@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="th" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>try{var t=localStorage.getItem('hft_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<title>Benches &amp; Racks | ม้านั่งและแร็คยกน้ำหนัก – HomeFitTools</title>
+<meta name="description" content="รวมม้านั่งออกกำลังกายและแร็คยกน้ำหนักคุณภาพสูง สำหรับฟิตเนสและ Home Gym ปรับมุมได้ แข็งแรง ปลอดภัย พร้อมบทความแนะนำการเลือกซื้อและขอใบเสนอราคาออนไลน์">
+<meta name="keywords" content="ม้านั่งออกกำลังกาย, แร็คยกน้ำหนัก, Weight Bench, Olympic Bench, Home Gym, อุปกรณ์ฟิตเนส">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Benches &amp; Racks | HomeFitTools">
+<meta property="og:description" content="ม้านั่งและแร็คยกน้ำหนักคุณภาพสูง สำหรับฟิตเนสและ Home Gym">
+<meta property="og:image" content="https://www.homefittools.com/media/catalog/product/cache/c4218f1997800f206b38e4323d8d1cf4/s/u/super-bench-hft-fgx39_1.png">
+<meta name="theme-color" content="#044394">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<a class="skip" href="#products" data-i18n="skip">ข้ามไปยังรายการสินค้า</a>
+
+<div class="topbar">
+  <div class="wrap topbar__in">
+    <p data-i18n="tb.promo">🔥 ลดเครื่องออกกำลังกายทุกรุ่น <strong>50%</strong> · ลงทะเบียนเล่นฟิตเนสฟรี 3 วัน</p>
+    <p class="topbar__contact"><a href="tel:0944951811">📞 094 495 1811</a><span data-i18n="tb.hours">เปิด 9:00 – 21:00 น.</span></p>
+  </div>
+</div>
+
+<header class="header" id="header">
+  <div class="wrap header__in">
+    <a class="logo" href="#top" aria-label="HomeFitTools">
+      <svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#044394"/><path d="M8 17v6M12 14v12M28 14v12M32 17v6M12 20h16" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="9" r="3.5" fill="#fd5003"/></svg>
+      <span>HOME<b>FIT</b>TOOLS</span>
+    </a>
+
+    <nav class="nav" id="nav" aria-label="Main">
+      <div class="nav__item nav__item--mega" id="megaItem">
+        <button class="nav__link" id="megaBtn" aria-expanded="false" aria-controls="mega">
+          <span data-i18n="nav.products">สินค้าของเรา</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="mega" id="mega"></div>
+      </div>
+      <a class="nav__link" href="#order" data-i18n="nav.order">วิธีการสั่งซื้อ</a>
+      <a class="nav__link" href="#articles" data-i18n="nav.articles">บทความ</a>
+      <a class="nav__link" href="#payment" data-i18n="nav.payment">แจ้งการโอนเงิน</a>
+      <a class="nav__link" href="#services" data-i18n="nav.services">บริการ</a>
+      <a class="nav__link" href="#contact" data-i18n="nav.contact">ติดต่อเรา</a>
+      <a class="nav__link" href="#warranty" data-i18n="nav.warranty">การรับประกัน</a>
+      <a class="nav__link nav__cta" href="#quote" data-i18n="nav.quote">ขอใบเสนอราคา</a>
+    </nav>
+
+    <div class="header__actions">
+      <button class="icon-btn" id="searchBtn" data-i18n-attr="aria-label:aria.search" aria-label="ค้นหา" aria-expanded="false" aria-controls="sbar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+      <button class="pill-btn" id="langBtn" data-i18n-attr="aria-label:aria.lang" aria-label="เปลี่ยนภาษา"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg><b id="langLbl">EN</b></button>
+      <button class="icon-btn" id="themeBtn" data-i18n-attr="aria-label:aria.theme" aria-label="สลับโหมดกลางวัน/กลางคืน">
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button class="icon-btn" id="wishBtn" data-i18n-attr="aria-label:aria.wish" aria-label="รายการโปรด"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/></svg><span class="badge" id="wishCount" data-n="0">0</span></button>
+      <button class="icon-btn" id="cartBtn" data-i18n-attr="aria-label:aria.cart" aria-label="ตะกร้าสินค้า"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2M9 20a1 1 0 1 0 0 .01M17 20a1 1 0 1 0 0 .01"/></svg><span class="badge" id="cartCount" data-n="0">0</span></button>
+      <button class="icon-btn burger" id="burger" data-i18n-attr="aria-label:aria.menu" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+
+  <div class="sbar" id="sbar" hidden>
+    <div class="wrap">
+      <form class="sbar__in" id="sForm" role="search" onsubmit="return false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" id="gq" autocomplete="off" placeholder="ค้นหาสินค้า บทความ หมวดหมู่..." data-i18n-attr="placeholder:search.gph;aria-label:search.gph">
+        <button type="button" class="sbar__x" id="sClose" aria-label="Close">×</button>
+      </form>
+      <div class="sbar__res" id="sRes" aria-live="polite"></div>
+    </div>
+  </div>
+</header>
+<div class="scrim" id="scrim"></div>
+
+<main id="top">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero__grid" aria-hidden="true"></div>
+  <svg class="hero__ecg" viewBox="0 0 1200 80" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40h300l20-6 14 6h40l16-34 22 68 18-34h60l20-8 16 8h300l20-6 14 6h40l16-34 22 68 18-34h60"/></svg>
+  <div class="wrap hero__in">
+    <div class="hero__text">
+      <nav class="crumbs" aria-label="breadcrumb">
+        <a href="#top" data-i18n="crumb.home">หน้าแรก</a><span>/</span><a href="#categories">Weight Training</a><span>/</span><span>Benches &amp; Racks</span>
+      </nav>
+      <p class="eyebrow">Strength Series 2026</p>
+      <h1 data-i18n="hero.h1">Benches &amp; Racks<br><em>ม้านั่งและแร็คยกน้ำหนัก</em></h1>
+      <p class="lead" data-i18n="hero.lead">แข็งแรง ปลอดภัย ปรับมุมได้ตามท่าฝึก ออกแบบตามหลักสรีรศาสตร์ เหมาะทั้ง Commercial Gym และ Home Gym</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="#products"><span data-i18n="hero.cta1">เลือกดูสินค้า</span> <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn btn--ghost" href="#quote" data-i18n="hero.cta2">ขอใบเสนอราคา</a>
+      </div>
+      <ul class="stats">
+        <li><b data-count="10">0</b><span data-i18n="hero.st1">รุ่นให้เลือก</span></li>
+        <li><b data-count="12">0</b><span data-i18n="hero.st2">หมวดสินค้า</span></li>
+        <li><b>9–21</b><span data-i18n="hero.st3">เปิดทำการ (น.)</span></li>
+      </ul>
+    </div>
+    <div class="hero__visual">
+      <div class="hero__ring"></div>
+      <img id="heroImg" src="https://www.homefittools.com/media/catalog/product/cache/c4218f1997800f206b38e4323d8d1cf4/s/u/super-bench-hft-fgx39_1.png" alt="Super Bench HFT-FGX39" width="560" height="560" fetchpriority="high">
+      <div class="chip chip--a"><small data-i18n="chip.rec">แนะนำ</small><b>Super Bench</b></div>
+      <div class="chip chip--b"><small data-i18n="chip.from">เริ่มต้น</small><b>6,190฿</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section" id="categories">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="eyebrow">Catalog</p>
+      <h2 data-i18n="cat.title">เลือกหมวดหมู่ให้เหมาะกับโปรเจกต์ของคุณ</h2>
+    </header>
+    <ul class="cats">
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><rect x="12" y="6" width="24" height="36" rx="3"/><path d="M18 14h12M18 22h12M18 30h12"/></svg><h3>PINLOAD</h3><span data-i18n="cat.s1">เครื่องแบบเสียบพิน</span></a></li>
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="5"/><path d="M4 24h6M38 24h6"/></svg><h3>PLATE LOAD</h3><span data-i18n="cat.s2">เครื่องใส่แผ่นน้ำหนัก</span></a></li>
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><path d="M8 40V8h32v32M8 14h32M24 14v26"/><circle cx="24" cy="30" r="3"/></svg><h3>CABLE CROSSOVER</h3><span data-i18n="cat.s3">เครื่องเคเบิลอเนกประสงค์</span></a></li>
+      <li class="is-current"><a href="#products" aria-current="page"><svg viewBox="0 0 48 48"><rect x="6" y="22" width="36" height="8" rx="3"/><path d="M12 30v10M36 30v10M4 16v10M44 16v10"/></svg><h3>BENCHES &amp; RACKS</h3><span data-i18n="cat.s4">ม้านั่งและแร็ค</span></a></li>
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><path d="M8 42V8h32v34M8 16h32M16 8v34M32 8v34"/></svg><h3>Rack Rigs</h3><span data-i18n="cat.s5">โครงเหล็กปรับได้</span></a></li>
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><circle cx="14" cy="34" r="8"/><circle cx="36" cy="34" r="8"/><path d="M14 34l8-16h10l4 16M20 18l-2-6h-4"/></svg><h3>Cardio</h3><span data-i18n="cat.s6">ลู่วิ่ง จักรยาน</span></a></li>
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><path d="M4 24h8M36 24h8M12 14v20M36 14v20M12 24h24M8 18v12M40 18v12"/></svg><h3>Free Weight</h3><span data-i18n="cat.s7">ดัมเบล บาร์เบล</span></a></li>
+      <li><a href="https://www.homefittools.com/products.html" target="_blank" rel="noopener"><svg viewBox="0 0 48 48"><circle cx="24" cy="10" r="5"/><path d="M24 15v14M10 22h28M24 29l-8 13M24 29l8 13"/></svg><h3>Functional</h3><span data-i18n="cat.s8">ฟังก์ชันนัลเทรนนิ่ง</span></a></li>
+    </ul>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="section section--tint" id="products">
+  <div class="wrap">
+    <header class="sec-head sec-head--row">
+      <div>
+        <p class="eyebrow">Products</p>
+        <h2 data-i18n="prod.title">สินค้า Benches &amp; Racks</h2>
+      </div>
+      <p class="count"><b id="resultCount">10</b> <span data-i18n="prod.items">รายการ</span></p>
+    </header>
+
+    <div class="toolbar">
+      <div class="seg" role="tablist" id="filters" data-i18n-attr="aria-label:f.aria" aria-label="กรองประเภทสินค้า">
+        <button role="tab" class="is-on" data-filter="all" aria-selected="true" data-i18n="f.all">ทั้งหมด</button>
+        <button role="tab" data-filter="bench" aria-selected="false" data-i18n="f.bench">ม้านั่ง</button>
+        <button role="tab" data-filter="machine" aria-selected="false" data-i18n="f.machine">เครื่องบริหารกล้ามเนื้อ</button>
+      </div>
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input type="search" id="q" placeholder="ค้นหารุ่น เช่น Olympic, FGX39" data-i18n-attr="placeholder:search.ph;aria-label:search.ph"></label>
+      <label class="select"><span class="sr" data-i18n="sort.label">เรียงลำดับ</span>
+        <select id="sort">
+          <option value="default" data-i18n="sort.default">เรียงตามรุ่น</option>
+          <option value="asc" data-i18n="sort.asc">ราคา: ต่ำ → สูง</option>
+          <option value="desc" data-i18n="sort.desc">ราคา: สูง → ต่ำ</option>
+        </select></label>
+    </div>
+
+    <ul class="grid" id="grid" aria-live="polite"></ul>
+    <p class="empty" id="empty" hidden data-i18n="prod.empty">ไม่พบสินค้าที่ตรงกับการค้นหา ลองเปลี่ยนคำค้นหรือตัวกรอง</p>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="section" id="why">
+  <div class="wrap split">
+    <div>
+      <p class="eyebrow" data-i18n="why.eyebrow">ทำความรู้จัก</p>
+      <h2 data-i18n="why.title">Benches &amp; Racks คืออะไร?</h2>
+      <p class="muted" data-i18n="why.p">อุปกรณ์สำหรับฝึก Free Weight และ Barbell ที่ออกแบบให้ปลอดภัย แข็งแรง และปรับมุมได้ตามต้องการ ม้านั่งช่วยให้ท่าฝึกถูกต้อง แร็คยกน้ำหนักช่วยรองรับน้ำหนักสูงและจัดท่าทางให้เหมาะสม ลดโอกาสบาดเจ็บ</p>
+      <h3 class="mt" data-i18n="why.h3">ทำไมถึงได้รับความนิยม?</h3>
+      <ul class="feat">
+        <li><span>01</span><div><b data-i18n="f1.t">วัสดุคุณภาพสูง</b><i data-i18n="f1.d">แข็งแรง ทนต่อการใช้งานหนัก</i></div></li>
+        <li><span>02</span><div><b data-i18n="f2.t">ปรับมุมได้หลายระดับ</b><i data-i18n="f2.d">รองรับท่า Bench Press, Incline, Decline</i></div></li>
+        <li><span>03</span><div><b data-i18n="f3.t">รองรับ Barbell และ Dumbbell</b><i data-i18n="f3.d">แร็คใช้งานได้อย่างปลอดภัย</i></div></li>
+        <li><span>04</span><div><b data-i18n="f4.t">ออกแบบตามหลักสรีรศาสตร์</b><i data-i18n="f4.d">ช่วยให้ท่าฝึกถูกต้อง</i></div></li>
+        <li><span>05</span><div><b data-i18n="f5.t">เหมาะทั้ง Commercial &amp; Home Gym</b><i data-i18n="f5.d">ใช้ได้ทุกพื้นที่</i></div></li>
+      </ul>
+    </div>
+    <aside class="who">
+      <h3 data-i18n="who.h">เหมาะกับใคร?</h3>
+      <ul class="tags">
+        <li data-i18n="w1">ฟิตเนส / ยิม</li><li data-i18n="w2">ฟิตเนสในคอนโด</li><li>Home Gym</li><li>Personal Trainer</li>
+        <li data-i18n="w5">โรงเรียน / มหาวิทยาลัย</li><li data-i18n="w6">หน่วยงานราชการ</li><li data-i18n="w7">ผู้ฝึก Free Weight</li><li data-i18n="w8">สตูดิโอ Powerlifting</li>
+        <li>Corporate Wellness</li><li data-i18n="w10">พื้นที่ออกกำลังกายกลุ่ม</li>
+      </ul>
+      <p class="muted sm" data-i18n="who.note">สอบถามรายละเอียดสินค้าเพิ่มเติมได้ที่ LINE หรือโทร 094 495 1811</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ORDER STEPS -->
+<section class="section section--tint" id="order">
+  <div class="wrap">
+    <header class="sec-head"><p class="eyebrow">How to order</p><h2 data-i18n="ord.title">วิธีการสั่งซื้อ</h2></header>
+    <ol class="steps">
+      <li><span>1</span><h3 data-i18n="s1.t">เลือกสินค้า</h3><p data-i18n="s1.d">เลือกรุ่นที่ต้องการจากรายการ หรือสอบถามทีมงานเพื่อขอคำแนะนำ</p></li>
+      <li><span>2</span><h3 data-i18n="s2.t">ขอใบเสนอราคา / สั่งซื้อ</h3><p data-i18n="s2.d">กรอกแบบฟอร์มขอใบเสนอราคา หรือติดต่อผ่าน LINE และโทรศัพท์</p></li>
+      <li><span>3</span><h3 data-i18n="s3.t">ชำระเงินและแจ้งโอน</h3><p data-i18n="s3.d">ชำระเงินตามที่ตกลง แล้วแจ้งการโอนเงินพร้อมหลักฐานผ่านแบบฟอร์มด้านล่าง</p></li>
+      <li><span>4</span><h3 data-i18n="s4.t">รับสินค้า</h3><p data-i18n="s4.d">ทีมงานยืนยันคำสั่งซื้อและนัดหมายการจัดส่งให้คุณ</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- SERVICES + WARRANTY -->
+<section class="section" id="services">
+  <div class="wrap">
+    <header class="sec-head"><p class="eyebrow">Services</p><h2 data-i18n="sv.title">บริการของเรา</h2></header>
+    <ul class="svc">
+      <li><span aria-hidden="true">🛒</span><h3 data-i18n="sv1.t">ขายปลีกและขายส่ง</h3><p data-i18n="sv1.d">รองรับทั้งลูกค้าทั่วไป ฟิตเนส และโครงการขนาดใหญ่</p></li>
+      <li><span aria-hidden="true">✅</span><h3 data-i18n="sv2.t">คัดสรรสินค้าด้วยตนเอง</h3><p data-i18n="sv2.d">เลือกสินค้าที่มีประสิทธิภาพอย่างแท้จริงก่อนนำเข้ามาจำหน่าย</p></li>
+      <li><span aria-hidden="true">💬</span><h3 data-i18n="sv3.t">ให้คำปรึกษา</h3><p data-i18n="sv3.d">ช่วยเลือกอุปกรณ์ให้เหมาะกับพื้นที่ เป้าหมาย และงบประมาณ</p></li>
+      <li><span aria-hidden="true">🚚</span><h3 data-i18n="sv4.t">จัดส่งสินค้า</h3><p data-i18n="sv4.d">ประสานงานการจัดส่งถึงสถานที่ของคุณ สอบถามเงื่อนไขกับทีมงาน</p></li>
+    </ul>
+
+    <div class="banner" id="warranty">
+      <div>
+        <p class="eyebrow eyebrow--light">Warranty</p>
+        <h2 data-i18n="wr.title">การรับประกันสินค้า</h2>
+        <p data-i18n="wr.p">สินค้าทุกรุ่นมีการรับประกันตามเงื่อนไขของผู้ผลิตและร้านค้า ระยะเวลาและเงื่อนไขแตกต่างกันตามรุ่น กรุณาสอบถามทีมงานก่อนสั่งซื้อ</p>
+      </div>
+      <a class="btn btn--primary" href="#contact" data-i18n="wr.btn">สอบถามเงื่อนไข</a>
+    </div>
+  </div>
+</section>
+
+<!-- ARTICLES -->
+<section class="section section--tint" id="articles">
+  <div class="wrap">
+    <header class="sec-head"><p class="eyebrow">Articles</p><h2 data-i18n="ar.title">บทความแนะนำ</h2><p class="muted" data-i18n="ar.sub">ความรู้เรื่องม้านั่งออกกำลังกาย แร็คยกน้ำหนัก และการจัด Home Gym</p></header>
+    <div class="arts">
+
+      <article class="art">
+        <p class="art__tag" data-i18n="a1.tag">คู่มือเลือกซื้อ</p>
+        <h3 data-i18n="a1.t">เลือกม้านั่งออกกำลังกายอย่างไรให้เหมาะกับคุณ: 5 ข้อต้องเช็กก่อนซื้อ</h3>
+        <p class="art__ex" data-i18n="a1.ex">ม้านั่งออกกำลังกายใช้ได้หลายท่า แต่รุ่นที่ใช่ขึ้นกับเป้าหมาย พื้นที่ และงบประมาณ</p>
+        <details><summary data-i18n="ar.read">อ่านบทความ</summary>
+          <div class="art__body" data-i18n="a1.b"><p>ม้านั่งออกกำลังกาย (Weight Bench) ใช้ได้ทั้งท่า Bench Press, Dumbbell Press, Row และท่านั่ง ก่อนตัดสินใจซื้อ ให้เริ่มจากเป้าหมายการฝึกและพื้นที่ใช้งานจริง</p><ol><li><b>ประเภทของม้านั่ง</b> – แบบราบ (Flat) เรียบง่ายและมั่นคง ส่วนแบบปรับระดับ (Adjustable) ทำท่าได้หลากหลายกว่า</li><li><b>โครงสร้างและความมั่นคง</b> – ดูความหนาของโครงเหล็ก ความกว้างของฐาน และจุดล็อกปรับระดับว่าแน่นหนา</li><li><b>เบาะ</b> – ควรแน่นพอรองรับสรีระ ไม่แข็งหรือยวบเกินไป และหุ้มด้วยวัสดุที่เช็ดทำความสะอาดง่าย</li><li><b>พื้นที่ใช้งานและการเก็บ</b> – วัดพื้นที่รวมระยะที่แขนและบาร์เคลื่อนที่ ไม่ใช่แค่ขนาดตัวม้านั่ง</li><li><b>งบประมาณและแผนต่อยอด</b> – หากวางแผนยกบาร์เบลหนัก ควรเลือกรุ่น Olympic ที่มีแร็ครองรับตั้งแต่ต้น</li></ol><p>ไม่แน่ใจว่ารุ่นไหนเหมาะ? <a href="#quote">ขอใบเสนอราคา</a>หรือสอบถามทีมงานได้เลย</p></div>
+        </details>
+      </article>
+
+      <article class="art">
+        <p class="art__tag" data-i18n="a2.tag">เปรียบเทียบ</p>
+        <h3 data-i18n="a2.t">Flat Bench, Adjustable Bench และ Olympic Bench ต่างกันอย่างไร</h3>
+        <p class="art__ex" data-i18n="a2.ex">เข้าใจความต่างของม้านั่งแต่ละแบบ เพื่อเลือกให้ตรงกับท่าฝึกที่ใช้บ่อย</p>
+        <details><summary data-i18n="ar.read">อ่านบทความ</summary>
+          <div class="art__body" data-i18n="a2.b"><p><b>Flat Bench (แบบราบ)</b> เหมาะกับท่านอนราบ เช่น Bench Press และ Dumbbell Press โครงสร้างเรียบง่าย ราคาเข้าถึงง่าย เหมาะกับผู้เริ่มต้นและ Home Gym</p><p><b>Adjustable Bench (แบบปรับระดับ)</b> ปรับมุมได้ ทั้งลาดขึ้น (Incline) และลาดลง (Decline) ทำให้เปลี่ยนท่าและเน้นกล้ามเนื้อได้หลายส่วนในเครื่องเดียว</p><p><b>Olympic Bench</b> ออกแบบให้ใช้กับบาร์เบลโอลิมปิก มีส่วนรองรับบาร์ในตัว เหมาะกับผู้ฝึกที่ยกน้ำหนักหนักและต้องการความปลอดภัยเพิ่ม</p><p>หากฝึกที่บ้านและต้องการความหลากหลาย แนะนำรุ่นปรับระดับ หากเน้นยกบาร์เบลเป็นหลัก ให้ดูรุ่น Olympic</p></div>
+        </details>
+      </article>
+
+      <article class="art">
+        <p class="art__tag" data-i18n="a3.tag">Home Gym</p>
+        <h3 data-i18n="a3.t">จัด Home Gym ในคอนโดให้ครบ ใช้พื้นที่น้อยแต่ได้ผล</h3>
+        <p class="art__ex" data-i18n="a3.ex">ห้องเล็กก็ฝึกครบได้ ถ้าวางแผนอุปกรณ์และการจัดวางให้ดี</p>
+        <details><summary data-i18n="ar.read">อ่านบทความ</summary>
+          <div class="art__body" data-i18n="a3.b"><p>การจัด Home Gym ในคอนโดไม่ต้องใช้พื้นที่มาก เริ่มจากวัดพื้นที่ว่างและเลือกอุปกรณ์ที่ใช้ได้หลายท่า</p><ol><li><b>เริ่มจากม้านั่งปรับระดับ</b> ร่วมกับดัมเบล ทำได้ครบทั้งหน้าอก ไหล่ แขน และหลัง</li><li><b>ปูแผ่นยางรองพื้น</b> ช่วยลดเสียงและแรงกระแทก โดยเฉพาะเมื่อฝึกในอาคารที่มีเพื่อนบ้าน</li><li><b>เผื่อพื้นที่รอบอุปกรณ์</b> ให้เคลื่อนไหวได้สะดวกและปลอดภัย</li><li><b>ชั้นวางดัมเบลและแร็ค</b> ช่วยจัดระเบียบและประหยัดพื้นที่</li></ol><p>ต้องการจัดชุดอุปกรณ์ให้เหมาะกับห้องของคุณ ติดต่อทีมงานเพื่อขอคำปรึกษาได้</p></div>
+        </details>
+      </article>
+
+      <article class="art">
+        <p class="art__tag" data-i18n="a4.tag">การดูแลรักษา</p>
+        <h3 data-i18n="a4.t">วิธีดูแลม้านั่งและแร็คยกน้ำหนัก ให้ใช้ได้นานและปลอดภัย</h3>
+        <p class="art__ex" data-i18n="a4.ex">การดูแลเบื้องต้นช่วยยืดอายุอุปกรณ์ และลดความเสี่ยงจากการใช้งาน</p>
+        <details><summary data-i18n="ar.read">อ่านบทความ</summary>
+          <div class="art__body" data-i18n="a4.b"><p>อุปกรณ์ที่ดูแลสม่ำเสมอจะแข็งแรง ปลอดภัย และคงรูปลักษณ์ได้นาน</p><ol><li><b>เช็ดเบาะหลังใช้งาน</b> ด้วยผ้าหมาดและน้ำยาที่ไม่กัดวัสดุ เพื่อลดเหงื่อและคราบสะสม</li><li><b>ตรวจน็อตและจุดล็อก</b> เป็นประจำ โดยเฉพาะจุดปรับระดับและขาตั้ง</li><li><b>วางบนพื้นเรียบ</b> เพื่อให้อุปกรณ์ไม่โยกขณะใช้งาน</li><li><b>หลีกเลี่ยงความชื้นสูงและแดดจัด</b> ซึ่งทำให้เบาะและโลหะเสื่อมเร็ว</li><li><b>ไม่ใช้เกินพิกัด</b> ตามที่ผู้ผลิตกำหนดในแต่ละรุ่น</li></ol></div>
+        </details>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" id="faq">
+  <div class="wrap wrap--narrow">
+    <header class="sec-head"><p class="eyebrow">FAQ</p><h2 data-i18n="faq.title">คำถามที่พบบ่อย</h2></header>
+    <div class="faq">
+      <details><summary data-i18n="q1">ม้านั่งปรับระดับได้กี่มุม?</summary><p data-i18n="r1">ขึ้นอยู่กับรุ่น ม้านั่งปรับระดับ เช่น Adjustable Decline Bench และ Multi-Purpose Bench รองรับท่า Flat, Incline และ Decline กรุณาดูรายละเอียดของแต่ละรุ่น หรือสอบถามทีมงาน</p></details>
+      <details><summary data-i18n="q2">แร็คยกน้ำหนักรองรับน้ำหนักสูงสุดเท่าไหร่?</summary><p data-i18n="r2">น้ำหนักรองรับแตกต่างกันตามรุ่นและโครงสร้าง โปรดสอบถามทีมงานเพื่อรับสเปกที่ถูกต้องของรุ่นที่สนใจ</p></details>
+      <details><summary data-i18n="q3">สามารถใช้ใน Home Gym ได้ไหม?</summary><p data-i18n="r3">ได้ ทุกรุ่นเหมาะทั้ง Home Gym คอนโด และฟิตเนสเชิงพาณิชย์ ควรวัดพื้นที่ติดตั้งก่อนสั่งซื้อ</p></details>
+      <details><summary data-i18n="q4">วัสดุและความแข็งแรงเป็นอย่างไร?</summary><p data-i18n="r4">โครงสร้างผลิตจากวัสดุคุณภาพสูง ทนต่อการใช้งานหนัก เบาะรองรับสรีระและออกแบบเพื่อความปลอดภัย</p></details>
+      <details><summary data-i18n="q5">เหมาะกับผู้เริ่มต้นหรือมืออาชีพ?</summary><p data-i18n="r5">เหมาะกับทั้งสองกลุ่ม ผู้เริ่มต้นเลือกรุ่น Flat Bench ส่วนผู้ฝึกจริงจังเลือกรุ่น Olympic Bench ได้</p></details>
+      <details><summary data-i18n="q6">ต้องดูแลรักษาอย่างไร?</summary><p data-i18n="r6">เช็ดทำความสะอาดเบาะหลังใช้งาน ตรวจสอบน็อตและจุดปรับเป็นระยะ และหลีกเลี่ยงความชื้นสูง</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- FORMS: PAYMENT + QUOTE -->
+<section class="section section--tint" id="forms">
+  <div class="wrap forms">
+    <form class="form" id="payment" novalidate>
+      <h2 data-i18n="pay.title">แจ้งการโอนเงิน</h2>
+      <p class="muted sm" data-i18n="pay.sub">โอนเงินแล้ว แจ้งรายละเอียดให้ทีมงานตรวจสอบได้ที่นี่</p>
+      <label><span data-i18n="pay.no">เลขที่คำสั่งซื้อ / ใบเสนอราคา</span><input name="order" required autocomplete="off"></label>
+      <div class="row2">
+        <label><span data-i18n="l.name">ชื่อ-นามสกุล</span><input name="name" required autocomplete="name"></label>
+        <label><span data-i18n="l.phone">เบอร์โทรศัพท์</span><input name="phone" type="tel" required pattern="[0-9+\-\s]{9,15}" autocomplete="tel"></label>
+      </div>
+      <div class="row2">
+        <label><span data-i18n="pay.amount">จำนวนเงิน (บาท)</span><input name="amount" type="number" min="1" step="any" required inputmode="decimal"></label>
+        <label><span data-i18n="pay.date">วันที่โอน</span><input name="date" type="date" required></label>
+      </div>
+      <label><span data-i18n="pay.slip">แนบสลิป</span><input name="slip" type="file" accept="image/*,application/pdf"></label>
+      <label><span data-i18n="l.note">หมายเหตุ</span><textarea name="note" rows="2"></textarea></label>
+      <button class="btn btn--primary" type="submit" data-i18n="pay.btn">ส่งข้อมูลการโอน</button>
+      <p class="form__ok" hidden role="status"></p>
+    </form>
+
+    <form class="form" id="quote" novalidate>
+      <h2 data-i18n="qt.title">ขอใบเสนอราคา</h2>
+      <p class="muted sm" data-i18n="qt.sub">แจ้งรายการสินค้าที่สนใจ ทีมงานจะติดต่อกลับพร้อมใบเสนอราคา</p>
+      <div class="row2">
+        <label><span data-i18n="l.name">ชื่อ-นามสกุล</span><input name="name" required autocomplete="name"></label>
+        <label><span data-i18n="l.phone">เบอร์โทรศัพท์</span><input name="phone" type="tel" required pattern="[0-9+\-\s]{9,15}" autocomplete="tel"></label>
+      </div>
+      <label><span data-i18n="l.email">อีเมล</span><input name="email" type="email" autocomplete="email"></label>
+      <div class="row2">
+        <label><span data-i18n="qt.product">สินค้าที่สนใจ</span><select name="product" id="qProduct" required></select></label>
+        <label><span data-i18n="qt.qty">จำนวน</span><input name="qty" type="number" min="1" value="1" required inputmode="numeric"></label>
+      </div>
+      <label><span data-i18n="qt.msg">รายละเอียดเพิ่มเติม</span><textarea name="msg" rows="2"></textarea></label>
+      <button class="btn btn--primary" type="submit" data-i18n="qt.btn">ส่งคำขอใบเสนอราคา</button>
+      <p class="form__ok" hidden role="status"></p>
+    </form>
+  </div>
+</section>
+
+<!-- CONTACT CTA -->
+<section class="section section--tight" id="contact">
+  <div class="wrap">
+    <h2 class="ct-title" data-i18n="cta.title">ติดต่อสอบถามข้อมูลและโปรโมชั่นพิเศษวันนี้!</h2>
+
+    <div class="promos">
+      <a class="promo promo--sale" href="https://www.homefittools.com/" target="_blank" rel="noopener">
+        <div class="promo__art"><span class="promo__tag">CLICK ▸</span><small data-i18n="pr1.k">ลดพิเศษ</small><b>50%</b><em data-i18n="pr1.t">เครื่องออกกำลังกาย</em><i>HOMEFITTOOLS</i></div>
+        <span class="promo__bar" data-i18n="pr1.b">ลดเครื่องออกกำลังกายทุกรุ่น 50% คลิกเลย!</span>
+      </a>
+      <a class="promo promo--trial" href="https://www.homefittools.com/" target="_blank" rel="noopener">
+        <div class="promo__art"><small>PROMOTION</small><strong data-i18n="pr2.t">ทดลองเล่น <u>ฟรี</u></strong><em data-i18n="pr2.s">เข้าเล่นได้ทุกคลาส ไม่จำกัด 3 วัน</em>
+          <ul><li data-i18n="br1">ซาฟารีเวิลด์</li><li data-i18n="br2">สายไหม</li><li data-i18n="br3">เลียบทางด่วน</li><li data-i18n="br4">สุขาภิบาล 5</li><li data-i18n="br5">พระราม 5</li><li data-i18n="br6">อุดมสุข</li></ul></div>
+        <span class="promo__bar" data-i18n="pr2.b">ลงทะเบียนเล่นฟิตเนสฟรี 3 วัน คลิกเลย!</span>
+      </a>
+    </div>
+
+    <div class="channels">
+      <div class="channels__head"><h3 data-i18n="ch.title">ปรึกษา และติดต่อได้ <b>4</b> ช่องทาง</h3><span data-i18n="ch.hours">เปิดบริการตั้งแต่ 9.00-21.00 น.</span></div>
+      <ul class="channels__list">
+        <li><a href="https://www.facebook.com/homefittools" target="_blank" rel="noopener">
+          <span class="ch-ic ch-ic--fb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3a4 4 0 0 0-4 4v2H7v4h3v7h4v-7h3l1-4h-4V8z"/></svg></span>
+          <span class="ch-tx"><b>Facebook</b><small>facebook.com/homefittools</small></span><span class="ch-go" data-i18n="ch.click">คลิกเลย</span></a></li>
+        <li><a href="https://line.me/R/ti/p/@homefittools" target="_blank" rel="noopener">
+          <span class="ch-ic ch-ic--line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.5 3 2 6.4 2 10.6c0 3.7 3.3 6.8 7.8 7.4.3.1.7.2.8.5l.1 1.7c0 .5.3.6.7.4 1-.5 5.5-3.2 7.5-5.5C20.200 13.500 22 12.200 22 10.600 22 6.400 17.500 3 12 3z"/></svg></span>
+          <span class="ch-tx"><b>@Line</b><small>@homefittools</small></span><span class="ch-go" data-i18n="ch.click">คลิกเลย</span></a></li>
+        <li><a href="tel:0944951811">
+          <span class="ch-ic ch-ic--tel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.600 10.800a15 15 0 0 0 6.600 6.600l2.200-2.200a1 1 0 0 1 1-.2 11 11 0 0 0 3.500.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.500a1 1 0 0 1 1 1c0 1.200.2 2.400.6 3.500a1 1 0 0 1-.2 1z"/></svg></span>
+          <span class="ch-tx"><b data-i18n="ch.call">โทร Call</b><small>094-495-1811</small></span><span class="ch-go" data-i18n="ch.click">คลิกเลย</span></a></li>
+        <li><a href="mailto:homefittools@gmail.com">
+          <span class="ch-ic ch-ic--mail"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.500V17h16V7.500l-8 5.500-8-5.500z"/></svg></span>
+          <span class="ch-tx"><b data-i18n="ch.mail">อีเมล</b><small>homefittools@gmail.com</small></span><span class="ch-go" data-i18n="ch.click">คลิกเลย</span></a></li>
+      </ul>
+      <a class="channels__map" href="https://www.google.com/maps/search/HomeFitTools+%E0%B8%A3%E0%B8%B2%E0%B8%A1%E0%B8%AD%E0%B8%B4%E0%B8%99%E0%B8%97%E0%B8%A3%E0%B8%B2+74" target="_blank" rel="noopener">
+        <span class="ch-ic ch-ic--map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.500A2.500 2.500 0 1 1 12 6.500a2.500 2.500 0 0 1 0 5z"/></svg></span>
+        <span class="ch-tx"><b data-i18n="mp.t">แผนที่หน้าร้าน ติดถนนก่อนถึงรามอินทรา 74</b><small data-i18n="mp.d">อยู่ริมถนน ใกล้ ๆ Makro (รามอินทรา) เลย Makro มาก่อนถึงสะพานลอยแรกเจอเลย! ฝั่งเดียวกับ Makro หรือ GPS มาที่ รามอินทรา 74 ก่อนถึง 100 เมตร GPS มาที่ร้าน HomeFitTools ได้เลย</small></span>
+        <span class="ch-cta"><span data-i18n="mp.btn">คลิกเลย</span> <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ALL CATEGORIES -->
+<section class="section" id="allcats">
+  <div class="wrap">
+    <header class="sec-head"><h2 data-i18n="all.title">หมวดหมู่สินค้าทั้งหมด</h2><p class="muted" data-i18n="all.sub">เลือกหมวดหมู่เครื่องออกกำลังกายที่คุณต้องการ</p></header>
+    <ul class="allcats" id="allCatsList"></ul>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div class="footer__brand">
+      <a class="logo logo--light" href="#top"><span>HOME<b>FIT</b>TOOLS</span></a>
+      <p data-i18n="ft.desc">เรานำเข้าและจัดจำหน่ายอุปกรณ์ออกกำลังกาย อุปกรณ์ฟิตเนส และอุปกรณ์อื่น ๆ เช่น ลู่วิ่ง จักรยานออกกำลังกาย โฮมยิม กระสอบทราย และดัมเบลคุณภาพสูง เรายังมีบริการขายปลีกและขายส่งอีกด้วย เราคัดสรรสินค้าทุกชิ้นด้วยตนเอง เพื่อให้มั่นใจว่าสินค้าทุกชิ้นมีประสิทธิภาพอย่างแท้จริง</p>
+      <p><a href="tel:0944951811">📞 094 495 1811</a><br><a href="mailto:homefittools@gmail.com">✉️ homefittools@gmail.com</a></p>
+    </div>
+    <div><h4 data-i18n="ft.about">เกี่ยวกับเรา</h4><ul><li><a href="#top" data-i18n="ft.a1">เกี่ยวกับ</a></li><li><a href="#contact" data-i18n="ft.a2">ติดต่อเรา</a></li><li><a href="#contact" data-i18n="ft.a3">ร้านของเรา</a></li><li><a href="#top" data-i18n="ft.a4">นโยบายความเป็นส่วนตัว</a></li></ul></div>
+    <div><h4 data-i18n="ft.cs">บริการลูกค้า</h4><ul><li><a href="#order" data-i18n="ft.c1">วิธีสั่งซื้อ</a></li><li><a href="#order" data-i18n="ft.c2">การชำระเงิน</a></li><li><a href="#services" data-i18n="ft.c3">การจัดส่ง</a></li><li><a href="#payment" data-i18n="ft.c4">แจ้งชำระเงิน</a></li><li><a href="#articles" data-i18n="ft.c5">รีวิวสินค้า / บทความ</a></li></ul></div>
+    <div>
+      <h4 data-i18n="ft.follow">ติดตามเรา</h4>
+      <p class="social"><a href="https://www.facebook.com/homefittools" target="_blank" rel="noopener" aria-label="Facebook">Facebook</a><a href="https://line.me/R/ti/p/@homefittools" target="_blank" rel="noopener" aria-label="LINE">LINE @homefittools</a></p>
+      <h4 class="mt2" data-i18n="ft.hours">เวลาทำการ</h4>
+      <p data-i18n="ft.hv">เปิดทำการ 9:00 น. ถึง 21:00 น.</p>
+      <p><a href="https://www.google.com/maps/search/HomeFitTools" target="_blank" rel="noopener">📍 Location Map</a></p>
+    </div>
+  </div>
+  <div class="wrap sitemap" id="sitemap"></div>
+  <p class="copy" data-i18n="ft.copy">© 2026 Homefittools.com All Rights Reserved. · หน้าทดสอบงาน Front-end (HTML/CSS/JS)</p>
+</footer>
+
+<!-- Quick view modal -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__bg" data-close></div>
+  <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="modal__x" data-close aria-label="Close">×</button>
+    <div class="modal__img"><img id="mImg" alt=""></div>
+    <div class="modal__info">
+      <p class="eyebrow" id="mCode"></p>
+      <h3 id="mTitle"></h3>
+      <p class="price" id="mPrice"></p>
+      <p class="muted" id="mDesc"></p>
+      <div class="modal__btns">
+        <button class="btn btn--primary" id="mAdd" data-i18n="m.add">เพิ่มลงตะกร้า</button>
+        <a class="btn btn--ghost" id="mLink" target="_blank" rel="noopener" data-i18n="m.link">ดูหน้าสินค้าเดิม</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="cookie" id="cookie" hidden>
+  <p data-i18n="ck.text">เว็บไซต์นี้ใช้คุกกี้เพื่อปรับปรุงการใช้งานและป้องกันข้อมูลส่วนบุคคล</p>
+  <button class="btn btn--primary btn--sm" id="cookieOk" data-i18n="ck.ok">ยอมรับ</button>
+</div>
+
+<button class="totop" id="totop" aria-label="Top" hidden>↑</button>
+
+<!-- Chat assistant -->
+<div class="chat" id="chat" hidden role="dialog" aria-labelledby="chatName">
+  <div class="chat__head">
+    <span class="chat__av" aria-hidden="true"></span>
+    <div><b id="chatName" data-i18n="chat.name">น้องฟิต</b><small data-i18n="chat.status">ออนไลน์ · ตอบทันที</small></div>
+    <button class="chat__x" id="chatClose" aria-label="Close">×</button>
+  </div>
+  <div class="chat__msgs" id="chatMsgs" aria-live="polite"></div>
+  <div class="chat__chips" id="chatChips"></div>
+  <form class="chat__form" id="chatForm" autocomplete="off">
+    <input id="chatIn" placeholder="พิมพ์คำถามของคุณ..." data-i18n-attr="placeholder:chat.ph;aria-label:chat.ph">
+    <button type="submit" class="chat__send" data-i18n-attr="aria-label:chat.send" aria-label="ส่ง"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7z"/></svg></button>
+  </form>
+</div>
+<button class="chat-btn" id="chatBtn" data-i18n-attr="aria-label:aria.chat" aria-label="แชทกับน้องฟิต" aria-expanded="false" aria-controls="chat">
+  <span class="chat__av" aria-hidden="true"></span>
+  <span class="chat-hint" id="chatHint" data-i18n="chat.hint">สอบถามน้องฟิตได้นะ!</span>
+</button>
+
+<script src="js/core/namespace.js"></script>
+<script src="js/data/dictionary.js"></script>
+<script src="js/data/products.js"></script>
+<script src="js/data/menu.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/state.js"></script>
+<script src="js/core/i18n.js"></script>
+<script src="js/ui/toast.js"></script>
+<script src="js/ui/cart.js"></script>
+<script src="js/ui/modal.js"></script>
+<script src="js/ui/products.js"></script>
+<script src="js/ui/navigation.js"></script>
+<script src="js/ui/sections.js"></script>
+<script src="js/ui/forms.js"></script>
+<script src="js/ui/controls.js"></script>
+<script src="js/ui/effects.js"></script>
+<script src="js/systems/search.js"></script>
+<script src="js/systems/chat.js"></script>
+<script src="js/systems/seo.js"></script>
+<script src="js/systems/background.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
