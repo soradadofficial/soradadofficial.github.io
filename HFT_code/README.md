@@ -10,6 +10,46 @@
 
 ---
 
+## หน้าตาเว็บ (Screenshot)
+
+ภาพทั้งหมดแคปจากตัวเว็บจริง เก็บไว้ที่ `docs/screenshots/`
+
+### คอม (1440px)
+
+| หน้าแรก (โหมดสว่าง) | เมกะเมนู "สินค้าของเรา" |
+|---|---|
+| ![หน้าแรก](docs/screenshots/desktop-home.jpg) | ![เมกะเมนู](docs/screenshots/desktop-megamenu.jpg) |
+
+| รายการสินค้า | มินิตะกร้า (เด้งตอนกดเพิ่มสินค้า) |
+|---|---|
+| ![รายการสินค้า](docs/screenshots/desktop-products.jpg) | ![มินิตะกร้า](docs/screenshots/desktop-minicart.jpg) |
+
+| ดูรายละเอียดด่วน | บทความ SEO |
+|---|---|
+| ![ดูรายละเอียดด่วน](docs/screenshots/desktop-quickview.jpg) | ![บทความ](docs/screenshots/desktop-articles.jpg) |
+
+| ช่องทางติดต่อ + แชทน้องฟิต | โหมดกลางคืน |
+|---|---|
+| ![ติดต่อและแชท](docs/screenshots/desktop-chat.jpg) | ![โหมดกลางคืน](docs/screenshots/desktop-dark.jpg) |
+
+| โหมดกลางคืน + English |
+|---|
+| ![มืดและอังกฤษ](docs/screenshots/desktop-dark-en.jpg) |
+
+ส่วนติดต่อทั้งหมด (โปรโมชัน 2 ใบ + 4 ช่องทาง + แผนที่) ดูได้ที่ `docs/screenshots/desktop-contact.jpg`
+
+### มือถือ (390px)
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/mobile-home.jpg" width="260" alt="หน้าแรกมือถือ"><br>หน้าแรก</td>
+    <td align="center"><img src="docs/screenshots/mobile-products.jpg" width="260" alt="สินค้ามือถือ"><br>รายการสินค้า</td>
+    <td align="center"><img src="docs/screenshots/mobile-menu.jpg" width="260" alt="เมนูมือถือ"><br>เมนู + เมกะเมนูแบบกดขยาย</td>
+  </tr>
+</table>
+
+---
+
 ## เปิดดูยังไง
 
 - ดับเบิลคลิก `index.html` ก็ขึ้นเลย (ต้องต่อเน็ตด้วยนะ รูปสินค้ากับฟอนต์ดึงมาจากข้างนอก)
