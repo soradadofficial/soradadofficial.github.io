@@ -27,6 +27,9 @@ window.I18N = {
     'chat.ph': 'พิมพ์คำถามของคุณ...', 'chat.send': 'ส่ง', 'chat.hint': 'สอบถามน้องฟิตได้นะ!',
     'kw.title': 'ค้นหายอดนิยม',
     'mc.view': 'ดูตะกร้าทั้งหมด',
+    'tag.rack': 'แร็ค', 'pg.prev': 'ก่อนหน้า', 'pg.next': 'ถัดไป', 'pg.page': 'หน้า {n}', 'm.quote.btn': 'ขอใบเสนอราคา',
+    'sp.size': 'ขนาดเครื่อง', 'sp.kg': 'น้ำหนักเครื่อง', 'sp.steel': 'ความหนาเหล็ก', 'sp.load': 'รับน้ำหนักถึง', 'u.mm': 'มม.', 'u.kg': 'กก.',
+    'chat.price': 'สินค้าในหน้านี้ราคา {min} – {max} บาท รุ่นราคาเริ่มต้นดังนี้',
     'cp.cart': 'ตะกร้าสินค้า', 'cp.wish': 'รายการโปรด', 'cp.empty.cart': 'ตะกร้ายังว่างอยู่ เลือกสินค้าที่สนใจได้เลย', 'cp.empty.wish': 'ยังไม่มีรายการโปรด กดรูปหัวใจที่สินค้าเพื่อบันทึก',
     'cp.total': 'รวม', 'cp.quote': 'ขอใบเสนอราคาจากรายการนี้', 'cp.clear': 'ล้างตะกร้า', 'cp.remove': 'ลบ'
   },
@@ -55,6 +58,10 @@ window.I18N = {
     'chat.ph': 'Type your question...', 'chat.send': 'Send', 'chat.hint': 'Ask Fit Buddy!',
     'kw.title': 'Popular searches',
     'mc.view': 'View full cart',
+    'tag.rack': 'Rack', 'pg.prev': 'Prev', 'pg.next': 'Next', 'pg.page': 'Page {n}', 'm.quote.btn': 'Request a quote',
+    'sp.size': 'Size', 'sp.kg': 'Weight', 'sp.steel': 'Steel thickness', 'sp.load': 'Max load', 'u.mm': 'mm', 'u.kg': 'kg',
+    'chat.price': 'Items on this page range from {min} to {max} THB. Entry-level options:',
+    'f.rack': 'Racks', 'pg.aria': 'Product pages', 'm.quote': 'Request a quote',
     'cp.cart': 'Your cart', 'cp.wish': 'Wishlist', 'cp.empty.cart': 'Your cart is empty. Pick something you like!', 'cp.empty.wish': 'No favourites yet. Tap the heart on a product to save it.',
     'cp.total': 'Total', 'cp.quote': 'Request a quote for these items', 'cp.clear': 'Clear cart', 'cp.remove': 'Remove',
 

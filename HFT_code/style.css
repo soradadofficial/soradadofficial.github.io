@@ -628,3 +628,18 @@ html.lock{overflow:hidden}
 .m-perks b{display:block;font-size:.88rem;color:var(--head);line-height:1.3}
 .m-perks span:not(.perk__ic){font-size:.78rem;color:var(--grey);line-height:1.3}
 @media (max-width:420px){.m-perks{grid-template-columns:1fr}}
+
+/* ---------- pagination + product specs ---------- */
+.pager{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:32px}
+.pager:empty{display:none}
+.pager button{min-width:42px;height:42px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--head);font-weight:500;transition:.2s}
+.pager button:hover:not(:disabled):not(.is-on){border-color:var(--orange);color:var(--orange-t)}
+.pager button.is-on{background:var(--navy);border-color:var(--navy);color:#fff}
+.pager button:disabled{opacity:.4;cursor:not-allowed}
+.m-specs{display:grid;gap:4px;margin:2px 0 4px}
+.m-specs:empty{display:none}
+.m-specs li{display:flex;justify-content:space-between;gap:12px;padding:7px 12px;border-radius:8px;background:var(--tint-s);font-size:.88rem}
+.m-specs span{color:var(--grey)}
+.m-specs b{color:var(--head);font-weight:600;text-align:right}
+@media (max-width:600px){.pager button{min-width:38px;height:38px;padding:0 10px}}
+[hidden]{display:none!important}

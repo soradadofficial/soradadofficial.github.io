@@ -25,9 +25,12 @@
 
   /* The header + hero are plain HTML, so let the browser paint them first and wire everything else
      right after the first frame (keeps LCP / FCP independent of our script cost). */
+  var started = false;
+  function run() { if (!started) { started = true; start(); } }
   function afterFirstPaint() {
-    if (window.requestAnimationFrame) requestAnimationFrame(function () { setTimeout(start, 0); });
-    else start();
+    if (window.requestAnimationFrame) requestAnimationFrame(function () { setTimeout(run, 0); });
+    setTimeout(run, 400);          // fallback: rAF never fires in a background tab
+    if (!window.requestAnimationFrame) run();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', afterFirstPaint);
   else afterFirstPaint();

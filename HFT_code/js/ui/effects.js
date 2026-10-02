@@ -23,7 +23,8 @@
 
       $$('[data-count]').forEach(function (el) {
         var end = +el.getAttribute('data-count'), n = 0;
-        var timer = setInterval(function () { n++; el.textContent = n; if (n >= end) clearInterval(timer); }, 90);
+        var step = Math.max(1, Math.ceil(end / 14));
+        var timer = setInterval(function () { n = Math.min(end, n + step); el.textContent = n; if (n >= end) clearInterval(timer); }, 80);
       });
 
       exclusive('.faq details'); exclusive('.art details');

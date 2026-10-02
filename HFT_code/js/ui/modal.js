@@ -10,13 +10,20 @@
     $('#mCode').textContent = p.code; $('#mTitle').textContent = H.pick({ th: p.th, en: p.en });
     $('#mPrice').textContent = H.fmt(p.price) + ' ' + H.t('price.sfx');
     $('#mDesc').textContent = S.lang === 'en' ? p.den : p.dth;
-    $('#mLink').href = p.url;
+    var link = $('#mLink'); link.hidden = !p.url; if (p.url) link.href = p.url;
+    var sp = p.spec || {}, rows = [];
+    if (sp.dims) rows.push([H.t('sp.size'), sp.dims + ' ' + H.t('u.mm')]);
+    if (sp.kg) rows.push([H.t('sp.kg'), sp.kg + ' ' + H.t('u.kg')]);
+    if (sp.steel) rows.push([H.t('sp.steel'), '≤ ' + sp.steel + ' ' + H.t('u.mm')]);
+    if (sp.load) rows.push([H.t('sp.load'), sp.load + ' ' + H.t('u.kg')]);
+    $('#mSpecs').innerHTML = rows.map(function (r) { return '<li><span>' + H.esc(r[0]) + '</span><b>' + H.esc(r[1]) + '</b></li>'; }).join('');
   }
 
   H.modal = {
     init: function () {
       modal = $('#modal');
       modal.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) H.modal.close(); });
+      $('#mQuote').addEventListener('click', function () { var p = S.current; H.modal.close(); if (p) H.quoteFor(p); });
       $('#mAdd').addEventListener('click', function () { if (S.current) { H.cart.add(S.current); H.modal.close(); } });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) H.modal.close(); });
       H.onRender(function () { if (!modal.hidden && S.current) fill(S.current); });

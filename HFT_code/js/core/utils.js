@@ -23,6 +23,12 @@
     return u.charAt(0) === '#' ? ' href="' + u + '"' : ' href="' + u + '" target="_blank" rel="noopener"';
   };
   H.find = function (id) { return H.data.PRODUCTS.filter(function (p) { return p.id === id; })[0]; };
+  /* jump to the quote form with this product pre-selected */
+  H.quoteFor = function (p) {
+    var f = document.getElementById('quote'); if (!f) return;
+    f.elements.product.value = p.code; f.elements.qty.value = 1;
+    f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   H.FALLBACK = 'data:image/svg+xml;utf8,' + encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#f3f6fb"/><path d="M40 110h120M55 90v40M145 90v40M30 100v20M170 100v20" stroke="#044394" stroke-width="8" stroke-linecap="round" fill="none"/></svg>');
   /* broken product image -> placeholder (error events do not bubble, so capture) */

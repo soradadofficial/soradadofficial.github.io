@@ -10,7 +10,7 @@
     theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
     wish: Array.isArray(wish) ? wish : [],
     cart: Array.isArray(cart) ? cart : [],
-    filter: 'all', q: '', sort: 'default',
+    filter: 'all', q: '', sort: 'default', page: 1,
     current: null      // product shown in the quick-view modal
   };
 })(window.HFT);
