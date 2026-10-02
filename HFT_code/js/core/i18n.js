@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Language engine. Thai text lives in the HTML itself (captured once); English lives in the dictionary. */
 (function (H) {
   'use strict';
@@ -42,7 +43,7 @@
     },
     toggle: function () {
       S.lang = S.lang === 'th' ? 'en' : 'th';
-      H.store.set('hft_lang', S.lang);
+      H.session.set('hft_lang', S.lang);
       H.i18n.apply();
     }
   };

@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* "Fit Buddy" – rule-based chat assistant (keyword intents, bilingual). Swap botReply() for a real AI API if needed. */
 (function (H) {
   'use strict';

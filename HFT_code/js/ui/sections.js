@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Data-driven page sections: footer sitemap + "all categories" grid. */
 (function (H) {
   'use strict';

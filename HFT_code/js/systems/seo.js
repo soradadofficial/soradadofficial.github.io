@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* SEO: rebuilds JSON-LD (organization, navigation, products, FAQ) in the active language. */
 (function (H) {
   'use strict';

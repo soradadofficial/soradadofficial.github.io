@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Global search: products, articles and categories in one dropdown under the header. */
 (function (H) {
   'use strict';

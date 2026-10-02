@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Page effects: scroll reveal, hero counters, one-open-at-a-time accordions, cookie banner. */
 (function (H) {
   'use strict';

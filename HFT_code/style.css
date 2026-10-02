@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 :root{
   --navy:#044394; --navy-d:#18283f; --navy-m:#233a59;
   --blue:#0080e8; --orange:#fd5003;
@@ -317,7 +318,7 @@ button{cursor:pointer}
 /* misc */
 .toast{position:fixed;left:50%;bottom:26px;z-index:150;transform:translate(-50%,30px);opacity:0;pointer-events:none;background:var(--navy-d);color:#fff;padding:12px 22px;border-radius:999px;font-size:.92rem;box-shadow:var(--shadow);transition:.3s;max-width:calc(100% - 32px);text-align:center;border:1px solid rgba(255,255,255,.15)}
 .toast.is-on{transform:translate(-50%,0);opacity:1}
-.cookie{position:fixed;left:16px;bottom:16px;z-index:120;max-width:420px;display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);padding:14px 16px;border-radius:16px;box-shadow:var(--shadow);font-size:.85rem}
+.cookie{position:fixed;left:16px;bottom:16px;z-index:85;max-width:420px;display:flex;gap:14px;align-items:center;background:var(--card);border:1px solid var(--line);padding:14px 16px;border-radius:16px;box-shadow:var(--shadow);font-size:.85rem}
 .cookie[hidden]{display:none}
 .totop{position:fixed;right:16px;bottom:16px;z-index:90;width:46px;height:46px;border-radius:50%;border:0;background:var(--navy);color:#fff;font-size:1.2rem;box-shadow:var(--shadow)}
 .totop[hidden]{display:none}
@@ -397,7 +398,7 @@ button{cursor:pointer}
   .icon-btn svg{width:19px;height:19px}
   .pill-btn{padding:0 8px;margin-right:0}
 }
-@media (max-width:360px){.grid{grid-template-columns:1fr}.logo span{display:none}}
+@media (max-width:360px){.grid{grid-template-columns:1fr}}
 @media (hover:none){.quick{display:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
 
@@ -485,7 +486,7 @@ button{cursor:pointer}
   .chat-hint{display:none}
 }
 @media (prefers-reduced-motion:reduce){.chat-btn{animation:none!important}}
-@media (max-width:420px){.logo span{display:none}}
+
 
 /* ---------- contact / promos ---------- */
 .ct-title{text-align:center;font-size:clamp(1.4rem,3vw,2.1rem);color:var(--head);margin-bottom:28px}
@@ -534,3 +535,74 @@ button{cursor:pointer}
 @media (max-width:1100px){.channels__list{grid-template-columns:repeat(2,1fr)}.channels__list li:nth-child(3){border-left:0}.channels__list li:nth-child(n+3){border-top:1px solid var(--line)}}
 @media (max-width:760px){.promos{grid-template-columns:1fr}.channels__map{padding:18px}.ch-cta{margin-left:0;width:100%;justify-content:center}}
 @media (max-width:560px){.channels__list{grid-template-columns:1fr}.channels__list li+li{border-left:0;border-top:1px solid var(--line)}}
+
+/* ---------- accessibility: text-safe orange/blue + scroll lock ---------- */
+:root{--orange-d:#c94600;--orange-t:#c43c00;--blue-t:#0067c2}
+:root[data-theme="dark"]{--orange-t:#ff8a4d;--blue-t:#5aaeff}
+html.lock{overflow:hidden}
+.btn--primary,.nav__cta,.add,.badge,.tag--hot,.ch-go,.promo__tag,.cgo,.chat__send{background:var(--orange-d)}
+.btn--primary:hover,.nav__cta:hover,.add:hover{background:#a93a00}
+.promo--sale .promo__bar{background:#c24400}
+.promo--trial .promo__bar{background:#1f8a3a}
+.ch-cta{background:linear-gradient(90deg,#d94f00,var(--orange-d))}
+.eyebrow{color:var(--orange-t)}
+.hero .eyebrow{color:#ff9a5c}
+.eyebrow--light{color:#ffb089}
+.code{color:var(--blue-t)}
+.art__tag{background:#0067c2}
+.art summary{color:var(--orange-t)}
+.art__body a{color:var(--blue-t)}
+.topbar strong{color:#ff8a4d}
+.card__img{cursor:zoom-in}
+
+/* ---------- cart / wishlist panel ---------- */
+.cpanel{position:fixed;inset:0;z-index:110}
+.cpanel[hidden]{display:none}
+.cpanel__bg{position:absolute;inset:0;background:rgba(10,20,36,.6);backdrop-filter:blur(3px)}
+.cpanel__box{position:absolute;top:0;right:0;bottom:0;width:min(420px,100vw);display:flex;flex-direction:column;background:var(--bg);box-shadow:-12px 0 40px rgba(0,0,0,.3);animation:slide .28s}
+@keyframes slide{from{transform:translateX(100%)}}
+.cpanel__box header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line)}
+.cpanel__box h3{font-size:1.2rem;color:var(--head)}
+.cpanel__x{width:38px;height:38px;border:0;border-radius:50%;background:var(--tint-s);font-size:1.5rem;line-height:1;color:var(--head)}
+.cpanel__body{flex:1;overflow-y:auto;padding:8px 20px}
+.cp-empty{padding:48px 8px;text-align:center;color:var(--grey)}
+.cprow{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.cprow img{width:64px;height:64px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:10px;flex-shrink:0}
+.cprow__t{flex:1;min-width:0;display:grid;gap:4px;align-content:start}
+.cprow__t b{font-weight:500;font-size:.9rem;line-height:1.4;color:var(--head)}
+.cprow__t small{color:var(--grey)}
+.qty{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.qty button:not(.btn):not(.rm){width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--head);font-size:1.1rem;line-height:1}
+.qty span{min-width:22px;text-align:center;font-weight:600}
+.qty .rm{margin-left:auto;border:0;background:transparent;color:var(--orange-t);font-size:.85rem;text-decoration:underline}
+.cpanel__foot{padding:16px 20px;border-top:1px solid var(--line);display:grid;gap:10px}
+.cpanel__foot:empty{display:none}
+.cp-total{display:flex;justify-content:space-between;align-items:baseline;color:var(--head)}
+.cp-total b{font-size:1.4rem;color:var(--accent)}
+.cp-link{border:0;background:transparent;color:var(--grey);text-decoration:underline;font-size:.88rem}
+
+/* ---------- mini cart popover ---------- */
+.minicart{position:fixed;right:max(12px,calc((100vw - 1240px)/2 + 20px));z-index:60;width:min(360px,calc(100vw - 24px));padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:0 18px 44px rgba(0,0,0,.28);animation:pop .2s}
+.minicart[hidden]{display:none}
+.minicart ul{display:grid;gap:10px;max-height:44vh;overflow-y:auto;margin-bottom:12px}
+.minicart li{display:flex;align-items:center;gap:10px}
+.minicart img{width:48px;height:48px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:8px;flex-shrink:0}
+.mc-n{flex:1;min-width:0;font-size:.82rem;line-height:1.35;color:var(--head);display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mc-q{display:grid;text-align:right;font-weight:600;color:var(--head);font-size:.88rem}
+.mc-q small{font-weight:500;color:var(--grey);font-size:.78rem}
+.mc-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;margin-bottom:12px;border-top:1px solid var(--line);color:var(--head)}
+.mc-total b{font-size:1.2rem;color:var(--accent)}
+.mc-empty{padding:14px 4px;text-align:center;color:var(--grey);font-size:.9rem}
+.minicart .btn{width:100%}
+
+/* ---------- brand logo (white-on-black JPG: "screen" blend drops the black) ---------- */
+.logo__badge{display:flex;align-items:center;padding:9px 16px;border-radius:12px;background:var(--navy);box-shadow:0 4px 12px rgba(4,67,148,.3)}
+.logo__badge img,.logo__img{display:block;height:22px;width:auto;mix-blend-mode:screen}
+.logo__img{height:28px}
+.logo{transition:transform .2s}
+.logo:hover{transform:scale(1.04)}
+@media (max-width:480px){.logo__badge{padding:7px 10px;border-radius:10px}.logo__badge img{height:16px}}
+@media (max-width:360px){.logo__badge{padding:6px 8px}.logo__badge img{height:13px}.pill-btn svg{display:none}.pill-btn{padding:0 9px}.icon-btn{width:31px;height:31px}}
+@media (max-width:480px){.logo__badge{padding:7px 8px}.logo__badge img{height:14px}}
+@media (max-width:360px){.icon-btn{width:30px;height:30px}.icon-btn svg{width:18px;height:18px}.header__actions{gap:0}}
+@media (max-width:340px){.logo__badge{padding:6px 7px}.logo__badge img{height:12px}.icon-btn{width:28px;height:28px}.pill-btn{height:30px;padding:0 7px;margin-right:2px}.badge{min-width:16px;height:16px;font-size:.62rem}}

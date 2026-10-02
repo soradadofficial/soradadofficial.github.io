@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Product grid: render, filter, search, sort. */
 (function (H) {
   'use strict';
@@ -37,7 +38,12 @@
     init: function () {
       grid = $('#grid');
       grid.addEventListener('click', function (e) {
-        var btn = e.target.closest('[data-act]'); if (!btn) return;
+        var btn = e.target.closest('[data-act]');
+        if (!btn) {   // tapping the photo opens quick view (touch screens have no hover button)
+          var img = e.target.closest('.card__img');
+          if (img) { var pp = H.find(+img.closest('.card').getAttribute('data-id')); if (pp) H.modal.open(pp, img); }
+          return;
+        }
         var p = H.find(+btn.closest('.card').getAttribute('data-id')); if (!p) return;
         var act = btn.getAttribute('data-act');
         if (act === 'add') H.cart.add(p);
@@ -51,6 +57,11 @@
       });
       $('#q').addEventListener('input', function (e) { S.q = e.target.value; render(); });
       $('#sort').addEventListener('change', function (e) { S.sort = e.target.value; render(); });
+      document.addEventListener('hft:change', function () {
+        $$('#grid .card').forEach(function (c) {
+          c.querySelector('.fav').setAttribute('aria-pressed', H.cart.isWished(H.find(+c.getAttribute('data-id'))));
+        });
+      });
       H.onRender(render);
     }
   };

@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Animated background: floating weights drift, spin and "heartbeat-pulse" behind the page. */
 (function (H) {
   'use strict';

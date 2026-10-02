@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Payment-confirmation + quote forms (front-end only: hook your API into the submit handler). */
 (function (H) {
   'use strict';
@@ -13,6 +14,8 @@
 
   H.ui.forms = {
     init: function () {
+      var d = $('#payment').elements.date, t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+      d.max = t.toISOString().slice(0, 10);
       $$('form.form').forEach(function (f) {
         f.addEventListener('submit', function (e) {
           e.preventDefault();

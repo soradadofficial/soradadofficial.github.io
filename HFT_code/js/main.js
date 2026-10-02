@@ -1,10 +1,11 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Entry point: initialise every module in order, then run the first render. */
 (function (H) {
   'use strict';
 
   var BOOT = [
     H.i18n,            // capture Thai source text first
-    H.cart, H.modal,
+    H.cart, H.cartPanel, H.minicart, H.modal,
     H.ui.products, H.ui.navigation, H.ui.sections, H.ui.forms, H.ui.controls, H.ui.effects,
     H.sys.search, H.sys.chat, H.sys.seo, H.sys.background
   ];

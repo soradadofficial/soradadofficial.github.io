@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Root namespace. Every module hangs off window.HFT (no build step, works from file://). */
 window.HFT = {
   data: {},        // static game-like "assets": products, menus, dictionary

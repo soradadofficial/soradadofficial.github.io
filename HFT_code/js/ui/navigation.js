@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Header: mobile drawer, mega menu (with SEO keyword strip), scroll state. */
 (function (H) {
   'use strict';
@@ -24,6 +25,7 @@
   function setActive(mg) { $$('.mg', mega).forEach(function (x) { x.classList.toggle('is-active', x === mg); }); }
   function closeNav() {
     nav.classList.remove('is-open'); burger.setAttribute('aria-expanded', 'false'); scrim.classList.remove('is-on'); setMega(false);
+    document.documentElement.classList.remove('lock');
   }
   H.closeNav = closeNav;
 
@@ -41,6 +43,7 @@
 
       burger.addEventListener('click', function () {
         var o = nav.classList.toggle('is-open'); burger.setAttribute('aria-expanded', o); scrim.classList.toggle('is-on', o);
+        document.documentElement.classList.toggle('lock', o);
       });
       scrim.addEventListener('click', closeNav);
       megaBtn.addEventListener('click', function (e) { e.stopPropagation(); setMega(!megaItem.classList.contains('is-open')); });

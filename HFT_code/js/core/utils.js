@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Small shared helpers. */
 (function (H) {
   'use strict';
@@ -11,6 +12,11 @@
   H.store = {
     get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  /* same API, but per browser tab: a new visit always starts from the defaults (Thai, light) */
+  H.session = {
+    get: function (k, d) { try { var v = sessionStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set: function (k, v) { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   };
   /* anchor attributes: in-page links stay in the tab, external ones open a new tab */
   H.link = function (u) {

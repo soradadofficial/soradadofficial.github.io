@@ -1,9 +1,10 @@
 <!doctype html>
+<!-- ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) -->
 <html lang="th" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>try{var t=localStorage.getItem('hft_theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>/* Default = light. Dark only if chosen in this visit (session), never from the OS setting. */try{var t=JSON.parse(sessionStorage.getItem('hft_theme'));document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light')}catch(e){document.documentElement.setAttribute('data-theme','light')}</script>
 <title>Benches &amp; Racks | ม้านั่งและแร็คยกน้ำหนัก – HomeFitTools</title>
 <meta name="description" content="รวมม้านั่งออกกำลังกายและแร็คยกน้ำหนักคุณภาพสูง สำหรับฟิตเนสและ Home Gym ปรับมุมได้ แข็งแรง ปลอดภัย พร้อมบทความแนะนำการเลือกซื้อและขอใบเสนอราคาออนไลน์">
 <meta name="keywords" content="ม้านั่งออกกำลังกาย, แร็คยกน้ำหนัก, Weight Bench, Olympic Bench, Home Gym, อุปกรณ์ฟิตเนส">
@@ -12,6 +13,9 @@
 <meta property="og:description" content="ม้านั่งและแร็คยกน้ำหนักคุณภาพสูง สำหรับฟิตเนสและ Home Gym">
 <meta property="og:image" content="https://www.homefittools.com/media/catalog/product/cache/c4218f1997800f206b38e4323d8d1cf4/s/u/super-bench-hft-fgx39_1.png">
 <meta name="theme-color" content="#044394">
+<link rel="icon" href="assets/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,6 +23,7 @@
 </head>
 <body>
 <canvas id="bg" aria-hidden="true"></canvas>
+<noscript><p style="padding:16px;text-align:center;background:#fff3cd;color:#664d03">กรุณาเปิดใช้งาน JavaScript เพื่อดูรายการสินค้า / Please enable JavaScript to view products.</p></noscript>
 <a class="skip" href="#products" data-i18n="skip">ข้ามไปยังรายการสินค้า</a>
 
 <div class="topbar">
@@ -31,8 +36,7 @@
 <header class="header" id="header">
   <div class="wrap header__in">
     <a class="logo" href="#top" aria-label="HomeFitTools">
-      <svg viewBox="0 0 40 40" width="36" height="36" aria-hidden="true"><rect width="40" height="40" rx="10" fill="#044394"/><path d="M8 17v6M12 14v12M28 14v12M32 17v6M12 20h16" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="31" cy="9" r="3.5" fill="#fd5003"/></svg>
-      <span>HOME<b>FIT</b>TOOLS</span>
+      <span class="logo__badge"><img src="assets/hft-logo.jpg" alt="HFT – HomeFitTools" width="145" height="30"></span>
     </a>
 
     <nav class="nav" id="nav" aria-label="Main">
@@ -60,7 +64,9 @@
         <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
       </button>
       <button class="icon-btn" id="wishBtn" data-i18n-attr="aria-label:aria.wish" aria-label="รายการโปรด"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/></svg><span class="badge" id="wishCount" data-n="0">0</span></button>
-      <button class="icon-btn" id="cartBtn" data-i18n-attr="aria-label:aria.cart" aria-label="ตะกร้าสินค้า"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2M9 20a1 1 0 1 0 0 .01M17 20a1 1 0 1 0 0 .01"/></svg><span class="badge" id="cartCount" data-n="0">0</span></button>
+      <span class="cartwrap" id="cartWrap">
+        <button class="icon-btn" id="cartBtn" data-i18n-attr="aria-label:aria.cart" aria-label="ตะกร้าสินค้า" aria-haspopup="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.4 11h10.2L20 8H6.2M9 20a1 1 0 1 0 0 .01M17 20a1 1 0 1 0 0 .01"/></svg><span class="badge" id="cartCount" data-n="0">0</span></button>
+      </span>
       <button class="icon-btn burger" id="burger" data-i18n-attr="aria-label:aria.menu" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -77,6 +83,7 @@
   </div>
 </header>
 <div class="scrim" id="scrim"></div>
+<div class="minicart" id="miniCart" role="region" aria-live="polite" hidden></div>
 
 <main id="top">
 
@@ -382,7 +389,7 @@
 <footer class="footer">
   <div class="wrap footer__grid">
     <div class="footer__brand">
-      <a class="logo logo--light" href="#top"><span>HOME<b>FIT</b>TOOLS</span></a>
+      <a class="logo logo--light" href="#top" aria-label="HomeFitTools"><img class="logo__img" src="assets/hft-logo.jpg" alt="HFT – HomeFitTools" width="145" height="30"></a>
       <p data-i18n="ft.desc">เรานำเข้าและจัดจำหน่ายอุปกรณ์ออกกำลังกาย อุปกรณ์ฟิตเนส และอุปกรณ์อื่น ๆ เช่น ลู่วิ่ง จักรยานออกกำลังกาย โฮมยิม กระสอบทราย และดัมเบลคุณภาพสูง เรายังมีบริการขายปลีกและขายส่งอีกด้วย เราคัดสรรสินค้าทุกชิ้นด้วยตนเอง เพื่อให้มั่นใจว่าสินค้าทุกชิ้นมีประสิทธิภาพอย่างแท้จริง</p>
       <p><a href="tel:0944951811">📞 094 495 1811</a><br><a href="mailto:homefittools@gmail.com">✉️ homefittools@gmail.com</a></p>
     </div>
@@ -417,6 +424,15 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="cpanel" id="cpanel" hidden>
+  <div class="cpanel__bg" data-close></div>
+  <aside class="cpanel__box" role="dialog" aria-modal="true" aria-labelledby="cpTitle">
+    <header><h3 id="cpTitle"></h3><button type="button" class="cpanel__x" data-close aria-label="Close">×</button></header>
+    <div class="cpanel__body" id="cpBody"></div>
+    <footer class="cpanel__foot" id="cpFoot"></footer>
+  </aside>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -458,6 +474,8 @@
 <script src="js/ui/cart.js"></script>
 <script src="js/ui/modal.js"></script>
 <script src="js/ui/products.js"></script>
+<script src="js/ui/cartpanel.js"></script>
+<script src="js/ui/minicart.js"></script>
 <script src="js/ui/navigation.js"></script>
 <script src="js/ui/sections.js"></script>
 <script src="js/ui/forms.js"></script>

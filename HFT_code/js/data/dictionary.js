@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Dictionary. Thai text for [data-i18n] is read from the HTML itself; only English
    (and Thai strings that are used from JS only) live here. */
 window.I18N = {
@@ -24,7 +25,10 @@ window.I18N = {
     'aria.search': 'ค้นหา', 'aria.chat': 'แชทกับน้องฟิต',
     'chat.name': 'น้องฟิต', 'chat.status': 'ออนไลน์ · ตอบทันที',
     'chat.ph': 'พิมพ์คำถามของคุณ...', 'chat.send': 'ส่ง', 'chat.hint': 'สอบถามน้องฟิตได้นะ!',
-    'kw.title': 'ค้นหายอดนิยม'
+    'kw.title': 'ค้นหายอดนิยม',
+    'mc.view': 'ดูตะกร้าทั้งหมด',
+    'cp.cart': 'ตะกร้าสินค้า', 'cp.wish': 'รายการโปรด', 'cp.empty.cart': 'ตะกร้ายังว่างอยู่ เลือกสินค้าที่สนใจได้เลย', 'cp.empty.wish': 'ยังไม่มีรายการโปรด กดรูปหัวใจที่สินค้าเพื่อบันทึก',
+    'cp.total': 'รวม', 'cp.quote': 'ขอใบเสนอราคาจากรายการนี้', 'cp.clear': 'ล้างตะกร้า', 'cp.remove': 'ลบ'
   },
   en: {
     'meta.title': 'Benches & Racks | Weight Benches & Lifting Racks – HomeFitTools',
@@ -50,6 +54,9 @@ window.I18N = {
     'chat.name': 'Fit Buddy', 'chat.status': 'Online · instant replies',
     'chat.ph': 'Type your question...', 'chat.send': 'Send', 'chat.hint': 'Ask Fit Buddy!',
     'kw.title': 'Popular searches',
+    'mc.view': 'View full cart',
+    'cp.cart': 'Your cart', 'cp.wish': 'Wishlist', 'cp.empty.cart': 'Your cart is empty. Pick something you like!', 'cp.empty.wish': 'No favourites yet. Tap the heart on a product to save it.',
+    'cp.total': 'Total', 'cp.quote': 'Request a quote for these items', 'cp.clear': 'Clear cart', 'cp.remove': 'Remove',
 
     'skip': 'Skip to products',
     'tb.promo': '🔥 <strong>50%</strong> off all fitness equipment · Free 3-day gym trial',

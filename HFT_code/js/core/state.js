@@ -1,7 +1,8 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Single source of truth for runtime state. */
 (function (H) {
   'use strict';
-  var lang = H.store.get('hft_lang', 'th');
+  var lang = H.session.get('hft_lang', 'th');
   var wish = H.store.get('hft_wish', []);
   var cart = H.store.get('hft_cart', []);
   H.state = {

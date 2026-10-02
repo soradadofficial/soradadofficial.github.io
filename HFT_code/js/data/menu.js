@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Navigation data: mega menu, footer sitemap, category grid, search keywords. */
 (function (H) {
   'use strict';

@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Product catalogue (images are hot-linked from the original shop). */
 (function (H) {
   'use strict';

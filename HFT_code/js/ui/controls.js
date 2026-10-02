@@ -1,3 +1,4 @@
+/* ใช้สำหรับสมัครงาน Homefittools เท่านั้น (For Homefittools job application only) */
 /* Header controls: language switch + day/night theme. */
 (function (H) {
   'use strict';
@@ -15,7 +16,7 @@
       $('#langBtn').addEventListener('click', H.i18n.toggle);
       $('#themeBtn').addEventListener('click', function () {
         S.theme = S.theme === 'dark' ? 'light' : 'dark';
-        H.store.set('hft_theme', S.theme); sync();
+        H.session.set('hft_theme', S.theme); sync();
         if (H.sys.background) H.sys.background.redraw();
       });
       H.onRender(sync);
