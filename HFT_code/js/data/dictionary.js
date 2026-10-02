@@ -149,6 +149,11 @@ window.I18N = {
     'ft.cs': 'Customer Service', 'ft.c1': 'How to Order', 'ft.c2': 'Payment', 'ft.c3': 'Shipping', 'ft.c4': 'Confirm Payment', 'ft.c5': 'Reviews / Articles',
     'ft.follow': 'Follow Us', 'ft.hours': 'Opening Hours', 'ft.hv': 'Open 9:00 – 21:00',
     'ft.copy': '© 2026 Homefittools.com All Rights Reserved. · Front-end test page (HTML/CSS/JS)',
+    'm.trial': 'Try the real product at our store', 'm.trial.pill': '50% off – click',
+    'pk1.t': 'Official warranty', 'pk1.d': 'Covered by the authorised Thai service centre',
+    'pk2.t': 'Fast delivery', 'pk2.d': 'Received within 24 hours',
+    'pk3.t': 'Installments on every item', 'pk3.d': '0% on orders of 3,000 THB or more',
+    'pk4.t': 'Chat with us', 'pk4.d': 'Free product advice',
     'm.add': 'Add to cart', 'm.link': 'View original page',
     'ck.text': 'This website uses cookies to improve your experience and protect personal data.', 'ck.ok': 'Accept'
   }

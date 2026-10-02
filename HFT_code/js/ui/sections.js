@@ -6,7 +6,7 @@
 
   function renderSitemap() {
     $('#sitemap').innerHTML = D.FOOT.map(function (g) {
-      return '<div><h5>' + esc(H.pick(g)) + '</h5><ul>' + g.kids.map(function (k) {
+      return '<div><h4>' + esc(H.pick(g)) + '</h4><ul>' + g.kids.map(function (k) {
         return '<li><a' + link(k[2]) + '>' + esc(H.pick({ th: k[0], en: k[1] })) + '</a></li>';
       }).join('') + '</ul></div>';
     }).join('');

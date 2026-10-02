@@ -9,6 +9,7 @@
     $('#themeBtn').setAttribute('aria-label', H.t(S.theme === 'dark' ? 'theme.light' : 'theme.dark'));
     var m = $('meta[name="theme-color"]'); if (m) m.setAttribute('content', S.theme === 'dark' ? '#0b1422' : '#044394');
     $('#langLbl').textContent = H.t('lang.btn');
+    $('#langBtn').setAttribute('aria-label', H.t('lang.btn') + ' – ' + H.t('aria.lang'));
   }
 
   H.ui.controls = {

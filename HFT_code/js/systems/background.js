@@ -21,7 +21,7 @@
   }
 
   function spawn() {
-    var n = Math.max(8, Math.min(20, Math.round(W / 105)));
+    var n = Math.max(5, Math.min(16, Math.round(W / 120)));
     shapes = [];
     for (var i = 0; i < n; i++) {
       shapes.push({ type: i % 3, x: Math.random() * W, y: Math.random() * (H_ + 160), s: 20 + Math.random() * 30,
@@ -49,8 +49,10 @@
   }
 
   function loop(ts) {
-    var dt = Math.min(.05, (ts - last) / 1000 || 0); last = ts; T += dt;
-    frame(dt); raf = requestAnimationFrame(loop);
+    raf = requestAnimationFrame(loop);
+    if (ts - last < 32) return;                      // cap at ~30fps: smooth enough, half the CPU
+    var dt = Math.min(.08, (ts - last) / 1000 || 0); last = ts; T += dt;
+    frame(dt);
   }
 
   function resize() {
@@ -67,7 +69,9 @@
       reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
       window.addEventListener('resize', resize);
       resize();
-      if (!reduce) raf = requestAnimationFrame(loop);
+      /* start animating only after the page has painted and the browser is idle (keeps load metrics clean) */
+      var go = function () { if (!reduce && !raf) raf = requestAnimationFrame(loop); };
+      window.addEventListener('load', function () { (window.requestIdleCallback || function (f) { setTimeout(f, 600); })(go, { timeout: 2500 }); });
     },
     redraw: function () { if (ctx && !raf) frame(0); }   // static repaint (reduced motion / theme change)
   };

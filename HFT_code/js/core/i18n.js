@@ -29,8 +29,9 @@
 
   H.i18n = {
     init: capture,
-    apply: function () {
+    apply: function (initial) {
       document.documentElement.lang = S.lang;
+      if (!(initial === true && S.lang === 'th')) {      // Thai is the markup itself, nothing to rewrite on first load
       $$('[data-i18n]').forEach(function (el) { el.innerHTML = H.t(el.getAttribute('data-i18n')); });
       $$('[data-i18n-attr]').forEach(function (el) {
         el.getAttribute('data-i18n-attr').split(';').forEach(function (pair) {
@@ -39,7 +40,11 @@
       });
       document.title = H.t('meta.title');
       var md = $('meta[name="description"]'); if (md) md.setAttribute('content', H.t('meta.desc'));
-      H.renderers.forEach(function (fn) { fn(); });
+      }
+      if (initial === true) {            // first load: one renderer per task, keeps the main thread responsive
+        var i = 0;
+        (function next() { var fn = H.renderers[i++]; if (fn) { fn(); setTimeout(next, 0); } })();
+      } else H.renderers.forEach(function (fn) { fn(); });
     },
     toggle: function () {
       S.lang = S.lang === 'th' ? 'en' : 'th';

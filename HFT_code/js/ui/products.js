@@ -2,13 +2,27 @@
 /* Product grid: render, filter, search, sort. */
 (function (H) {
   'use strict';
-  var $ = H.$, $$ = H.$$, esc = H.esc, S = H.state, grid;
+  var $ = H.$, $$ = H.$$, esc = H.esc, S = H.state, grid, io;
+  var BLANK = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+
+  /* load a product photo only when it is about to scroll into view (saves bandwidth on first load) */
+  function observeImages() {
+    var imgs = $$('#grid img[data-src]');
+    if (!('IntersectionObserver' in window)) { imgs.forEach(function (i) { i.src = i.getAttribute('data-src'); }); return; }
+    if (!io) io = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var i = en.target; i.src = i.getAttribute('data-src'); i.removeAttribute('data-src'); io.unobserve(i);
+      });
+    }, { rootMargin: '250px 0px' });
+    imgs.forEach(function (i) { io.observe(i); });
+  }
 
   function cardHTML(p, i) {
     var name = H.pick({ th: p.th, en: p.en });
     return '<li class="card" style="animation-delay:' + (i * 50) + 'ms" data-id="' + p.id + '">' +
       '<div class="card__img">' +
-        '<img src="' + p.img + '" alt="' + esc(name) + '" loading="lazy" width="260" height="260">' +
+        '<img src="' + BLANK + '" data-src="' + p.img + '" alt="' + esc(name) + '" width="260" height="260" decoding="async">' +
         '<span class="tag' + (p.hot ? ' tag--hot' : '') + '">' + esc(p.hot ? H.t('tag.hot') : H.t(p.type === 'bench' ? 'tag.bench' : 'tag.machine')) + '</span>' +
         '<button class="fav" data-act="fav" aria-pressed="' + H.cart.isWished(p) + '" aria-label="' + esc(H.t('aria.fav')) + '"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.4-9.5 9-9.5 9z"/></svg></button>' +
         '<button class="quick" data-act="view">' + esc(H.t('quick')) + '</button>' +
@@ -32,6 +46,7 @@
     grid.innerHTML = list.map(cardHTML).join('');
     $('#resultCount').textContent = list.length;
     $('#empty').hidden = list.length > 0;
+    observeImages();
   }
 
   H.ui.products = {
