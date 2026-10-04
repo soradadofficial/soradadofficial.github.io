@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surajak Chansamrit — Full-Stack Web Developer &amp; Technical SEO Specialist</title>
+<meta name="description" content="Interactive 3D DOOM-style resume of Surajak Chansamrit: Full-Stack Web Developer and Technical SEO Specialist with 8+ years of experience in SEO, data analytics, automation and Next.js/Node.js/Python development.">
+<meta name="author" content="Surajak Chansamrit">
+<meta name="theme-color" content="#0d0614">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Surajak Chansamrit — Full-Stack Developer &amp; Technical SEO">
+<meta property="og:description" content="A cute DOOM-style 3D resume. Fight bugs, read terminals, beat the boss.">
+<meta property="og:image" content="og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
+<link rel="stylesheet" href="css/style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Surajak Chansamrit",
+  "jobTitle": "Full-Stack Web Developer & Technical SEO Specialist",
+  "email": "mailto:azhime.blog@gmail.com",
+  "url": "https://soradad.com",
+  "sameAs": ["https://soradad.com"],
+  "address": {"@type": "PostalAddress", "addressLocality": "Bang Kadi, Pathum Thani", "addressCountry": "TH"},
+  "alumniOf": [{"@type": "CollegeOrUniversity", "name": "Suan Dusit University"}],
+  "worksFor": {"@type": "Organization", "name": "SORADAD", "url": "https://soradad.com"},
+  "knowsAbout": ["Technical SEO", "Web Analytics", "Next.js", "Node.js", "Python", "REST API", "Looker Studio", "Google Ads", "Automation"],
+  "knowsLanguage": ["th", "en"]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#about">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="Surajak Chansamrit — home"><span class="brand-ico" aria-hidden="true">♥</span><span class="doomfont">SC.EXE</span></a>
+    <nav class="links" id="links" aria-label="Sections"><a href="#about" data-i18n="k1">About</a><a href="#experience" data-i18n="k2">Experience</a><a href="#skills" data-i18n="k3">Skills</a><a href="#projects" data-i18n="k4">Projects</a><a href="#achievements" data-i18n="k5">Awards</a><a href="#contact" data-i18n="k6">Contact</a></nav>
+    <div class="tools">
+      <button class="tool" id="langBtn" type="button" aria-label="Switch language"><span class="on">EN</span>/<span>TH</span></button>
+      <button class="tool menu" id="menuBtn" type="button" aria-label="Menu" aria-expanded="false"><span aria-hidden="true">☰</span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="home">
+  <div class="wrap">
+    <p class="kicker pixel"><span class="dot"></span> <span data-i18n="k44">E1M0 · NOW LOADING</span></p>
+    <h1 class="doomfont">Surajak <span class="hl">Chansamrit</span></h1>
+    <p class="role" data-i18n="k45">Full-Stack Web Developer &amp; Technical SEO Specialist</p>
+    <p class="lead" data-i18n="k46">My career as a cute first-person dungeon. Squash the bugs, read the terminals, beat the boss. The plain-text resume waits right below.</p>
+    <div class="cta">
+      <button class="btn" id="playBtn" type="button"><span data-i18n="k47">▶ Play the resume</span></button>
+      <a class="btn ghost" href="#about"><span data-i18n="k48">View resume ↓</span></a>
+      <a class="btn ghost" href="assets/Surajak-Chansamrit-Resume-EN.pdf" data-cv="assets/Surajak-Chansamrit-Resume-%s.pdf" download><span data-i18n="k49">Download CV (PDF)</span></a>
+    </div>
+
+    <div class="arcade" id="arcade">
+      <div class="cabinet" id="cabinet">
+        <div class="screen" id="screen" tabindex="0" role="application" aria-label="Interactive 3D game. WASD or arrow keys to move, mouse to look, space to shoot. A full text resume follows below the game.">
+          <canvas id="view" width="320" height="180" aria-hidden="true"></canvas>
+          <div class="hurt-fx" id="hurtFx" aria-hidden="true"></div>
+          <div class="banner" id="banner" aria-live="polite"></div>
+          <div class="boss-bar" id="bossBar" hidden><span>THE CORE UPDATE</span><i><b id="bossFill"></b></i></div>
+          <aside class="term-card" id="termCard" hidden aria-live="polite"></aside>
+          <div class="overlay" id="overlay"></div>
+          <div class="touch" id="touch" aria-hidden="true">
+            <div class="joy" id="joy"><i id="joyKnob"></i></div>
+            <button type="button" class="fire" id="fireBtn">FIRE</button>
+          </div>
+        </div>
+        <div class="hud-bar" id="hudBar">
+          <div class="hud-cell"><span class="lbl" id="lblHp">HEALTH</span><b class="num hp" id="hpNum">100%</b></div>
+          <div class="hud-face"><canvas id="faceCv" width="32" height="32" aria-hidden="true"></canvas></div>
+          <div class="hud-cell"><span class="lbl" id="lblSk">SKILLS</span><b class="num" id="skillNum">0/14</b></div>
+          <div class="hud-cell"><span class="lbl" id="lblKl">BUGS</span><b class="num" id="killNum">0/0</b></div>
+          <div class="hud-cell wide"><span class="lbl" id="lblLv">AREA</span><b class="num sm" id="lvlName">LOBBY</b></div>
+          <div class="hud-cell"><span class="lbl" id="lblMd">MODE</span><b class="num sm" id="modeName">♥ CUTE</b></div>
+          <button class="hud-btn" id="btnSound" type="button" aria-pressed="false">SOUND OFF</button>
+        </div>
+      </div>
+      <p class="hint" id="hintLine">WASD / arrows move · mouse or ← → turn · Space / click fire · Esc pause</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="about">
+  <div class="wrap">
+    <div class="sec-head reveal"><span class="idx" data-i18n="k50">E1</span><h2 data-i18n="k51">About me</h2></div>
+    <div class="about">
+      <div class="about-text reveal">
+        <p data-i18n="k52">Results-driven professional with over 8 years of combined expertise in <strong>Technical SEO</strong>, <strong>Digital Marketing</strong>, <strong>Data Analytics</strong> and <strong>Full-Stack Web Development</strong>. I bridge marketing strategy with modern engineering (Python, Node.js, Next.js, REST APIs and cloud databases).</p>
+        <p data-i18n="k53">I'm adept at competitor benchmarking, scaling organic traffic, and building end-to-end automation systems and interactive web dashboards that drive measurable business impact.</p>
+      </div>
+      <div class="stats"><div class="stat px reveal"><div class="stat-n pixel"><span data-count="8">8</span>+</div><p data-i18n="k7">Years of experience</p></div>
+<div class="stat px reveal"><div class="stat-n pixel"><span data-count="150">150</span>+</div><p data-i18n="k8">Keywords ranked on Google Page 1</p></div>
+<div class="stat px reveal"><div class="stat-n pixel"><span data-count="95">95</span>+</div><p data-i18n="k9">Core Web Vitals score</p></div>
+<div class="stat px reveal"><div class="stat-n pixel"><span data-count="65">65</span>%</div><p data-i18n="k10">Less dashboard refresh lag</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt" id="experience">
+  <div class="wrap">
+    <div class="sec-head reveal"><span class="idx" data-i18n="k54">E2</span><h2 data-i18n="k55">Experience</h2><p class="sub-note" data-i18n="k56">Mission log · newest first</p></div>
+    <div class="timeline">
+<article class="quest px reveal" id="exp-soradad" style="--c:#ff5fa2">
+  <span class="node" aria-hidden="true"></span>
+  <header>
+    <div class="q-head">
+      <span class="lv pixel">LV 05</span>
+      <span class="date" data-i18n="k15">Jan 2024 – Present</span>
+    </div>
+    <h3 data-i18n="k16">Founder / Full-Stack Developer & Digital Strategist</h3>
+    <p class="org">SORADAD (soradad.com)</p>
+  </header>
+  <ul><li data-i18n="k11"><strong>Dashboards & systems:</strong> architected responsive web apps and real-time dashboards (Next.js, Node.js/Python, REST APIs) on Vercel and Cloudflare; an automated API pipeline with asynchronous polling cut data-refresh lag by <b>65%</b>.</li>
+<li data-i18n="k12"><strong>Technical SEO:</strong> SEO-first architecture with schema markup lifted Core Web Vitals to <b>95+</b> and doubled organic search impressions within 6 months.</li>
+<li data-i18n="k13"><strong>Automation:</strong> Python scripts for order tracking and reporting save over <b>15 hours</b> of manual work every week.</li>
+<li data-i18n="k14"><strong>E-commerce & affiliate:</strong> ran multi-platform campaigns (Shopee, TikTok Shop), using analytics to optimize conversion funnels and CTR.</li></ul>
+  <div class="tags"><span class="tag">Next.js</span><span class="tag">Node.js</span><span class="tag">Python</span><span class="tag">REST API</span><span class="tag">Vercel</span><span class="tag">Cloudflare</span><span class="tag">Schema markup</span></div>
+</article>
+
+<article class="quest px reveal" id="exp-homepro" style="--c:#ff8a3d">
+  <span class="node" aria-hidden="true"></span>
+  <header>
+    <div class="q-head">
+      <span class="lv pixel">LV 04</span>
+      <span class="date" data-i18n="k22">Aug 2018 – Dec 2023</span>
+    </div>
+    <h3 data-i18n="k23">Business Analyst & SEO Specialist</h3>
+    <p class="org">HomePro Head Office</p>
+  </header>
+  <ul><li data-i18n="k17"><strong>Organic recovery:</strong> restored visibility after a major Google core update by disavowing <b>1,000+</b> toxic backlinks and restructuring on-page content, driving a <b>35%</b> rebound in non-brand organic traffic.</li>
+<li data-i18n="k18"><strong>Top rankings:</strong> built an internal keyword tracking and optimization tool that helped rank <b>150+</b> high-competition commercial keywords on Google Page 1.</li>
+<li data-i18n="k19"><strong>Reporting automation:</strong> automated Looker Studio dashboards (Semrush + Google Analytics) for executives, eliminating <b>20+ hours</b> of manual work each month.</li>
+<li data-i18n="k20"><strong>Strategy:</strong> directed keyword taxonomy across product categories, tracked ranking dynamics and benchmarked competitors.</li>
+<li data-i18n="k21"><strong>Content & on-page:</strong> wrote SEO content guidelines and handled on-page HTML/CSS for internal platforms; audited backlink profiles after algorithm updates.</li></ul>
+  <div class="tags"><span class="tag">Semrush</span><span class="tag">Google Analytics</span><span class="tag">Looker Studio</span><span class="tag">Keyword strategy</span><span class="tag">Backlink audit</span></div>
+</article>
+
+<article class="quest px reveal" id="exp-unicronet" style="--c:#a86bff">
+  <span class="node" aria-hidden="true"></span>
+  <header>
+    <div class="q-head">
+      <span class="lv pixel">LV 03</span>
+      <span class="date" data-i18n="k27">Mar 2017 – Jul 2018</span>
+    </div>
+    <h3 data-i18n="k28">Media Planner & Digital Marketing</h3>
+    <p class="org">Unicronet, Don Mueang</p>
+  </header>
+  <ul><li data-i18n="k24"><strong>Paid ads:</strong> managed SEM budgets across Google Ads and Meta Ads; restructured underperforming Search campaigns and negative keyword lists, cutting CPC by <b>22%</b> and lifting conversion rate by <b>18%</b>.</li>
+<li data-i18n="k25"><strong>Local SEO:</strong> designed a citation and link-building roadmap that put multiple client locations into the Google 3-Pack.</li>
+<li data-i18n="k26"><strong>Analytics:</strong> monitored campaign KPIs and reported on CPA/CPC to refine acquisition cost.</li></ul>
+  <div class="tags"><span class="tag">Google Ads</span><span class="tag">Meta Ads</span><span class="tag">Local SEO</span></div>
+</article>
+
+<article class="quest px reveal" id="exp-sqi" style="--c:#22c1a5">
+  <span class="node" aria-hidden="true"></span>
+  <header>
+    <div class="q-head">
+      <span class="lv pixel">LV 02</span>
+      <span class="date" data-i18n="k32">Jan 2017 – Dec 2017</span>
+    </div>
+    <h3 data-i18n="k33">Assistant E-Commerce Manager</h3>
+    <p class="org">SQI Group</p>
+  </header>
+  <ul><li data-i18n="k29"><strong>Multi-site overhaul:</strong> consolidated 4+ brand sites (Kid Art, Kid Art School, Maestro Music School, Mellow Shopping) into optimized WordPress installs, cutting page load time by <b>40%</b> and lifting mobile conversion.</li>
+<li data-i18n="k30"><strong>Funnel tracking:</strong> set up Google Analytics event tracking across the checkout funnel, finding drop-off points and improving conversion flow by <b>15%</b>.</li>
+<li data-i18n="k31">Built Looker Studio (Google Data Studio) dashboards from GA data and planned content around search intent.</li></ul>
+  <div class="tags"><span class="tag">WordPress</span><span class="tag">Google Analytics</span><span class="tag">Looker Studio</span></div>
+</article>
+
+<article class="quest px reveal" id="exp-homexpert" style="--c:#5b8cff">
+  <span class="node" aria-hidden="true"></span>
+  <header>
+    <div class="q-head">
+      <span class="lv pixel">LV 01</span>
+      <span class="date" data-i18n="k37">Jan 2016 – Dec 2016</span>
+    </div>
+    <h3 data-i18n="k38">Digital Marketing</h3>
+    <p class="org">HomeXpert Asia</p>
+  </header>
+  <ul><li data-i18n="k34">Maintained corporate web assets, produced marketing collateral and edited video content for digital channels.</li>
+<li data-i18n="k35">Analyzed Google Analytics data to plan On-Page and Off-Page SEO initiatives.</li>
+<li data-i18n="k36"><strong>Digital engagement:</strong> revamped product video and landing-page assets, raising average session duration by <b>28%</b>.</li></ul>
+  <div class="tags"><span class="tag">Google Analytics</span><span class="tag">On-Page SEO</span><span class="tag">Video editing</span></div>
+</article></div>
+  </div>
+</section>
+
+<section class="sec" id="skills">
+  <div class="wrap">
+    <div class="sec-head reveal"><span class="idx" data-i18n="k57">E3</span><h2 data-i18n="k58">Arsenal (skills)</h2></div>
+    <div class="skill-grid"><div class="skill px reveal" style="--c:#4de1ff"><h3 data-i18n="k39">SEO & Web Analytics</h3><ul class="pills"><li class="pill">Technical SEO</li><li class="pill">Keyword Research</li><li class="pill">Competitor Analysis</li><li class="pill">Link Building</li><li class="pill">Core Web Vitals</li><li class="pill">Semrush</li><li class="pill">Google Search Console</li><li class="pill">Google Analytics (GA4)</li><li class="pill">Looker Studio</li></ul></div>
+<div class="skill px reveal" style="--c:#7cffb2"><h3 data-i18n="k40">Programming & Web Dev</h3><ul class="pills"><li class="pill">HTML5</li><li class="pill">CSS3</li><li class="pill">JavaScript</li><li class="pill">Python</li><li class="pill">Node.js</li><li class="pill">Express</li><li class="pill">Django</li><li class="pill">Next.js</li><li class="pill">React</li><li class="pill">REST API</li></ul></div>
+<div class="skill px reveal" style="--c:#ffcc4d"><h3 data-i18n="k41">Databases & Infrastructure</h3><ul class="pills"><li class="pill">PostgreSQL</li><li class="pill">Supabase</li><li class="pill">Firebase</li><li class="pill">Linux / Ubuntu</li><li class="pill">Cloud VPS (HostingLotus, DigitalOcean)</li><li class="pill">Vercel</li><li class="pill">Cloudflare</li></ul></div>
+<div class="skill px reveal" style="--c:#ff6b9d"><h3 data-i18n="k42">Paid Advertising</h3><ul class="pills"><li class="pill">Google Ads (Search, Display, Video)</li><li class="pill">Meta Ads Manager</li></ul></div>
+<div class="skill px reveal" style="--c:#a86bff"><h3 data-i18n="k43">Creative Tools</h3><ul class="pills"><li class="pill">Adobe Photoshop</li><li class="pill">Illustrator</li><li class="pill">Blender (3D)</li><li class="pill">CapCut</li></ul></div></div>
+  </div>
+</section>
+
+<section class="sec alt" id="projects">
+  <div class="wrap">
+    <div class="sec-head reveal"><span class="idx" data-i18n="k59">E4</span><h2 data-i18n="k60">Projects</h2></div>
+    <div class="proj-grid">
+      <article class="proj px reveal">
+        <span class="pixel badge">FEATURED</span>
+        <h3 data-i18n="k61">SORADAD Dashboard</h3>
+        <p data-i18n="k62">Real-time operations and analytics dashboard with API integrations, a Next.js frontend and serverless deployment.</p>
+        <div class="tags"><span class="tag">Next.js</span><span class="tag">REST API</span><span class="tag">Vercel</span><span class="tag">Cloudflare</span></div>
+        <a class="btn small" href="https://soradad.com" target="_blank" rel="noopener">soradad.com ↗</a>
+      </article>
+      <article class="proj px reveal">
+        <span class="pixel badge alt">NETWORK</span>
+        <h3 data-i18n="k63">Content &amp; Web Network</h3>
+        <p data-i18n="k64">Niche web projects built and managed for organic search acquisition and monetization.</p>
+        <div class="tags"><span class="tag">Technical SEO</span><span class="tag">Schema markup</span><span class="tag">Affiliate</span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="achievements">
+  <div class="wrap">
+    <div class="sec-head reveal"><span class="idx" data-i18n="k65">E5</span><h2 data-i18n="k66">Medals &amp; education</h2></div>
+    <div class="ach-grid">
+      <div class="ach px reveal">
+        <h3 data-i18n="k67">Certifications &amp; awards</h3>
+        <ul class="ach-list">
+          <li><b>Google Ads Web Certified</b> <span class="yr">2018</span></li>
+          <li><b>Google Ads Mobile Certified</b> <span class="yr">2018</span></li>
+          <li><b>Video Advertising Certified</b> <span class="yr">2018</span></li>
+          <li data-i18n="k68"><b>Bronze Medal</b>, Vocational Website Design Competition (HTML) <span class="yr">2012</span></li>
+        </ul>
+      </div>
+      <div class="ach px reveal">
+        <h3 data-i18n="k69">Education</h3>
+        <ul class="ach-list">
+          <li data-i18n="k70"><b>B.Sc. Information Technology</b><br>Suan Dusit University, Bangkok <span class="yr">2009 – 2012</span></li>
+          <li data-i18n="k71"><b>Vocational Certificate in Business Computer</b><br>SBAC Nonthaburi <span class="yr">2007 – 2009</span></li>
+        </ul>
+      </div>
+      <div class="ach px reveal">
+        <h3 data-i18n="k72">Languages</h3>
+        <ul class="ach-list">
+          <li data-i18n="k73"><b>Thai</b> — Native</li>
+          <li data-i18n="k74"><b>English</b> — Professional working proficiency</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt clear" id="contact">
+  <div class="wrap">
+    <div class="clear-box px reveal">
+      <p class="pixel gc">LEVEL COMPLETE ★</p>
+      <h2 data-i18n="k75">Ready for the next level?</h2>
+      <p data-i18n="k76">Let's build something that ranks, scales and actually works. I'm happy to talk about roles, freelance projects or collaborations.</p>
+      <div class="cta center">
+        <a class="btn" href="mailto:azhime.blog@gmail.com"><span data-i18n="k77">✉ Email me</span></a>
+        <a class="btn ghost" href="tel:0959590007"><span data-i18n="k78">☎ Call 09-959-0007</span></a>
+        <a class="btn ghost" href="https://soradad.com" target="_blank" rel="noopener">soradad.com ↗</a>
+      </div>
+      <p class="mail">azhime.blog@gmail.com · Bang Kadi, Pathum Thani</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p>© <span id="yr">2026</span> Surajak Chansamrit · <span data-i18n="k79">Built with vanilla JS, a raycaster and a lot of hearts</span></p>
+    <p class="egg pixel" aria-hidden="true">cheat code: i d d q d</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/i18n-th.js"></script>
+<script src="js/stages.js"></script>
+<script src="js/app.js"></script>
+<script src="js/art.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
