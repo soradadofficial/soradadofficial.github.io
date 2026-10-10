@@ -3804,9 +3804,8 @@ function showResult(rows, winnerIdx){
 const ICE_SERVERS = [
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'stun:global.stun.twilio.com:3478'},
-  // Relay for players behind NAT that can't connect directly (mobile data, school/office Wi-Fi). Shared public Open Relay
-  // account: free but best-effort, swap for your own metered.ca TURN credentials if it gets busy.
-  {urls:['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turns:openrelay.metered.ca:443?transport=tcp'], username:'openrelayproject', credential:'openrelayproject'},
+  // No shared public TURN here: the old Open Relay credentials are dead, and a broken relay entry only slows the
+  // direct link down. Add your own in config.js (network.rmsKey / turnApi / iceServers).
 ];
 // config.js → network.iceServers (your own list) or network.turnApi (a Metered credentials URL) for a TURN relay you control
 let TURN_OWN = false;
@@ -3820,6 +3819,26 @@ let TURN_OWN = false;
       console.info('[config.js] TURN relay ready (' + list.length + ' servers)');
       if (!$('online').hidden) renderLobby();
     }).catch(e => console.warn('[config.js] network.turnApi failed', e));
+  }
+  // A Metered Realtime Messaging publishable key (pk_live_…) also works: its welcome message carries TURN credentials
+  // when the app has a TURN service and "Auto-inject TURN" is on for the key.
+  const pk = [N.rmsKey, N.turnApi].find(k => typeof k === 'string' && /^pk_live_[A-Za-z0-9]+$/.test(k.trim()));
+  if (pk && typeof WebSocket === 'function'){
+    let ws; try { ws = new WebSocket('wss://rms.metered.ca/v1?key=' + encodeURIComponent(pk.trim())); } catch(e){ console.warn('[config.js] rms failed', e); return; }
+    const done = () => { clearTimeout(to); try { ws.close(); } catch(e){} };
+    const to = setTimeout(() => { console.warn('[config.js] rms: no welcome within 8 s'); done(); }, 8000);
+    ws.onmessage = ev => {
+      let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+      if (!m || m.type !== 'welcome') return;
+      const list = m.metadata && m.metadata.iceServers;
+      if (Array.isArray(list) && list.length){
+        ICE_SERVERS.splice(0, ICE_SERVERS.length, {urls:'stun:stun.l.google.com:19302'}, ...list); TURN_OWN = true;
+        console.info('[config.js] TURN relay ready via Metered key (' + list.length + ' servers)');
+        if (!$('online').hidden) renderLobby();
+      } else console.warn('[config.js] rms welcome had no iceServers: turn on a TURN service in Metered and "Auto-inject TURN" on this key');
+      done();
+    };
+    ws.onerror = () => { console.warn('[config.js] rms connection failed'); done(); };
   }
 })();
 const ID_PREFIX = 'skybrawl-v1-';
@@ -4271,6 +4290,101 @@ function renderAccount(msg){
   $('acctOut').hidden = !g;
 }
 
+/* ---------- Supabase relay: when two devices can't open a direct link, game messages go through Supabase Realtime ----------
+   One channel per relayed guest (host + that guest only). Free Supabase allows ~100 realtime events a second for the whole
+   project, and a relayed player costs ~35, so relay seats per room are capped (config.js network.relayMax). */
+const NETCFG = (window.SKY_CONFIG && window.SKY_CONFIG.network) || {};
+const RELAY_MODE = ['auto', 'always', 'off'].includes(NETCFG.supaRelay) ? NETCFG.supaRelay : 'auto';
+const RELAY_MAX = Math.max(0, Math.min(20, Number.isFinite(+NETCFG.relayMax) && NETCFG.relayMax !== '' ? Math.round(+NETCFG.relayMax) : 3));
+const RELAY_SNAP_MS = 95, RELAY_IN_MS = 110, RELAY_PING_MS = 3000, RELAY_DEAD_MS = 12000;
+class RelayConn {
+  constructor(peer, out, onClose){ Object.assign(this, {peer, out, onClose, open:false, closed:false, relay:true, h:{}, last:Date.now()}); }
+  on(ev, fn){ (this.h[ev] = this.h[ev] || []).push(fn); return this; }
+  emit(ev, a){ for (const fn of this.h[ev] || []) try { fn(a); } catch (e) { console.error(e); } }
+  ready(){ if (this.open || this.closed) return; this.open = true; this.last = Date.now(); this.emit('open'); }
+  got(m){ this.last = Date.now(); if (this.open && m) this.emit('data', m); }
+  send(m){ if (this.open) this.out(m); }
+  close(){ if (this.closed) return; this.closed = true; this.open = false; try { this.onClose(); } catch (e) {} this.emit('close'); }
+}
+const Relay = {
+  hostCh:null, hostCode:'', guests:new Map(), mine:null, pingT:0,
+  ok(){ return RELAY_MODE !== 'off' && RELAY_MAX > 0 && !!Supa.getClient(); },
+  sub(topic, ev, status){
+    const ch = Supa.client.channel(topic, {config:{broadcast:{self:false}}});
+    for (const k of Object.keys(ev)) ch.on('broadcast', {event:k}, msg => ev[k]((msg && msg.payload) || {}));
+    ch.subscribe(st => status && status(st));
+    return ch;
+  },
+  say(ch, event, payload = {}){ if (ch) try { const r = ch.send({type:'broadcast', event, payload}); if (r && r.catch) r.catch(() => {}); } catch (e) {} },
+  drop(ch){ if (ch) setTimeout(() => { try { Supa.client.removeChannel(ch); } catch (e) {} }, 300); },
+  // Pings keep idle rooms alive and expose guests/hosts that vanished without saying goodbye
+  tick(){
+    const now = Date.now(), all = [...this.guests.values()].map(r => r.conn).concat(this.mine ? [this.mine] : []);
+    for (const c of all){
+      if (c.closed) continue;
+      if (c.open && now - c.last > RELAY_DEAD_MS){ c.close(); continue; }
+      if (c.open) c.ping();
+    }
+    if (!this.hostCh && !this.mine){ clearInterval(this.pingT); this.pingT = 0; }
+  },
+  pinging(){ if (!this.pingT) this.pingT = setInterval(() => this.tick(), RELAY_PING_MS); },
+
+  hostStart(code){
+    this.hostStop();
+    if (!this.ok()) return;
+    this.hostCode = code;
+    this.hostCh = this.sub('sbr-' + code, {hello: p => this.onHello(p)});
+    this.pinging();
+  },
+  hostStop(){
+    for (const r of [...this.guests.values()]) r.conn.close();
+    this.guests.clear();
+    const ch = this.hostCh; this.hostCh = null; this.drop(ch);
+  },
+  onHello(p){
+    const id = p.id;
+    if (Net.role !== 'host' || !this.hostCh || typeof id !== 'string' || !/^[A-Za-z0-9_-]{4,64}$/.test(id)) return;
+    const cur = this.guests.get(id);
+    if (cur){ if (cur.subbed) this.say(cur.ch, 'ack'); return; }
+    if (this.guests.size >= RELAY_MAX){ this.say(this.hostCh, 'full', {id}); return; }
+    const rec = {subbed:false};
+    rec.conn = new RelayConn(id, m => this.say(rec.ch, 'h', {m}), () => {
+      if (this.guests.get(id) === rec) this.guests.delete(id);
+      this.say(rec.ch, 'x'); this.drop(rec.ch);
+    });
+    rec.conn.ping = () => this.say(rec.ch, 'k');
+    rec.ch = this.sub(`sbr-${this.hostCode}-${id}`, {g: q => rec.conn.got(q.m), k: () => rec.conn.got(null), x: () => rec.conn.close()}, st => {
+      if (st === 'SUBSCRIBED'){ rec.subbed = true; this.say(rec.ch, 'ack'); rec.conn.ready(); }
+      else if ((st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') && !rec.conn.open) rec.conn.close();
+    });
+    this.guests.set(id, rec);
+    Net.onGuestConn(rec.conn);
+  },
+
+  // Guest: listen on our own channel, knock on the room channel until the host answers
+  guestOpen(code, me){
+    this.guestStop();
+    let mineOk = false, roomOk = false, knockT = 0, room = null, ch = null;
+    const conn = new RelayConn(code, m => this.say(ch, 'g', {m}), () => {
+      clearInterval(knockT);
+      if (this.mine === conn) this.mine = null;
+      this.say(ch, 'x'); this.drop(ch); this.drop(room); room = null;
+    });
+    conn.ping = () => this.say(ch, 'k');
+    const knock = () => { if (!conn.open && !conn.closed && mineOk && roomOk) this.say(room, 'hello', {id:me}); };
+    ch = this.sub(`sbr-${code}-${me}`, {h: q => conn.got(q.m), k: () => conn.got(null), x: () => conn.close(),
+      ack: () => { conn.ready(); clearInterval(knockT); const r = room; room = null; this.drop(r); }}, st => {
+      if (st === 'SUBSCRIBED'){ mineOk = true; knock(); }
+      else if ((st === 'CHANNEL_ERROR' || st === 'TIMED_OUT') && !conn.open) conn.emit('error');
+    });
+    room = this.sub('sbr-' + code, {full: p => { if (p.id === me && !conn.open) conn.emit('full'); }}, st => { if (st === 'SUBSCRIBED'){ roomOk = true; knock(); } });
+    knockT = setInterval(knock, 2000);
+    this.mine = conn; this.pinging();
+    return conn;
+  },
+  guestStop(){ if (this.mine) this.mine.close(); this.mine = null; },
+};
+
 const Net = {
   ready:false, peer:null, me:null, role:null, code:null, conns:new Map(), hostConn:null, myPres:{}, hostPres:{},
   ph:'wait', epoch:0, slots:[], botLooks:[], inMap:new Map(), counts:{a:0, j:0, g:0, s:0, l:0, pa:false, pj:false, pg:false, ps:false, pl:false}, lastIn:'',
@@ -4307,7 +4421,8 @@ const Net = {
     if (this.hostConn) try { this.hostConn.close(); } catch (err) {}
     this.hostConn = null;
     if (p) try { p.destroy(); } catch (err) {}
-    Object.assign(this, {role:null, code:null, me:null, myPres:{}, hostPres:{}, slots:[], gotHost:false});
+    Relay.hostStop(); Relay.guestStop();
+    Object.assign(this, {role:null, code:null, me:null, myPres:{}, hostPres:{}, slots:[], gotHost:false, viaRelay:false});
     G.net = null;
   },
   leave(msg){
@@ -4331,6 +4446,7 @@ const Net = {
       if (this.peer !== peer || this.role === 'host') return;
       Object.assign(this, {role:'host', code, me:id, ph:'wait', epoch:0, botLooks:[], myPres:{}});
       G.net = 'host'; G.cfg.n = 2;
+      Relay.hostStart(code);
       this.computeSlots(); this.publishRoom();
       showRoomView();
     });
@@ -4454,6 +4570,7 @@ const Net = {
     for (const e of this.conns.values()){
       const dc = e.conn.dataChannel;
       if (dc && dc.bufferedAmount > 65536) continue;
+      if (e.conn.relay){ const t = performance.now(); if (t - (e.conn.snapT || 0) < RELAY_SNAP_MS) continue; e.conn.snapT = t; }
       this.send(e.conn, msg);
     }
   },
@@ -4477,11 +4594,9 @@ const Net = {
     showOnMsg(`กำลังเข้าห้อง ${code}…`);
     const peer = this.newPeer(); this.peer = peer;
     const started = Date.now();
-    const connect = () => {
-      if (this.peer !== peer) return;
-      if (this.hostConn) try { this.hostConn.close(); } catch (e) {}
-      const conn = peer.connect(ID_PREFIX + code, {reliable:true, serialization:'json'});
-      this.hostConn = conn;
+    const relayOk = Relay.ok();
+    this.viaRelay = RELAY_MODE === 'always' && relayOk;
+    const bind = conn => {
       conn.on('open', () => {
         if (this.hostConn !== conn) return;
         this.myPres = {};
@@ -4501,14 +4616,47 @@ const Net = {
         this.applyHost(this.hostPres);
       });
       conn.on('close', () => { if (this.hostConn === conn) lost(this.gotHost ? 'drop' : 'ice'); });
-      conn.on('error', () => { if (this.hostConn === conn && !conn.open) lost('ice'); });
-      // Phones on mobile data can take well over 8 s to finish connecting; only give up on a real failure or after 25 s
+      conn.on('error', () => {
+        if (this.hostConn !== conn || conn.open) return;
+        if (relayOk && !conn.relay){ this.viaRelay = true; connectRelay(); } else lost('ice');
+      });
+    };
+    // Through Supabase instead of a direct link: slower, but works on any network that can see the lobby
+    const connectRelay = () => {
+      if (this.peer !== peer) return;
+      const old = this.hostConn; this.hostConn = null;   // cleared first so the old link's close event isn't taken as a drop
+      if (old) try { old.close(); } catch (e) {}
+      const conn = Relay.guestOpen(code, this.me);
+      this.hostConn = conn; bind(conn);
+      conn.on('full', () => { if (this.hostConn === conn) this.leave(`ห้อง ${code} ที่นั่งทางสำรองเต็มแล้ว ลองต่อ Wi-Fi แล้วเข้าใหม่ หรือรอให้มีคนออกก่อน`); });
+      if (!this.gotHost) showOnMsg(`กำลังเข้าห้อง ${code} ผ่านเซิร์ฟเวอร์สำรอง…`);
+      clearTimeout(this.joinTimer);
+      const t0 = Date.now();
+      const watch = () => {
+        if (this.hostConn !== conn || conn.open) return;
+        // No answer: go back to trying the direct link next round (the host may just have been away)
+        if (Date.now() - t0 > 20000){ this.viaRelay = RELAY_MODE === 'always'; return lost('nohost'); }
+        this.joinTimer = setTimeout(watch, 1000);
+      };
+      this.joinTimer = setTimeout(watch, 1000);
+    };
+    const connect = () => {
+      if (this.peer !== peer) return;
+      if (this.viaRelay) return connectRelay();
+      const old = this.hostConn; this.hostConn = null;
+      if (old) try { old.close(); } catch (e) {}
+      const conn = peer.connect(ID_PREFIX + code, {reliable:true, serialization:'json'});
+      this.hostConn = conn; bind(conn);
+      // Phones on mobile data can take well over 8 s to finish connecting; only give up on a real failure or after 25 s.
+      // With the Supabase relay available, a direct link that isn't up after 12 s (the old, known-good join timeout) hands over to it.
       clearTimeout(this.joinTimer);
       const t0 = Date.now();
       const watch = () => {
         if (this.hostConn !== conn || conn.open) return;
         const pc = conn.peerConnection, ice = pc && pc.iceConnectionState;
-        if (ice === 'failed' || ice === 'closed') return lost('ice');
+        const failed = ice === 'failed' || ice === 'closed';
+        if (relayOk && (failed || Date.now() - t0 > 12000)){ this.viaRelay = true; return connectRelay(); }
+        if (failed) return lost('ice');
         if (Date.now() - t0 > 25000) return lost(pc && pc.remoteDescription ? 'ice' : 'nohost');
         this.joinTimer = setTimeout(watch, 1000);
       };
@@ -4548,7 +4696,7 @@ const Net = {
     });
     peer.on('error', err => {
       if (this.peer !== peer) return;
-      if (err.type === 'peer-unavailable'){ lost('nohost'); return; }
+      if (err.type === 'peer-unavailable'){ if (!this.viaRelay) lost('nohost'); return; }
       if (this.role === 'guest' && SOFT_ERRORS.has(err.type)){ this.healSoon(); return; }
       this.leave(`เชื่อมต่อไม่สำเร็จ (${err.type})`);
     });
@@ -4688,7 +4836,9 @@ const Net = {
     c.pa = raw.atk; c.pj = raw.jump; c.pg = raw.grab; c.ps = raw.skill; c.pl = raw.lock;
     const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s, c.l];
     const key = arr.join(',');
-    if (key !== this.lastIn){ this.lastIn = key; this.presence({in:arr}); }
+    if (key === this.lastIn) return;
+    if (this.hostConn && this.hostConn.relay){ const t = performance.now(); if (t - (this.inT || 0) < RELAY_IN_MS) return; this.inT = t; }
+    this.lastIn = key; this.presence({in:arr});
   },
 };
 document.addEventListener('visibilitychange', () => { if (!document.hidden){ Net.heal(); Lobby.heal && Lobby.heal(); } });
