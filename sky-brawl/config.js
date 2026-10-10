@@ -99,7 +99,7 @@ window.SKY_CONFIG = {
   //   2. คัดลอก API Key แล้วใส่ลิงก์ด้านล่าง แทน ชื่อแอป และ API_KEY
   //   3. อัปไฟล์นี้ขึ้น GitHub แล้วรีเฟรช หัวรายการห้องจะขึ้น "รีเลย์ ✓"
   network: {
-    turnApi: '',   // ตัวอย่าง: 'https://skybrawl.metered.live/api/v1/turn/credentials?apiKey=API_KEY'
+    turnApi: 'pk_live_e600f97e36fe448be852f073a106279a20258140',   // ตัวอย่าง: 'https://skybrawl.metered.live/api/v1/turn/credentials?apiKey=API_KEY'
   },
 
   // ---------- บอสด่านคริสต์มาส (ยักษ์หิมะ) ----------
