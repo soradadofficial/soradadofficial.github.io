@@ -3804,6 +3804,9 @@ function showResult(rows, winnerIdx){
 const ICE_SERVERS = [
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'stun:global.stun.twilio.com:3478'},
+  // Relay for players behind NAT that can't connect directly (mobile data, school/office Wi-Fi). Shared public Open Relay
+  // account: free but best-effort, swap for your own metered.ca TURN credentials if it gets busy.
+  {urls:['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turns:openrelay.metered.ca:443?transport=tcp'], username:'openrelayproject', credential:'openrelayproject'},
 ];
 const ID_PREFIX = 'skybrawl-v1-';
 const CODE_RE = /^[a-z0-9]{3,8}$/;
@@ -4430,7 +4433,15 @@ const Net = {
       tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)]),
       em:G.stones.map(st => Math.ceil(st.hp)),
       bs:G.boss ? [Math.round(G.boss.pos.x*100), Math.round(G.boss.pos.z*100), Math.ceil(G.boss.hp), BOSS_STATES.indexOf(G.boss.state), G.boss.t, Math.round(G.boss.facing*100)] : null};
-    this.presence({ph:this.ph, sn});
+    // Snapshots replace each other, so a guest whose channel is backed up just skips this one instead of piling up lag
+    const patch = {ph:this.ph, sn};
+    mergePres(this.myPres, patch);
+    const msg = {t:'p', d:patch};
+    for (const e of this.conns.values()){
+      const dc = e.conn.dataChannel;
+      if (dc && dc.bufferedAmount > 65536) continue;
+      this.send(e.conn, msg);
+    }
   },
   hostEnd(rows, win){
     this.ph = 'end';
@@ -4460,7 +4471,10 @@ const Net = {
       conn.on('open', () => {
         if (this.hostConn !== conn) return;
         this.myPres = {};
-        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), in:[0,0,0,0,0,0]});
+        // counters carry over from earlier connections; sending zeros would register as a phantom button press on the host
+        const c = this.counts;
+        this.lastIn = '';
+        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), in:[0,0,0,c.a,c.j,c.g,c.s,c.l]});
         if (G.mode !== 'play') showRoomView();
       });
       conn.on('data', msg => {
@@ -4644,7 +4658,10 @@ const Net = {
 };
 document.addEventListener('visibilitychange', () => { if (!document.hidden){ Net.heal(); Lobby.heal && Lobby.heal(); } });
 addEventListener('online', () => Net.heal());
-addEventListener('beforeunload', () => { if (Net.peer) try { Net.peer.destroy(); } catch (e) {} });
+// pagehide also fires on mobile where beforeunload doesn't; tell guests the host is gone instead of making them wait out a timeout
+const netBye = () => { if (Net.role === 'host') for (const e of Net.conns.values()) Net.send(e.conn, {t:'bye'}); if (Net.peer) try { Net.peer.destroy(); } catch (e) {} };
+addEventListener('beforeunload', netBye);
+addEventListener('pagehide', e => { if (!e.persisted) netBye(); });
 function guestTick(){
   for (const f of G.fighters){
     if (f.netInit && alive(f)){
