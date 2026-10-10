@@ -3954,13 +3954,15 @@ const SupaLobby = {
     const ch = client.channel('skybrawl-lobby', {config:{presence:{key}, broadcast:{self:true}}});
     this.ch = ch;
     ch.on('presence', {event:'sync'}, () => this.sync());
+    ch.on('presence', {event:'join'}, () => this.sync());
+    ch.on('presence', {event:'leave'}, () => this.sync());
     ch.on('broadcast', {event:'chat'}, ({payload}) => this.gotChat(payload));
     ch.subscribe(st => {
       if (this.ch !== ch) return;
       if (st === 'SUBSCRIBED'){
         clearTimeout(this.failT);
         this.connected = true; this.everOk = true; this.info('');
-        this.track();
+        this.track(); syncChatUi();
       } else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED'){
         this.connected = false;
         if (!this.everOk){ this.stop(); onFail(); }
@@ -4021,28 +4023,45 @@ const SupaLobby = {
     return true;
   },
 };
-// Whichever lobby is in charge: Supabase first, the peer-to-peer lobby if Supabase can't be reached
+// Both lobbies run side by side: every room is listed on Supabase AND on the peer-to-peer lobby, and the room list
+// merges the two. Before, a phone that couldn't reach Supabase in time switched to the peer lobby for good, while
+// its friends stayed on Supabase, and the two never saw each other's rooms.
 const Lobby = {
-  use:null, supaDown:false,
-  get rooms(){ return this.use ? this.use.rooms : []; },
-  get online(){ return this.use ? this.use.online : 0; },
-  get status(){ return this.use ? this.use.status : ''; },
-  get connected(){ return !!(this.use && this.use.connected); },
-  get kind(){ return this.use === SupaLobby ? 'supa' : this.use ? 'peer' : ''; },
+  on:false, rt:0,
+  get rooms(){
+    const by = new Map();
+    for (const src of [SupaLobby, PeerLobby]) for (const r of src.rooms || []){
+      const old = by.get(r.code);
+      if (!old || r.n > old.n || (r.n === old.n && r.ph !== old.ph && src === SupaLobby)) by.set(r.code, r);
+    }
+    return [...by.values()];
+  },
+  get online(){ return Math.max(SupaLobby.connected ? SupaLobby.online : 0, PeerLobby.connected ? PeerLobby.online : 0); },
+  get connected(){ return SupaLobby.connected || PeerLobby.connected; },
+  get status(){ return this.connected ? '' : (SupaLobby.status || PeerLobby.status); },
+  get kind(){ return SupaLobby.connected ? 'supa' : PeerLobby.connected ? 'peer' : ''; },
+  // Short health line so players can compare: "หลัก ✓ · สำรอง ✓"
+  get badge(){ return 'หลัก ' + (SupaLobby.connected ? '✓' : Supa.available ? '…' : '✗') + ' · สำรอง ' + (PeerLobby.connected ? '✓' : typeof window.Peer === 'function' ? '…' : '✗'); },
   start(){
-    if (this.use){ this.use.start(() => {}); return; }
-    const fallback = () => {
-      this.supaDown = true; this.use = PeerLobby; PeerLobby.start(); syncChatUi();
-      if (PeerLobby.mine === undefined) PeerLobby.mine = null;
-      if (!$('online').hidden) renderLobby();
-    };
-    if (!this.supaDown && Supa.available){ this.use = SupaLobby; SupaLobby.start(fallback); }
-    else fallback();
+    this.on = true;
+    if (Supa.available && !SupaLobby.active) SupaLobby.start(() => this.retrySupa());
+    PeerLobby.start();
     syncChatUi();
   },
-  stop(){ if (this.use) this.use.stop(); this.use = null; syncChatUi(); },
-  advertise(room){ SupaLobby.mine = room; PeerLobby.mine = room; if (this.use) this.use.advertise(room); },
-  heal(){ if (this.use && this.use.heal) this.use.heal(); },
+  // Supabase didn't answer: keep trying in the background instead of giving up for the session
+  retrySupa(){
+    clearTimeout(this.rt);
+    if (this.on) this.rt = setTimeout(() => { if (this.on && !SupaLobby.active && Supa.available) SupaLobby.start(() => this.retrySupa()); }, 15000);
+    syncChatUi(); if (!$('online').hidden) renderLobby();
+  },
+  stop(){ this.on = false; clearTimeout(this.rt); SupaLobby.stop(); PeerLobby.stop(); syncChatUi(); },
+  advertise(room){ SupaLobby.advertise(room); PeerLobby.advertise(room); },
+  heal(){
+    if (!this.on) return;
+    SupaLobby.heal();
+    if (!SupaLobby.active && Supa.available) SupaLobby.start(() => this.retrySupa());
+    if (PeerLobby.active && !PeerLobby.connected) PeerLobby.later();
+  },
 };
 function syncChatUi(note){
   const box = $('chatBox'); if (!box) return;
@@ -4657,7 +4676,7 @@ function showRoomView(){
 }
 function renderLobby(){
   $('mkRoom').disabled = $('codeGo').disabled = !Net.ready;
-  $('lobbyInfo').textContent = Lobby.status || (Lobby.connected ? 'ออนไลน์ ' + Lobby.online + ' คน' : '');
+  $('lobbyInfo').textContent = (Lobby.status || (Lobby.connected ? 'ออนไลน์ ' + Lobby.online + ' คน' : '')) + ' (' + Lobby.badge + ')';
   const list = $('roomList'); list.textContent = '';
   const rooms = Lobby.rooms.filter(r => r.code !== Net.code);
   if (!rooms.length){
