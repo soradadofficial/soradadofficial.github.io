@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#3f6fb5">
-<meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 32 คน">
+<meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 64 คน">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://soradadofficial.github.io/sky-brawl/">
 <meta property="og:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
@@ -271,7 +271,7 @@ button{touch-action:manipulation}
   <div class="card">
     <div>
       <h1 class="logo">SKY <span>BRAWL</span></h1>
-      <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 124 คน (ออนไลน์ 32 คน) ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
+      <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 124 คน (ออนไลน์ 64 คน) ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
       <div id="lvChip" class="lvchip" hidden><span class="lv"></span><span class="lt"></span><span class="xpbar"><i></i></span></div>
       <div id="acctBox" class="acct" hidden>
         <span id="acctText" class="note"></span>
@@ -395,7 +395,7 @@ button{touch-action:manipulation}
         </div>
       </div>
       <div id="rCfg" class="settings">
-        <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="32" value="2"><output id="rNOut" for="rN">2</output></div>
+        <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="64" value="2"><output id="rNOut" for="rN">2</output></div>
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
         <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option></select></div>
@@ -403,6 +403,7 @@ button{touch-action:manipulation}
       </div>
       <p id="rCfgText" class="note" hidden></p>
       <div class="opt"><h4 id="slotHead">นักสู้ในห้อง</h4><div id="slotList" class="slots"></div></div>
+      <p id="netWarn" class="note" hidden style="color:var(--p1)"></p>
       <div class="btns">
         <button class="btn red" id="rStart" type="button">เริ่มแข่ง</button>
         <button class="btn plain" id="rLeave" type="button">ออกจากห้อง</button>
@@ -2294,7 +2295,7 @@ function spawnItem(){
 const dropItem = (type, pos) => addItem(type, {x:pos.x, y:pos.y + 1.5, z:pos.z}, 4);
 function removeItem(it){ scene.remove(it.mesh, it.mesh.userData.ring); G.items.splice(G.items.indexOf(it), 1); }
 function doGrab(f){
-  if (f.held === 'bomb'){ throwBomb(f); return; }
+  if (f.held === 'bomb'){ throwBomb(f); return true; }
   let best = null, bd = 1.5;
   for (const it of G.items){
     if (!it.landed || it.type === 'heal') continue;
@@ -2302,12 +2303,13 @@ function doGrab(f){
     const d = Math.hypot(it.pos.x - f.pos.x, it.pos.z - f.pos.z);
     if (d < bd){ bd = d; best = it; }
   }
-  if (!best) return;
+  if (!best) return false;
   const at = new V(f.pos.x, 2.4, f.pos.z);
   if (WEAPON_INFO[best.type]){ const w = WEAPON_INFO[best.type]; f.weapon = best.type; f.weaponUses = w.uses; if (f.isLocal) popup(at, w.got, 'th'); }
   else { f.held = 'bomb'; if (f.isLocal) popup(at, 'ได้ระเบิด!', 'th'); }
   emit(best.pos, 8, 0xffc23a, 3, 3, 18, 1.2, 4);
   removeItem(best);
+  return true;
 }
 function makeBomb(id, kind = 'bomb'){ const mesh = kind === 'meteor' ? buildMeteor() : buildBomb(); scene.add(mesh); return {id, kind, mesh, pos:new V(), vel:new V(), t:0}; }
 function buildMeteor(){
@@ -2766,6 +2768,8 @@ function stepFighter(f){
       else if (grabP) doGrab(f);
       else if (f.buffer > 0){
         if (f.held === 'bomb'){ throwBomb(f); f.buffer = 0; }
+        // Standing next to an item: the attack button picks it up (the grab button still works too)
+        else if (doGrab(f)) f.buffer = 0;
         else startMove(f, attackKey(f));
       }
       else if (inp.guard && f.onGround) setState(f, 'guard');
@@ -2961,7 +2965,7 @@ function tick(){
   stepTurrets();
   stepBullets();
   if (G.mode === 'menu'){ for (const f of fs) if (f.stocks < 99) f.stocks = 99; }
-  if (G.net === 'host' && G.mode === 'play' && G.frame % 2 === 0) Net.hostSend();
+  if (G.net === 'host' && G.mode === 'play' && G.frame % Net.sendEvery() === 0) Net.hostSend();
   if (G.endT > 0 && --G.endT === 0) showResult();
 }
 
@@ -3368,8 +3372,8 @@ function mergePres(target, patch){
 const LOBBY_ID = 'skybrawl-lobby-v2';
 function sanitizeRoom(r){
   if (!r || typeof r !== 'object' || !CODE_RE.test(String(r.code))) return null;
-  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(32, Number(r.n) || 0)),
-    mx:Math.max(2, Math.min(32, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
+  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(64, Number(r.n) || 0)),
+    mx:Math.max(2, Math.min(64, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
 }
 const PeerLobby = {
   active:false, peer:null, holder:null, conn:null, clients:new Map(), rooms:[], online:0, mine:null,
@@ -3888,8 +3892,8 @@ const Net = {
   },
   computeSlots(){
     const humans = [{peer:this.me || '', nm:LOOKS[0].name, lk:encLook(LOOKS[0])}]
-      .concat(this.guests().slice(0, 31).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 7) : null})));
-    const n = Math.min(32, Math.max(G.cfg.n, humans.length));
+      .concat(this.guests().slice(0, 63).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 7) : null})));
+    const n = Math.min(64, Math.max(G.cfg.n, humans.length));
     const slots = humans.map(h => [h.peer, h.nm, h.lk]);
     for (let i = humans.length, b = 1; i < n; i++, b++){
       if (!this.botLooks[b]) this.botLooks[b] = 1 + Math.floor(Math.random()*1e6);
@@ -3943,6 +3947,10 @@ const Net = {
     return [r(f.pos.x*100), r(f.pos.y*100), r(f.pos.z*100), r(f.vel.x*10), r(f.vel.y*10), r(f.vel.z*10), r(f.facing*100),
       STATES.indexOf(f.state), Math.min(f.stateT, 999), Math.ceil(Math.max(0, f.hp)), f.stocks, flags, f.move ? MOVE_KEYS.indexOf(f.moveKey) : -1, f.weaponUses, f.lr, WEAPONS.indexOf(f.weapon), Math.ceil(f.skillCd/6), f.lock ? f.lock.idx : -1];
   },
+  // 30 / 20 / 15 / 10 snapshots a second for up to 8 / 16 / 32 / 63 guests
+  sendEvery(){ const g = this.conns.size; return g <= 8 ? 2 : g <= 16 ? 3 : g <= 32 ? 4 : 6; },
+  // Rough upload the host needs in Mbit/s: ~60 bytes per fighter + overhead, per guest, per snapshot
+  uploadMbps(fighters, guests){ const every = guests <= 8 ? 2 : guests <= 16 ? 3 : guests <= 32 ? 4 : 6; return (60*fighters + 400)*(60/every)*guests*8/1e6; },
   hostSend(){
     if (this.role !== 'host') return;
     const r = v => Math.round(v*100);
@@ -4029,7 +4037,7 @@ const Net = {
   },
   applyHost(p){
     if (!p || typeof p !== 'object') return;
-    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 32);
+    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 64);
     if (Array.isArray(p.cfg)) this.cfg = p.cfg;
     const stk = Array.isArray(p.cfg) ? STAGE_KEYS[Number(p.cfg[3])] : null;
     if (stk && stk !== STAGE_KEY && G.mode !== 'play'){ setStage(stk); if (G.mode === 'menu') enterAttract(); }
@@ -4240,6 +4248,12 @@ function renderRoomView(){
     list.appendChild(row);
   });
   $('rStart').hidden = !host;
+  {
+    const humans = slots.filter(x => x[0]).length, guests = Math.max(0, humans - 1);
+    const mbps = Net.uploadMbps(slots.length, guests), warn = $('netWarn');
+    warn.hidden = !host || guests < 8;
+    warn.textContent = 'คนจริง ' + humans + ' คน: เครื่อง host ต้องอัปโหลดราว ' + mbps.toFixed(0) + ' Mbps ตลอดการแข่ง ถ้าเน็ต host ไม่พอ ทุกคนจะกระตุก ใช้สายแลนหรือ Wi-Fi แรงๆ จะดีที่สุด';
+  }
 }
 
 /* ---------- Customize screen ---------- */
