@@ -48,7 +48,7 @@ button,select,input{font-family:inherit;color:inherit}
 .chipbtn{font-family:var(--display);font-size:13px;background:var(--paper);border:3px solid var(--ink);border-radius:10px;padding:5px 10px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;white-space:nowrap}
 #board{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:6px 10px 8px;width:min(220px,36vw);display:grid;gap:4px;box-sizing:border-box}
 #boardHead{font-family:var(--display);font-size:12px;display:flex;justify-content:space-between;gap:6px}
-#brows{display:grid;gap:2px;font-size:12px;max-height:52vh;overflow:hidden}
+#brows{display:grid;gap:1px;font-size:11px;max-height:48vh;overflow:hidden}
 .brow{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:6px;align-items:center}
 .brow .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ink);box-sizing:border-box}
 .brow .bn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
@@ -198,6 +198,7 @@ button{touch-action:manipulation}
   <div id="cards"></div>
   <div id="hudMid">
     <button id="pauseBtn" class="chipbtn" type="button">II เมนู</button>
+    <button id="camBtn" class="chipbtn" type="button" title="ปรับมุมกล้อง (ปุ่ม - และ = หรือล้อเมาส์)">กล้อง: ปกติ</button>
     <button id="touchBtn" class="chipbtn" type="button">ปุ่มจอ: ปิด</button>
     <button id="spec" class="chipbtn" type="button" hidden>ดูคนถัดไป</button>
   </div>
@@ -226,7 +227,7 @@ button{touch-action:manipulation}
       <p class="note" id="touchNote" hidden style="margin-top:8px">เล่นบนมือถือ: แตะครึ่งซ้ายของจอแล้วลากเพื่อเดิน ใช้ปุ่มด้านขวาเพื่อต่อย กระโดด กัน และหยิบของ หมุนจอแนวนอนจะเล่นง่ายขึ้น</p>
     </div>
     <div class="settings">
-      <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="16" value="8"><output id="nfOut" for="nf">8</output></div>
+      <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="32" value="8"><output id="nfOut" for="nf">8</output></div>
       <div class="seg" role="radiogroup" aria-label="จำนวนชีวิต">
         <span class="lbl">ชีวิตต่อคน</span>
         <input type="radio" name="st" id="st1" value="1"><label for="st1">1</label>
@@ -238,6 +239,12 @@ button{touch-action:manipulation}
         <input type="radio" name="diff" id="d-easy" value="easy"><label for="d-easy">ง่าย</label>
         <input type="radio" name="diff" id="d-normal" value="normal" checked><label for="d-normal">ปกติ</label>
         <input type="radio" name="diff" id="d-hard" value="hard"><label for="d-hard">ยาก</label>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="ด่าน">
+        <span class="lbl">ด่าน</span>
+        <input type="radio" name="stage" id="sg-titanic" value="titanic" checked><label for="sg-titanic">เรือไททานิก</label>
+        <input type="radio" name="stage" id="sg-temple" value="temple"><label for="sg-temple">วัดไทย</label>
+        <input type="radio" name="stage" id="sg-siam" value="siam"><label for="sg-siam">สยาม</label>
       </div>
     </div>
     <div class="btns">
@@ -270,7 +277,7 @@ button{touch-action:manipulation}
           </dl>
         </div>
       </div>
-      <p class="note" style="margin-top:10px">ถ้าเล่นคนเดียวหรือออนไลน์ ใช้ลูกศรกับ <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> <kbd>I</kbd> แทนได้ · <kbd>X</kbd> ดู hitbox · <kbd>Esc</kbd> เมนู · มือถือใช้จอยกับปุ่มบนจอ</p>
+      <p class="note" style="margin-top:10px">ปรับมุมกล้องด้วย <kbd>-</kbd> <kbd>=</kbd> ล้อเมาส์ หรือปุ่ม "กล้อง" ระหว่างเล่น · ถ้าเล่นคนเดียวหรือออนไลน์ ใช้ลูกศรกับ <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> <kbd>I</kbd> แทนได้ · <kbd>X</kbd> ดู hitbox · <kbd>Esc</kbd> เมนู · มือถือใช้จอยกับปุ่มบนจอ</p>
     </details>
   </div>
 </div>
@@ -302,9 +309,10 @@ button{touch-action:manipulation}
         <button class="btn plain" id="shareLink" type="button" style="flex:0 0 auto" hidden>แชร์</button>
       </div>
       <div id="rCfg" class="settings">
-        <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="16" value="2"><output id="rNOut" for="rN">2</output></div>
+        <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="32" value="2"><output id="rNOut" for="rN">2</output></div>
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
+        <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
       <div class="opt"><h4 id="slotHead">นักสู้ในห้อง</h4><div id="slotList" class="slots"></div></div>
@@ -416,6 +424,61 @@ const MOVES = {
   sk_gunner:   {name:'ระดมยิง', anim:'shoot', startup:4, active:30, recovery:10, noHit:true, rapid:5, skill:true},
   sk_engineer: {name:'ป้อมปืน', anim:'cast', startup:12, active:1, recovery:12, noHit:true, skill:true,
     fire:f => placeTurret(f)},
+  sk_pony:     {name:'เรนโบว์แดช', anim:'headbutt', startup:6, active:16, recovery:18, dmg:12, kb:11, up:7, launch:true, lunge:15, glide:true, sweep:true, trail:true, reach:.8, rad:1, hitstop:8, shake:.3, skill:true},
+  sk_gundam:   {name:'เมก้าบีม', anim:'shoot', startup:16, active:1, recovery:24, noHit:true, dmg:14, kb:12, up:6, launch:true, hitstop:8, shake:.5, skill:true,
+    fire:(f, m) => { const b = fireProj(f, 'mega', f.facing, 30, 45, m); b.pierce = true; if (f.isLocal) G.shake = Math.max(G.shake, .4); }},
+  kn1:{name:'ฟันดาบ', anim:'swing', startup:5, active:3, recovery:11, dmg:6, kb:3, up:0, stun:18, reach:1.25, rad:.9, lunge:2.5, next:'kn2', hitstop:5},
+  kn2:{name:'ฟันย้อน', anim:'slashH2', startup:5, active:3, recovery:12, dmg:6, kb:3.5, up:0, stun:18, reach:1.25, rad:.9, lunge:2.5, next:'kn3', hitstop:5},
+  kn3:{name:'ฟันดิ่ง', anim:'slam', startup:11, active:4, recovery:22, dmg:11, kb:9, up:7, launch:true, reach:1.35, rad:1, lunge:3, hitstop:9, shake:.3, hy:-.3},
+  wa1:{name:'จามขวาน', anim:'swing', startup:8, active:4, recovery:14, dmg:8, kb:4, up:0, stun:22, reach:1.35, rad:1, lunge:2, next:'wa2', hitstop:7, shake:.1},
+  wa2:{name:'ผ่าขวาน', anim:'slam', startup:13, active:4, recovery:24, dmg:14, kb:10, up:8, launch:true, reach:1.4, rad:1.1, lunge:2, hitstop:11, shake:.4, hy:-.3},
+  bz1:{name:'หมุนขวาน', anim:'spin', startup:8, active:12, recovery:18, multi:6, sweep:true, dmg:5, kb:4, up:1, stun:16, reach:0, rad:1.9, next:'bz2', hitstop:3, shake:.1},
+  bz2:{name:'ทุบคลั่ง', anim:'slam', startup:14, active:4, recovery:24, dmg:15, kb:11, up:9, launch:true, reach:1.4, rad:1.1, lunge:3, hitstop:12, shake:.5, hy:-.3},
+  pa1:{name:'กระแทกโล่', anim:'thrust', startup:5, active:3, recovery:11, dmg:5, kb:5, up:0, stun:20, reach:.9, rad:.9, lunge:4, next:'pa2', hitstop:5},
+  pa2:{name:'ฟาดคทา', anim:'swing', startup:7, active:3, recovery:13, dmg:7, kb:4, up:0, stun:18, reach:1.1, rad:.9, lunge:2, next:'pa3', hitstop:6},
+  pa3:{name:'คทาเสย', anim:'uppercut', startup:9, active:4, recovery:20, dmg:9, kb:5, up:11, launch:true, reach:1, rad:.95, hitstop:8, shake:.25},
+  ma1:{name:'กระทุ้งไม้เท้า', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:2.5, up:0, stun:16, reach:1.3, rad:.75, lunge:2, next:'ma2', hitstop:4},
+  ma2:{name:'กระทุ้งซ้ำ', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:3, up:0, stun:18, reach:1.3, rad:.75, lunge:2, next:'ma3', hitstop:4},
+  ma3:{name:'ลูกศรเวท', anim:'cast', startup:8, active:1, recovery:16, noHit:true, dmg:8, kb:7, up:4, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'bolt', f.facing, 22, 40, m)},
+  pr1:{name:'กระทุ้งคทา', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:2.5, up:0, stun:16, reach:1.25, rad:.75, lunge:2, next:'pr2', hitstop:4},
+  pr2:{name:'หวดคทา', anim:'swing', startup:6, active:3, recovery:12, dmg:5, kb:3.5, up:0, stun:18, reach:1.25, rad:.85, lunge:2, next:'pr3', hitstop:5},
+  pr3:{name:'แสงศักดิ์สิทธิ์', anim:'cast', startup:9, active:1, recovery:16, noHit:true, dmg:7, kb:6, up:3, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'holy', f.facing, 18, 35, m)},
+  ne1:{name:'เกี่ยวเคียว', anim:'swing', startup:7, active:4, recovery:13, sweep:true, dmg:6, kb:3, up:0, stun:18, reach:1.5, rad:1.1, lunge:2, next:'ne2', hitstop:5},
+  ne2:{name:'หมุนเคียว', anim:'spin', startup:6, active:10, recovery:14, sweep:true, multi:5, dmg:4, kb:3, up:0, stun:14, reach:0, rad:1.9, next:'ne3', hitstop:3},
+  ne3:{name:'วิญญาณน้อย', anim:'cast', startup:8, active:1, recovery:16, noHit:true, dmg:6, kb:5, up:2, stun:16, hitstop:4, fire:(f, m) => fireProj(f, 'soul', f.facing, 18, 40, m)},
+  dr1:{name:'กระทุ้งไม้', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:2.5, up:0, stun:16, reach:1.25, rad:.75, lunge:2, next:'dr2', hitstop:4},
+  dr2:{name:'หวดไม้', anim:'swing', startup:6, active:3, recovery:12, dmg:5, kb:3.5, up:0, stun:18, reach:1.25, rad:.85, lunge:2, next:'dr3', hitstop:5},
+  dr3:{name:'หนามพฤกษา', anim:'stomp', startup:10, active:1, recovery:18, noHit:true, dmg:7, kb:6, up:6, launch:true, hitstop:6, shake:.2,
+    fire:(f, m) => { const c = f.pos.clone(); emit(new V(c.x, .2, c.z), 16, 0x3fbf5a, 4, 4, 22, 1.4, 6); aoe(f, c, 2.2, m); }},
+  ar1:{name:'ยิงธนู', anim:'shoot', startup:6, active:1, recovery:12, noHit:true, dmg:5, kb:3, up:0, stun:14, next:'ar2', hitstop:3, fire:(f, m) => fireProj(f, 'arrow', f.facing, 30, 40, m)},
+  ar2:{name:'ยิงธนูซ้ำ', anim:'shoot', startup:6, active:1, recovery:12, noHit:true, dmg:5, kb:3, up:0, stun:14, next:'ar3', hitstop:3, fire:(f, m) => fireProj(f, 'arrow', f.facing, 30, 40, m)},
+  ar3:{name:'ธนูทะลวง', anim:'shoot', startup:12, active:1, recovery:20, noHit:true, dmg:10, kb:9, up:5, launch:true, hitstop:6, shake:.15,
+    fire:(f, m) => { const b = fireProj(f, 'arrow', f.facing, 36, 45, m); b.pierce = true; }},
+  as1:{name:'แทงซ้าย', anim:'punchL', startup:3, active:2, recovery:7, dmg:4, kb:2, up:0, stun:14, reach:.9, rad:.7, lunge:3, next:'as2', hitstop:3},
+  as2:{name:'แทงขวา', anim:'punchR', startup:3, active:2, recovery:7, dmg:4, kb:2, up:0, stun:14, reach:.9, rad:.7, lunge:3, next:'as3', hitstop:3},
+  as3:{name:'ปาดหมุน', anim:'spin', startup:5, active:6, recovery:16, sweep:true, dmg:8, kb:7, up:6, launch:true, reach:.2, rad:1.4, hitstop:7, shake:.2},
+  ni1:{name:'ฟันเร็ว', anim:'swing', startup:4, active:3, recovery:8, dmg:5, kb:2.5, up:0, stun:16, reach:1.1, rad:.85, lunge:3, next:'ni2', hitstop:4},
+  ni2:{name:'ฟันย้อนเร็ว', anim:'slashH2', startup:4, active:3, recovery:8, dmg:5, kb:2.5, up:0, stun:16, reach:1.1, rad:.85, lunge:3, next:'ni3', hitstop:4},
+  ni3:{name:'พุ่งฟัน', anim:'dash', startup:6, active:8, recovery:16, dmg:9, kb:8, up:5, launch:true, lunge:10, glide:true, reach:1, rad:.9, hitstop:7, shake:.2},
+  sa1:{name:'ฟันลง', anim:'slam', startup:8, active:3, recovery:14, dmg:9, kb:5, up:0, stun:24, reach:1.4, rad:1, lunge:2.5, next:'sa2', hitstop:8, shake:.15, hy:-.2},
+  sa2:{name:'ฟันกวาด', anim:'swing', startup:9, active:4, recovery:22, sweep:true, dmg:12, kb:11, up:6, launch:true, reach:1.5, rad:1.3, lunge:2, hitstop:11, shake:.35},
+  mo1:{name:'หมัดไว', anim:'punchL', startup:3, active:2, recovery:6, dmg:3, kb:1.5, up:0, stun:14, reach:.85, rad:.7, lunge:2.5, next:'mo2', hitstop:3},
+  mo2:{name:'หมัดไวขวา', anim:'punchR', startup:3, active:2, recovery:6, dmg:3, kb:1.5, up:0, stun:14, reach:.85, rad:.7, lunge:2.5, next:'mo3', hitstop:3},
+  mo3:{name:'เตะหมุน', anim:'kick', startup:6, active:4, recovery:16, dmg:8, kb:9, up:6, launch:true, reach:1, rad:.85, lunge:4, hitstop:8, shake:.2, hy:-.2},
+  bd1:{name:'ฟาดพิณ', anim:'swing', startup:6, active:3, recovery:12, dmg:6, kb:4, up:0, stun:18, reach:1.1, rad:.9, lunge:2, next:'bd2', hitstop:5},
+  bd2:{name:'โน้ตดนตรี', anim:'cast', startup:7, active:1, recovery:14, noHit:true, dmg:6, kb:8, up:3, launch:true, hitstop:4,
+    fire:(f, m) => { for (const da of [-.12, .12]) fireProj(f, 'note', f.facing + da, 17, 40, m); }},
+  gn1:{name:'ยิงปืนซ้าย', anim:'shoot', startup:4, active:1, recovery:9, noHit:true, dmg:4, kb:2, up:0, stun:12, next:'gn2', hitstop:2, fire:(f, m) => fireProj(f, 'bullet', f.facing, 28, 32, m)},
+  gn2:{name:'ยิงปืนขวา', anim:'shoot', startup:4, active:1, recovery:9, noHit:true, dmg:4, kb:2, up:0, stun:12, next:'gn3', hitstop:2, fire:(f, m) => fireProj(f, 'bullet', f.facing, 28, 32, m)},
+  gn3:{name:'เตะถีบ', anim:'kick', startup:7, active:4, recovery:16, dmg:7, kb:9, up:5, launch:true, reach:.95, rad:.8, lunge:4, hitstop:7, shake:.15, hy:-.25},
+  en1:{name:'เหวี่ยงประแจ', anim:'swing', startup:6, active:3, recovery:12, dmg:6, kb:3.5, up:0, stun:18, reach:1.05, rad:.85, lunge:2, next:'en2', hitstop:5},
+  en2:{name:'ทุบประแจ', anim:'slam', startup:10, active:4, recovery:20, dmg:10, kb:8, up:6, launch:true, reach:1.1, rad:.95, lunge:2, hitstop:9, shake:.25, hy:-.3},
+  pn1:{name:'ขวิดเขา', anim:'headbutt', startup:5, active:4, recovery:11, dmg:6, kb:4, up:0, stun:18, reach:.9, rad:.85, lunge:5, next:'pn2', hitstop:5},
+  pn2:{name:'ดีดกีบ', anim:'kick', startup:6, active:4, recovery:12, dmg:7, kb:5, up:2, stun:20, reach:.95, rad:.85, lunge:3, next:'pn3', hitstop:6, hy:-.25},
+  pn3:{name:'ลำแสงสายรุ้ง', anim:'cast', startup:9, active:1, recovery:16, noHit:true, dmg:8, kb:8, up:5, launch:true, hitstop:6, fire:(f, m) => fireProj(f, 'rainbow', f.facing, 20, 40, m)},
+  gd1:{name:'บีมเซเบอร์', anim:'swing', startup:5, active:3, recovery:10, sweep:true, dmg:7, kb:4, up:0, stun:18, reach:1.3, rad:1, lunge:3, next:'gd2', hitstop:5},
+  gd2:{name:'เซเบอร์ฟันลง', anim:'slam', startup:8, active:3, recovery:14, dmg:9, kb:6, up:4, stun:22, reach:1.4, rad:1, lunge:3, next:'gd3', hitstop:7, hy:-.2},
+  gd3:{name:'บีมไรเฟิล', anim:'shoot', startup:9, active:1, recovery:18, noHit:true, dmg:10, kb:9, up:4, launch:true, hitstop:6, shake:.2, fire:(f, m) => fireProj(f, 'beam', f.facing, 34, 34, m)},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -437,7 +500,14 @@ const SKILL_INFO = {
   bard:{cd:540, range:4, desc:'คลื่นเสียงผลักทุกคนรอบตัวกระเด็นไกล'},
   gunner:{cd:480, range:10, desc:'ยิงรัว 6 นัดใส่ข้างหน้า'},
   engineer:{cd:900, range:10, desc:'วางป้อมปืนที่ยิงศัตรูเอง 8 วินาที'},
+  pony:{cd:420, range:6, desc:'พุ่งทะยานทิ้งสายรุ้ง ชนทุกคนที่ขวาง'},
+  gundam:{cd:600, range:12, desc:'ยิงบีมยักษ์ทะลุทุกคนในแนวยิง'},
 };
+// First hit of each class's ground combo; the chain continues through each move's next
+const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
+  archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1'};
+const CLASS_REACH = {archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2};
+const CLASS_STOP = {archer:6, gunner:5};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
 const RAPID_SHOT = {dmg:5, kb:3, up:0, stun:12, hitstop:2, shake:.03};
 const TURRET_SHOT = {dmg:6, kb:3, up:0, stun:12, hitstop:2, shake:.03};
@@ -450,18 +520,19 @@ const DIFF = {
 const DIFF_KEYS = ['easy','normal','hard'];
 const STATES = ['idle','run','air','attack','guard','guardstun','hitstun','tumble','down','getup','ko','respawn','wait','out'];
 const RAILED = new Set(['idle','run','air','attack','guard','guardstun','hitstun','down','getup']);
-const TEAM = Array.from({length:16}, (_, i) => new THREE.Color().setHSL((i*.618034 + .02) % 1, .78, .55).getHex());
+const TEAM = Array.from({length:32}, (_, i) => new THREE.Color().setHSL((i*.618034 + .02) % 1, .78, .55).getHex());
 TEAM[0] = 0xff5d4a; TEAM[1] = 0x2f8cff;
 
 /* ---------- The ship: deck outline drives both the model and the physics ---------- */
-const SEA_Y = -4.5;
-const FUNNELS = [-17, -6, 5, 16].map(x => ({x, z:0, r:1.6}));
+let SEA_Y = -4.5;
+const SHIP_FUNNELS = [-17, -6, 5, 16].map(x => ({x, z:0, r:1.6}));
+let FUNNELS = SHIP_FUNNELS;   // obstacles of the current stage
 function hw(x){
   if (x > 18) return x >= 32 ? 0 : 8*Math.sqrt(1 - ((x - 18)/14)**2);
   if (x < -26) return x <= -32 ? 0 : 8*Math.sqrt(1 - ((x + 26)/6)**2);
   return 8;
 }
-const onDeck = (x, z, m = 0) => Math.abs(z) < hw(x) - m;
+const onDeck = (x, z, m = 0) => STAGE.inside(x, z, m);
 
 /* ---------- Renderer & world ---------- */
 const canvas = $('c');
@@ -470,13 +541,14 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, IS_TOUCH ? 1.5 : 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
-{
+function paintSky(stops){
   const c = document.createElement('canvas'); c.width = 2; c.height = 256;
   const x = c.getContext('2d'), g = x.createLinearGradient(0,0,0,256);
-  g.addColorStop(0,'#3f6fb5'); g.addColorStop(.45,'#9fb8d8'); g.addColorStop(.75,'#f6b77c'); g.addColorStop(1,'#ffd7a3');
+  stops.forEach((col, i) => g.addColorStop(i/(stops.length - 1), col));
   x.fillStyle = g; x.fillRect(0,0,2,256);
-  scene.background = new THREE.CanvasTexture(c);
+  return new THREE.CanvasTexture(c);
 }
+scene.background = paintSky(['#3f6fb5','#9fb8d8','#f6b77c','#ffd7a3']);
 scene.fog = new THREE.Fog(0xf2c7a0, 50, 170);
 const camera = new THREE.PerspectiveCamera(45, 1, .1, 400);
 scene.add(new THREE.HemisphereLight(0xfff1e0, 0x4a6fa5, .75));
@@ -498,6 +570,7 @@ function part(geo, mat, outline){
   return m;
 }
 
+const TITANIC_DECOR = new THREE.Group();
 // Sea
 const seaGeo = new THREE.PlaneGeometry(360, 360, 60, 60); seaGeo.rotateX(-PI/2);
 const sea = new THREE.Mesh(seaGeo, new THREE.MeshToonMaterial({color:0x2f78b5, gradientMap:gmap}));
@@ -513,14 +586,14 @@ function waveSea(t){
 }
 {
   const foam = new THREE.Mesh(new THREE.RingGeometry(1, 1.14, 64), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.55, side:THREE.DoubleSide}));
-  foam.rotation.x = -PI/2; foam.scale.set(34, 9.4, 1); foam.position.y = SEA_Y + .35; scene.add(foam);
+  foam.rotation.x = -PI/2; foam.scale.set(34, 9.4, 1); foam.position.y = SEA_Y + .35; TITANIC_DECOR.add(foam);
 }
 // Icebergs on the horizon
 for (const [x, y, z, s] of [[95, -8, -70, 16], [-80, -6, -95, 10], [130, -6, 40, 9]]){
   const g = new THREE.IcosahedronGeometry(s, 1), p = g.attributes.position;
   for (let i = 0; i < p.count; i++){ const k = .8 + Math.random()*.4; p.setXYZ(i, p.getX(i)*k, p.getY(i)*k*1.3, p.getZ(i)*k); }
   g.computeVertexNormals();
-  const m = new THREE.Mesh(g, toon(0xe8f6ff)); m.position.set(x, y, z); scene.add(m);
+  const m = new THREE.Mesh(g, toon(0xe8f6ff)); m.position.set(x, y, z); TITANIC_DECOR.add(m);
 }
 // Clouds
 const clouds = [];
@@ -598,7 +671,221 @@ function buildShip(){
   }
   return g;
 }
-scene.add(buildShip());
+const SHIP_GROUP = buildShip(); SHIP_GROUP.add(TITANIC_DECOR); scene.add(SHIP_GROUP);
+
+/* ---------- More stages ---------- */
+function tileTex(base, alt, line, n){
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const t = c.getContext('2d'), sz = 256/n;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){ t.fillStyle = (i + j) % 2 ? alt : base; t.fillRect(i*sz, j*sz, sz, sz); }
+  t.strokeStyle = line; t.lineWidth = 3;
+  for (let i = 0; i <= n; i++){ t.beginPath(); t.moveTo(i*sz, 0); t.lineTo(i*sz, 256); t.stroke(); t.beginPath(); t.moveTo(0, i*sz); t.lineTo(256, i*sz); t.stroke(); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.anisotropy = 4;
+  return tex;
+}
+function gable(w, h, len, color){
+  const sh = new THREE.Shape(); sh.moveTo(-w/2, 0); sh.lineTo(w/2, 0); sh.lineTo(0, h); sh.lineTo(-w/2, 0);
+  const m = part(new THREE.ExtrudeGeometry(sh, {depth:len, bevelEnabled:false}), toon(color));
+  m.rotation.y = PI/2; m.position.x = -len/2;
+  return m;
+}
+const TEMPLE_OBS = [[-17, -8], [17, -8], [-17, 8], [17, 8]].map(([x, z]) => ({x, z, r:2.1}));
+function buildTemple(){
+  const g = new THREE.Group(), W = 25, D = 14;
+  const tex = tileTex('#efe3cc', '#e2d0ae', '#c9b18a', 4); tex.repeat.set(W/4, D/4);
+  const top = new THREE.MeshToonMaterial({map:tex, gradientMap:gmap}), wall = toon(0xf6f1e7), gold = toon(0xe0b13a);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W*2, 3, D*2), [wall, wall, top, wall, wall, wall]); base.position.y = -1.5; base.receiveShadow = true; g.add(base);
+  const band = new THREE.Mesh(new THREE.BoxGeometry(W*2 + .3, .45, D*2 + .3), toon(0xa82828)); band.position.y = -2.4; g.add(band);
+  const trim = new THREE.Mesh(new THREE.BoxGeometry(W*2 + .2, .18, D*2 + .2), gold); trim.position.y = -.12; g.add(trim);
+  // Low white balustrade with gold lotus-bud posts
+  const seg = (x, z, len, alongX) => { const b = part(new THREE.BoxGeometry(alongX ? len : .3, .75, alongX ? .3 : len), wall); b.position.set(x, .375, z); g.add(b); };
+  for (let x = -W + 2; x <= W - 2; x += 4){ seg(x, D - .15, 3.4, true); seg(x, -D + .15, 3.4, true); }
+  for (let z = -D + 2; z <= D - 2; z += 4){ seg(W - .15, z, 3.4, false); seg(-W + .15, z, 3.4, false); }
+  for (const [x, z] of [[W, D], [-W, D], [W, -D], [-W, -D]]){
+    const p = part(new THREE.CylinderGeometry(.3, .35, 1.2, 10), wall); p.position.set(x*.994, .6, z*.99); g.add(p);
+    const bud = part(new THREE.ConeGeometry(.28, .6, 10), gold); bud.position.set(x*.994, 1.5, z*.99); g.add(bud);
+  }
+  // Golden chedis are the cover on this stage
+  for (const o of TEMPLE_OBS){
+    const c = new THREE.Group();
+    const b0 = part(new THREE.BoxGeometry(3.6, .8, 3.6), wall, 1.02); b0.position.y = .4; c.add(b0);
+    const gm = toon(0xe8b730);
+    for (const [rt, rb, h, y] of [[1.6, 1.7, .6, 1.1], [1.4, 1.5, .5, 1.6]]){ const m = part(new THREE.CylinderGeometry(rt, rb, h, 20), gm, 1.03); m.position.y = y; c.add(m); }
+    const bell = part(SPH(1.3), gm, 1.03); bell.scale.y = 1.15; bell.position.y = 2.9; c.add(bell);
+    for (let i = 0; i < 6; i++){ const r = part(new THREE.TorusGeometry(.55 - i*.07, .12, 8, 18), gm); r.rotation.x = PI/2; r.position.y = 4.4 + i*.28; c.add(r); }
+    const spire = part(new THREE.ConeGeometry(.25, 2.4, 12), gm, 1.05); spire.position.y = 7.2; c.add(spire);
+    c.position.set(o.x, 0, o.z); g.add(c);
+  }
+  // Ubosot (ordination hall) behind the terrace: stacked red roofs, green eaves, gold chofa and bai raka
+  const ub = new THREE.Group(); ub.position.set(0, 0, -D - 13);
+  const plat = part(new THREE.BoxGeometry(24, 3, 14), wall); plat.position.y = -1.5; ub.add(plat);
+  const body = part(new THREE.BoxGeometry(18, 7, 9), toon(0xfaf6ee), 1.01); body.position.y = 3.5; ub.add(body);
+  for (let i = 0; i < 6; i++){
+    const col = part(new THREE.CylinderGeometry(.4, .45, 7, 12), wall, 1.04); col.position.set(-7.5 + i*3, 3.5, 5.2); ub.add(col);
+    const cap = part(new THREE.BoxGeometry(1, .4, 1), gold); cap.position.set(-7.5 + i*3, 7.1, 5.2); ub.add(cap);
+  }
+  const frame = part(new THREE.BoxGeometry(3.6, 5, .2), gold); frame.position.set(0, 2.5, 4.55); ub.add(frame);
+  const door = part(new THREE.BoxGeometry(3, 4.5, .3), toon(0x7a1e1e)); door.position.set(0, 2.25, 4.6); ub.add(door);
+  for (const x of [-5, 5]){ const w = part(new THREE.BoxGeometry(1.4, 2, .3), toon(0x7a1e1e)); w.position.set(x, 3.6, 4.6); ub.add(w); }
+  for (const [w, h, len, y, c] of [[13, 5.5, 22, 7, 0xb8282a], [10, 4.6, 18, 9.2, 0xd8542c], [7, 3.6, 13, 11.6, 0xb8282a]]){
+    const eave = gable(w + 1.2, h*.82, len + .4, 0x2f8f5a); eave.position.y = y - .25; ub.add(eave);
+    const roof = gable(w, h, len, c); roof.position.y = y; ub.add(roof);
+    const a = Math.atan2(h, w/2), L = Math.hypot(w/2, h);
+    for (const sx of [-1, 1]){
+      const chofa = part(new THREE.ConeGeometry(.18, 1.6, 8), gold, 1.08); chofa.position.set(sx*(len/2 + .15), y + h + .5, 0); chofa.rotation.z = -sx*.5; ub.add(chofa);
+      for (const sz of [-1, 1]){
+        const raka = part(new THREE.BoxGeometry(.25, .3, L), gold); raka.position.set(sx*(len/2 + .15), y + h/2, sz*w/4); raka.rotation.x = sz === 1 ? a : PI - a; ub.add(raka);
+      }
+    }
+  }
+  g.add(ub);
+  // Front stairs flanked by naga balustrades
+  for (let k = 0; k < 5; k++){ const st = part(new THREE.BoxGeometry(6, .6, .9), wall); st.position.set(0, -.3 - k*.6, D + .45 + k*.9); g.add(st); }
+  for (const sx of [-1, 1]){
+    for (let i = 0; i < 8; i++){ const t = i/7, b = part(SPH(.38 - t*.12), toon(i % 2 ? 0xe0b13a : 0x2f8f5a)); b.position.set(sx*3.4, .3 - t*3, D + .3 + t*4.3); g.add(b); }
+    const head = part(SPH(.55), gold, 1.06); head.position.set(sx*3.4, -1.6, D + 5); g.add(head);
+    const crest = part(new THREE.ConeGeometry(.45, 1.2, 5), gold); crest.position.set(sx*3.4, -.8, D + 4.8); g.add(crest);
+  }
+  // Islands with trees, lotus pads on the pond
+  for (const [x, z] of [[-36, -6], [36, -6], [-30, 22], [30, 22]]){
+    const isl = part(new THREE.CylinderGeometry(4, 4.6, 1.2, 16), toon(0x6bbf4f)); isl.position.set(x, -3.4, z); g.add(isl);
+    const trunk = part(new THREE.CylinderGeometry(.5, .8, 6, 10), toon(0x6b4a2e)); trunk.position.set(x, 0, z); g.add(trunk);
+    for (let i = 0; i < 4; i++){ const leaf = part(SPH(2.2 + Math.random()), toon(0x3f8f4a)); leaf.position.set(x + (Math.random() - .5)*3, 3.5 + Math.random()*2, z + (Math.random() - .5)*3); g.add(leaf); }
+  }
+  for (let i = 0; i < 70; i++){
+    const a = Math.random()*PI*2, r = 22 + Math.random()*50, x = Math.cos(a)*r, z = Math.sin(a)*r;
+    if (Math.abs(x) < 28 && Math.abs(z) < 21) continue;
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(.6 + Math.random()*.7, .6, .06, 14), toon(0x4f9a3c)); pad.position.set(x, -3.05, z); g.add(pad);
+    if (i % 3 === 0){ const fl = new THREE.Mesh(new THREE.ConeGeometry(.28, .5, 8), toon(0xff8fb5)); fl.position.set(x, -2.75, z); g.add(fl); }
+  }
+  return g;
+}
+const SIAM_OBS = [[-21, 0, 'lamp'], [-7, 0, 'lamp'], [7, 0, 'lamp'], [21, 0, 'lamp'], [-14, 4.5, 'pot'], [-14, -4.5, 'pot'], [14, 4.5, 'pot'], [14, -4.5, 'pot']]
+  .map(([x, z, kind]) => ({x, z, kind, r:kind === 'lamp' ? .8 : 1}));
+function windowTex(base, win){
+  const c = document.createElement('canvas'); c.width = 64; c.height = 128;
+  const t = c.getContext('2d'); t.fillStyle = base; t.fillRect(0, 0, 64, 128);
+  for (let y = 6; y < 128; y += 16) for (let x = 4; x < 64; x += 15){ t.fillStyle = Math.random() < .25 ? '#fff6c9' : win; t.fillRect(x, y, 10, 10); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  return tex;
+}
+function signTex(text, bg, fg){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+  const t = c.getContext('2d'); t.fillStyle = bg; t.fillRect(0, 0, 512, 160);
+  t.fillStyle = fg; t.font = 'bold 104px Kanit, Tahoma, sans-serif'; t.textAlign = 'center'; t.textBaseline = 'middle'; t.fillText(text, 256, 86);
+  return new THREE.CanvasTexture(c);
+}
+function buildSiam(){
+  const g = new THREE.Group(), W = 30, D = 8;
+  const tex = tileTex('#d3d7dd', '#c8cdd4', '#aeb4bd', 4); tex.repeat.set(W/3, D/3);
+  const top = new THREE.MeshToonMaterial({map:tex, gradientMap:gmap}), side = toon(0x9aa3b5), concrete = toon(0xb7bcc4);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(W*2, 1.2, D*2), [side, side, top, side, side, side]); slab.position.y = -.6; slab.receiveShadow = true; g.add(slab);
+  for (const sz of [-1, 1]){ const strip = new THREE.Mesh(new THREE.BoxGeometry(W*2 - 1, .02, .4), toon(0xffc23a)); strip.position.set(0, .01, sz*(D - 1.1)); g.add(strip); }
+  // Glass railing on all four sides
+  const glass = new THREE.MeshBasicMaterial({color:0x9fd8ff, transparent:true, opacity:.3, depthWrite:false}), steel = toon(0xc9d2de);
+  const edge = (w, d, x, z) => {
+    const p = new THREE.Mesh(new THREE.BoxGeometry(w, 1.1, d), glass); p.position.set(x, .55, z); g.add(p);
+    const r = part(new THREE.BoxGeometry(w + .1, .1, d + .1), steel); r.position.set(x, 1.12, z); g.add(r);
+  };
+  edge(W*2, .08, 0, D - .04); edge(W*2, .08, 0, -D + .04); edge(.08, D*2, W - .04, 0); edge(.08, D*2, -W + .04, 0);
+  for (const x of [-24, -8, 8, 24]){ const c = part(new THREE.CylinderGeometry(1.2, 1.4, 11, 16), concrete); c.position.set(x, -6.7, 0); g.add(c); }
+  for (const o of SIAM_OBS){
+    if (o.kind === 'lamp'){
+      const p = part(new THREE.CylinderGeometry(.35, .45, 5, 12), toon(0x5a5f6b), 1.05); p.position.set(o.x, 2.5, o.z); g.add(p);
+      const head = part(new THREE.BoxGeometry(1.4, .3, .6), toon(0x2b2f3a)); head.position.set(o.x, 5.1, o.z); g.add(head);
+      const bulb = new THREE.Mesh(new THREE.BoxGeometry(1.1, .1, .4), new THREE.MeshBasicMaterial({color:0xfff6c9})); bulb.position.set(o.x, 4.94, o.z); g.add(bulb);
+    } else {
+      const pot = part(new THREE.CylinderGeometry(.9, .75, .9, 16), toon(0xe9dcc4), 1.04); pot.position.set(o.x, .45, o.z); g.add(pot);
+      const bush = part(SPH(.85), toon(0x3fbf5a), 1.04); bush.position.set(o.x, 1.3, o.z); g.add(bush);
+    }
+  }
+  // Street below, with Bangkok-coloured taxis
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), toon(0x8a8f99)); ground.rotation.x = -PI/2; ground.position.y = -12.15; g.add(ground);
+  const rc = document.createElement('canvas'); rc.width = rc.height = 256;
+  const rt = rc.getContext('2d'); rt.fillStyle = '#3a3f4b'; rt.fillRect(0, 0, 256, 256);
+  rt.fillStyle = '#f4f1ea'; for (let x = 0; x < 256; x += 64) rt.fillRect(x, 126, 34, 4);
+  rt.fillStyle = '#ffc23a'; rt.fillRect(0, 0, 256, 4); rt.fillRect(0, 252, 256, 4);
+  const rtex = new THREE.CanvasTexture(rc); rtex.wrapS = rtex.wrapT = THREE.RepeatWrapping; rtex.repeat.set(28, 1);
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(420, 28), new THREE.MeshToonMaterial({map:rtex, gradientMap:gmap})); road.rotation.x = -PI/2; road.position.y = -12.1; g.add(road);
+  const cars = [], carCols = [0xff5d8f, 0x3fbf5a, 0xffc23a, 0x2f8cff, 0xf4f4f4, 0xff5d8f];
+  for (let i = 0; i < 12; i++){
+    const c = new THREE.Group();
+    const bodyM = part(new THREE.BoxGeometry(3.6, 1, 1.7), toon(carCols[i % carCols.length]), 1.04); bodyM.position.y = .5; c.add(bodyM);
+    const cab = part(new THREE.BoxGeometry(2, .8, 1.5), toon(0x2b2f3a)); cab.position.set(-.2, 1.3, 0); c.add(cab);
+    const lane = [-10, -4, 4, 10][i % 4];
+    c.position.set(-150 + i*27, -12.1, lane);
+    c.userData = {dir:lane < 0 ? 1 : -1, sp:.2 + Math.random()*.2};
+    if (c.userData.dir < 0) c.rotation.y = PI;
+    g.add(c); cars.push(c);
+  }
+  // Elevated rail line and a passing train
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(420, 1.4, 3), concrete); beam.position.set(0, 1.2, -17); g.add(beam);
+  for (let x = -192; x <= 192; x += 24){ const p = new THREE.Mesh(new THREE.CylinderGeometry(.9, 1, 13, 10), concrete); p.position.set(x, -5.2, -17); g.add(p); }
+  const train = new THREE.Group();
+  for (let i = 0; i < 4; i++){
+    const car = new THREE.Group();
+    car.add(part(new THREE.BoxGeometry(10, 3, 2.8), toon(0xf4f4f4), 1.02));
+    const s1 = new THREE.Mesh(new THREE.BoxGeometry(10.05, .35, 2.85), toon(0x2f8cff)); s1.position.y = -.6; car.add(s1);
+    const s2 = new THREE.Mesh(new THREE.BoxGeometry(10.05, .2, 2.85), toon(0x3fbf5a)); s2.position.y = -1; car.add(s2);
+    const win = new THREE.Mesh(new THREE.BoxGeometry(9, .9, 2.9), toon(0x2b3a55)); win.position.y = .5; car.add(win);
+    car.position.x = i*10.6; train.add(car);
+  }
+  train.position.set(-140, 3.4, -17); g.add(train);
+  // City blocks around the square, kept outside the menu camera's orbit
+  const pal = ['#5b7fa6', '#7a8fa8', '#4f6d8f', '#8a7fa8', '#6b8f8a'];
+  for (let i = 0; i < 20; i++){
+    const w = 12 + Math.random()*14, h = 24 + Math.random()*45, d = 12 + Math.random()*10;
+    const wt = windowTex(pal[i % pal.length], '#9fd8ff'); wt.repeat.set(Math.max(1, Math.round(w/4)), Math.max(1, Math.round(h/8)));
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshToonMaterial({map:wt, gradientMap:gmap}));
+    const sideI = i % 3; let x, z;
+    if (sideI === 0){ x = -100 + (i/3|0)*30; z = -52 - Math.random()*12; }
+    else if (sideI === 1){ x = -95 + (i/3|0)*30; z = 54 + Math.random()*12; }
+    else { x = (i % 2 ? 1 : -1)*(64 + Math.random()*10); z = -20 + Math.random()*40; }
+    m.position.set(x, -12 + h/2, z); g.add(m);
+  }
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(26, 8), new THREE.MeshBasicMaterial({map:signTex('สยาม', '#ff5d8f', '#ffffff')}));
+  sign.position.set(0, 22, -50); g.add(sign);
+  const pole = new THREE.Mesh(new THREE.BoxGeometry(1, 34, 1), concrete); pole.position.set(0, 2, -50.6); g.add(pole);
+  g.userData = {cars, train};
+  return g;
+}
+const rectInside = (W, D) => (x, z, m) => Math.abs(x) < W - m && Math.abs(z) < D - m;
+const rectPush = (W, D) => (x, z) => (W - Math.abs(x) < D - Math.abs(z)) ? {x:Math.sign(x || 1)*(W + .35), z} : {x, z:Math.sign(z || 1)*(D + .35)};
+const STAGES = {
+  titanic:{name:'เรือไททานิก', fallText:'ตกทะเล', water:0x2f78b5, fallY:-4.5, wallBottom:-6.3, camX:26, orbit:48,
+    preview:new V(22, 0, 0), spawn:[-24, 24, -5, 5], box:[-26, 26, -8, 8], obstacles:SHIP_FUNNELS, fog:0xf2c7a0,
+    sky:['#3f6fb5','#9fb8d8','#f6b77c','#ffd7a3'], skyTex:scene.background, group:SHIP_GROUP,
+    inside:(x, z, m) => Math.abs(z) < hw(x) - m,
+    pushOut:(x, z) => { const h = hw(x); return h > .6 ? {x, z:Math.sign(z || 1)*(h + .35)} : {x:Math.sign(x)*(Math.abs(x) + .4), z}; },
+    fx:fr => { if (fr % 9 === 0) for (let i = 0; i < 3; i++){ const fn = SHIP_FUNNELS[i]; emit(new V(fn.x - .8, 7.8, fn.z), 1, 0x6b6f7c, .6, 1.6, 120, 9, -.25, .55); } }},
+  temple:{name:'วัดไทย', fallText:'ตกสระบัว', water:0x3c8f86, fallY:-3.5, wallBottom:-3.2, camX:21, orbit:46,
+    preview:new V(0, 0, 6), spawn:[-20, 20, -10, 10], box:[-24, 24, -13, 13], obstacles:TEMPLE_OBS, fog:0xffd2a8,
+    sky:['#ff8a5c','#ffb27a','#ffd9a3','#fff0d6'], build:buildTemple, inside:rectInside(25, 14), pushOut:rectPush(25, 14),
+    fx:fr => { if (fr % 20 === 0){ const o = TEMPLE_OBS[(fr/20 | 0) % 4]; emit(new V(o.x, 8.6, o.z), 1, 0xffd23a, .5, .6, 50, 1.2, -.1); } }},
+  siam:{name:'สยาม', fallText:'ร่วงลงถนน', water:null, fallY:-11.5, wallBottom:-1.3, camX:27, orbit:40,
+    preview:new V(0, 0, 3), spawn:[-26, 26, -5.5, 5.5], box:[-29, 29, -7.5, 7.5], obstacles:SIAM_OBS, fog:0xd5e6f3,
+    sky:['#3f8fe0','#86c3f2','#cfe6f7','#eef5fb'], build:buildSiam, inside:rectInside(30, 8), pushOut:rectPush(30, 8),
+    fx:() => {
+      const u = STAGE.group.userData;
+      for (const c of u.cars){ c.position.x += c.userData.sp*c.userData.dir; if (c.position.x > 170) c.position.x = -170; if (c.position.x < -170) c.position.x = 170; }
+      u.train.position.x += .45; if (u.train.position.x > 150) u.train.position.x = -190;
+    }},
+};
+const STAGE_KEYS = Object.keys(STAGES);
+let STAGE = STAGES.titanic, STAGE_KEY = 'titanic';
+function setStage(k){
+  const key = STAGES[k] ? k : 'titanic', st = STAGES[key];
+  if (st === STAGE) return;
+  scene.remove(STAGE.group);
+  STAGE = st; STAGE_KEY = key;
+  if (!st.group) st.group = st.build();
+  scene.add(st.group);
+  FUNNELS = st.obstacles; SEA_Y = st.fallY;
+  sea.visible = st.water != null; sea.position.y = st.fallY;
+  if (st.water != null) sea.material.color.setHex(st.water);
+  if (!st.skyTex) st.skyTex = paintSky(st.sky);
+  scene.background = st.skyTex; scene.fog.color.setHex(st.fog);
+}
 
 /* ---------- Character customization ---------- */
 const HAIRS = {short:'สั้น', spiky:'ชี้ฟู', buns:'จุกคู่', long:'ยาว', mohawk:'โมฮอว์ก', none:'โล้น'};
@@ -730,6 +1017,31 @@ const OUTFITS = {
     const pipe = OP(new THREE.CylinderGeometry(.05, .05, .4, 8), 0xc9d2de); pipe.position.set(.18, .4, -.5); t.add(pipe);
     const wrench = OP(new THREE.BoxGeometry(.06, .4, .04), 0xc9d2de); wrench.position.set(-.2, -.1, .35); wrench.rotation.z = .5; t.add(wrench);
   }},
+  pony:{name:'โพนี่', body:0xc8a2ff, head:true, noHair:true, build(h, t){
+    const hood = OP(new THREE.SphereGeometry(.62, 24, 16, 0, PI*2, 0, PI*.45), 0xc8a2ff, 1.03); hood.rotation.x = -.2; h.add(hood);
+    for (const s of [-1, 1]){ const ear = OP(new THREE.ConeGeometry(.13, .32, 6), 0xc8a2ff, 1.08); ear.position.set(s*.3, .6, -.05); ear.rotation.z = -s*.25; h.add(ear); }
+    const horn = OP(new THREE.ConeGeometry(.08, .45, 10), 0xffe066, 1.08); horn.position.set(0, .66, .28); horn.rotation.x = .5; h.add(horn);
+    const rainbow = [0xff5d4a, 0xffc23a, 0x3fbf5a, 0x2f8cff, 0x9b5de5];
+    rainbow.forEach((c, i) => { const phi = .3 + i*.38; const m = OP(SPH(.17), c); m.position.set(0, .64*Math.cos(phi), -.64*Math.sin(phi)); h.add(m); });
+    rainbow.forEach((c, i) => { const m = OP(SPH(.15 - i*.012), c); m.position.set(0, -.12 - i*.07, -.42 - i*.12); t.add(m); });
+  }},
+  gundam:{name:'กันดั้ม', body:0xf4f4f4, head:true, noHair:true, build(h, t){
+    oDome(h, 0xf4f4f4);
+    for (const s of [-1, 1]){
+      const fin = OP(new THREE.BoxGeometry(.06, .5, .05), 0xffc23a); fin.position.set(s*.16, .55, .52); fin.rotation.z = -s*.75; h.add(fin);
+      const eye = new THREE.Mesh(new THREE.BoxGeometry(.14, .05, .02), new THREE.MeshBasicMaterial({color:0x6bff8a})); eye.position.set(s*.2, .05, .56); eye.rotation.z = s*.2; h.add(eye);
+      const vent = OP(new THREE.BoxGeometry(.06, .2, .2), 0x9aa3b5); vent.position.set(s*.6, .05, 0); h.add(vent);
+      const sh = OP(new THREE.BoxGeometry(.32, .3, .4), 0xf4f4f4, 1.06); sh.position.set(s*.48, .26, 0); t.add(sh);
+      const stripe = OP(new THREE.BoxGeometry(.33, .08, .41), 0x2f5bd8); stripe.position.set(s*.48, .2, 0); t.add(stripe);
+      const v = OP(new THREE.BoxGeometry(.14, .12, .04), 0xffc23a); v.position.set(s*.16, .12, .37); t.add(v);
+      const hilt = OP(new THREE.CylinderGeometry(.04, .04, .3, 8), 0xf4f4f4); hilt.position.set(s*.18, .45, -.48); hilt.rotation.z = s*.3; t.add(hilt);
+    }
+    const crest = OP(new THREE.BoxGeometry(.12, .1, .06), 0xd8342c); crest.position.set(0, .4, .56); h.add(crest);
+    const chin = OP(new THREE.BoxGeometry(.2, .1, .1), 0xd8342c); chin.position.set(0, -.36, .44); h.add(chin);
+    const chest = OP(new THREE.BoxGeometry(.6, .32, .12), 0x2f5bd8, 1.05); chest.position.set(0, .12, .3); t.add(chest);
+    const pack = OP(new THREE.BoxGeometry(.5, .45, .22), 0xf4f4f4, 1.05); pack.position.set(0, .1, -.42); t.add(pack);
+    const skirt = OP(new THREE.BoxGeometry(.55, .18, .5), 0xd8342c); skirt.position.y = -.22; t.add(skirt);
+  }},
 };
 const OUTFIT_K = Object.keys(OUTFITS);
 const BODY_COLORS = [0xff5d4a, 0x2f8cff, 0x3fbf5a, 0xffc23a, 0x9b5de5, 0xff7fb5, 0x00b8a9, 0x2b2f3a, 0xf4f4f4];
@@ -748,6 +1060,16 @@ try {
 const saveLooks = () => { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOKS)); } catch (e) {} };
 const pick = a => a[Math.random()*a.length | 0];
 const randomLook = name => ({name, body:pick(BODY_COLORS), skin:pick(SKIN_COLORS), hairColor:pick(HAIR_COLORS), hair:pick(HAIR_K), hat:pick(HAT_K), eyes:pick(EYE_K), outfit:pick(OUTFIT_K)});
+function seededLook(seed, name){
+  let a = (seed >>> 0) || 1;
+  const rnd = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; };
+  const pk = arr => arr[Math.floor(rnd()*arr.length)];
+  return {name, body:pk(BODY_COLORS), skin:pk(SKIN_COLORS), hairColor:pk(HAIR_COLORS), hair:pk(HAIR_K), hat:pk(HAT_K), eyes:pk(EYE_K), outfit:pk(OUTFIT_K)};
+}
+function slotName(sl, i){
+  if (sl[0] || sl.length !== 2) return cleanName(sl[1], 'ผู้เล่น');
+  return 'บอท ' + (Net.slots.slice(0, i).filter(x => !x[0] && x.length === 2).length + 1);
+}
 const encLook = l => [l.body, l.skin, l.hairColor, HAIR_K.indexOf(l.hair), HAT_K.indexOf(l.hat), EYE_K.indexOf(l.eyes), OUTFIT_K.indexOf(l.outfit || 'none')];
 function decLook(a, name){
   if (!Array.isArray(a)) return randomLook(name);
@@ -881,13 +1203,15 @@ function buildChibi(look, team){
   const hammer = buildHammer(); hammer.position.y = -.36; armR.add(hammer);
   const gun = buildGun('gun'); gun.position.y = -.36; armR.add(gun);
   const shotgun = buildGun('shotgun'); shotgun.position.y = -.36; armR.add(shotgun);
+  const cw = buildClassWeapon(look.outfit); if (cw){ cw.position.y = -.36; armR.add(cw); }
+  const oh = buildOffhand(look.outfit); if (oh){ oh.position.y = -.36; armL.add(oh); }
   const bomb = buildBomb(); bomb.position.y = 1.55; tilt.add(bomb);
   const bubble = new THREE.Mesh(SPH(1.05), new THREE.MeshBasicMaterial({color:team, transparent:true, opacity:.22, depthWrite:false}));
   bubble.position.y = .1; tilt.add(bubble);
   const wire = c => new THREE.Mesh(new THREE.SphereGeometry(1,12,8), new THREE.MeshBasicMaterial({color:c, wireframe:true}));
   const hurt = wire(0x3fbf5a); hurt.scale.setScalar(.55); const hit = wire(0xff2a2a);
   scene.add(root, hurt, hit);
-  return {root, tilt, head, armL, armR, legL, legR, hammer, gun, shotgun, bomb, bubble, hurt, hit};
+  return {root, tilt, head, armL, armR, legL, legR, hammer, gun, shotgun, cw, oh, bomb, bubble, hurt, hit};
 }
 
 /* ---------- FX ---------- */
@@ -921,6 +1245,7 @@ function flash(pos, color, s0, s1, frames){
 const dust = (pos, n = 6) => emit(new V(pos.x, pos.y + .1, pos.z), n, 0xf3ead7, 3, 1.2, 22, 1.6, 2);
 function splash(pos){
   const p = new V(pos.x, SEA_Y + .2, pos.z);
+  if (!STAGE.water){ emit(p, 18, 0x9aa3b5, 4, 5, 30, 2, 12); flash(p, 0xffffff, .4, 2, 12); return; }
   emit(p, 20, 0xffffff, 3, 8, 32, 2, 16); flash(p, 0xd8f0ff, .4, 2.2, 16);
 }
 function explodeFx(pos){
@@ -950,11 +1275,11 @@ function feed(text){
 /* ---------- Game state ---------- */
 const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[], frame:0, itemTimer:300, slow:0, shake:0,
   countdown:0, cdShown:new Set(), paused:false, debug:false, endT:0, winner:null, stocks:2,
-  cfg:{n:8, st:2, df:'normal'}, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0};
+  cfg:{n:8, st:2, df:'normal', stage:'titanic'}, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0};
 
 class Fighter {
   constructor(idx, spec){
-    this.idx = idx; this.team = TEAM[idx % 16];
+    this.idx = idx; this.team = TEAM[idx % 32];
     this.name = spec.name; this.ctrl = spec.ctrl; this.peer = spec.peer || '';
     this.isLocal = spec.ctrl === 'p1' || spec.ctrl === 'p2' || !!spec.me;
     this.pos = new V(); this.vel = new V(); this.netPos = new V(); this.netVel = new V();
@@ -989,17 +1314,25 @@ const alive = f => f.state !== 'out' && f.state !== 'wait';
 const hittable = f => alive(f) && !['ko','down','respawn'].includes(f.state) && f.invuln <= 0;
 
 function spawnPoint(i, n){
-  const cols = Math.ceil(n/2), col = Math.floor(i/2);
-  const x = cols === 1 ? -.5 : -24 + 48*col/(cols - 1);
-  const z = i % 2 ? -4 : 4;
-  return {p:new V(x, 0, z), facing: z > 0 ? PI : 0};
+  const [x0, x1, z0, z1] = STAGE.spawn;
+  const rows = n <= 2 ? 1 : n <= 8 ? 2 : n <= 18 ? 3 : 4, cols = Math.ceil(n/rows);
+  const r = i % rows, c = Math.floor(i/rows);
+  let x = cols === 1 ? (x0 + x1)/2 : x0 + (x1 - x0)*c/(cols - 1);
+  let z = rows === 1 ? 0 : z0 + (z1 - z0)*r/(rows - 1);
+  if (n === 2){ x = (x0 + x1)/2; z = i ? z0*.6 : z1*.6; }
+  for (const fn of FUNNELS){
+    const dx = x - fn.x, dz = z - fn.z, d = Math.hypot(dx, dz), need = fn.r + .8;
+    if (d < need){ if (d < .01) z += need; else { x = fn.x + dx/d*need; z = fn.z + dz/d*need; } }
+  }
+  return {p:new V(x, 0, z), facing:Math.atan2(-x, -z)};
 }
 function randomDeckPoint(margin){
-  for (let k = 0; k < 40; k++){
-    const x = -26 + Math.random()*52, h = Math.max(0, hw(x) - margin), z = (Math.random()*2 - 1)*h;
-    if (FUNNELS.every(fn => Math.hypot(x - fn.x, z - fn.z) > fn.r + 1)) return new V(x, 0, z);
+  const bx = STAGE.box;
+  for (let k = 0; k < 60; k++){
+    const x = bx[0] + Math.random()*(bx[1] - bx[0]), z = bx[2] + Math.random()*(bx[3] - bx[2]);
+    if (onDeck(x, z, margin) && FUNNELS.every(fn => Math.hypot(x - fn.x, z - fn.z) > fn.r + 1)) return new V(x, 0, z);
   }
-  return new V(22, 0, 0);
+  return STAGE.preview.clone();
 }
 function createFighters(specs, stocks, tags){
   for (const f of G.fighters) f.dispose();
@@ -1021,6 +1354,8 @@ addEventListener('keydown', e => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   if (e.code === 'Escape' && G.mode === 'play' && $('result').hidden){ togglePause(); return; }
   if (e.code === 'KeyX' && !e.repeat) toggleDebug();
+  if (G.mode === 'play' && (e.code === 'Minus' || e.code === 'NumpadSubtract')) camStep(1);
+  if (G.mode === 'play' && (e.code === 'Equal' || e.code === 'NumpadAdd')) camStep(-1);
   if (G.mode === 'play' && GAME_KEYS.has(e.code)){ e.preventDefault(); keys.add(e.code); }
 });
 addEventListener('keyup', e => keys.delete(e.code));
@@ -1085,15 +1420,15 @@ function think(b){
   if (!ai.tgt || !alive(ai.tgt) || ai.tgt.state === 'ko' || --ai.tgtT <= 0){ ai.tgt = nearestFoe(b); ai.tgtT = 90 + Math.random()*120 | 0; }
   const t = ai.tgt, tOk = !!t && alive(t) && t.state !== 'ko';
   const dx = tOk ? t.pos.x - b.pos.x : 0, dz = tOk ? t.pos.z - b.pos.z : 0, dist = Math.hypot(dx, dz) || .001;
-  const edge = Math.abs(b.pos.z) > hw(b.pos.x) - 1.3;
+  const edge = !onDeck(b.pos.x, b.pos.z, 1.3);
   let goal = null, stop = 0;
   const item = nearestItem(b, 7);
-  if (ai.retreat > 0){ ai.retreat--; goal = {x:b.pos.x*.8, z:0}; }
-  else if (edge && Math.random() < D.edge*.08){ ai.retreat = 20; goal = {x:b.pos.x*.8, z:0}; }
+  if (ai.retreat > 0){ ai.retreat--; goal = {x:b.pos.x*.8, z:b.pos.z*.4}; }
+  else if (edge && Math.random() < D.edge*.08){ ai.retreat = 20; goal = {x:b.pos.x*.8, z:b.pos.z*.4}; }
   else if (!tOk){ goal = item ? item.it.pos : {x:0, z:0}; stop = item ? 0 : 2; }
   else if (b.held === 'bomb'){ if (dist < 4) goal = {x:b.pos.x - dx, z:b.pos.z - dz}; }
   else if (item && item.d < dist*.8){ goal = item.it.pos; }
-  else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : 1.1; }
+  else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : b.weapon ? 1.1 : (CLASS_STOP[b.cls] || 1.1); }
   inp.x = inp.z = 0;
   if (goal){
     const mx = goal.x - b.pos.x, mz = goal.z - b.pos.z, md = Math.hypot(mx, mz);
@@ -1120,7 +1455,7 @@ function think(b){
   const near = nearestItem(b, 1.3);
   if (near && near.it.type !== 'heal'){ press('grab'); ai.cd = 4; return; }
   const isGun = b.weapon === 'gun' || b.weapon === 'shotgun';
-  if (tOk && dist < (isGun ? (b.weapon === 'gun' ? 11 : 5.5) : b.weapon ? 2.3 : 1.9) && Math.random() < D.aggr*(isGun ? .5 : 1)){
+  if (tOk && dist < (isGun ? (b.weapon === 'gun' ? 11 : 5.5) : b.weapon ? 2.3 : (CLASS_REACH[b.cls] || 1.9)) && Math.random() < D.aggr*(isGun ? .5 : 1)){
     inp.x = dx/dist*.3; inp.z = dz/dist*.3; press('atk'); ai.wantCombo = Math.random() < D.combo; ai.cd = 4; return;
   }
   if (tOk && t.pos.y > 1 && dist < 2.5 && Math.random() < .3) press('jump');
@@ -1133,12 +1468,12 @@ function attackKey(f){
   if (f.weapon === 'gun') return 'shoot';
   if (f.weapon === 'shotgun') return 'blast';
   if (!f.onGround) return 'air';
-  return f.weapon === 'hammer' ? 'ham1' : 'jab1';
+  return f.weapon === 'hammer' ? 'ham1' : (CLASS_COMBO[f.cls] || 'jab1');
 }
 function startMove(f, key){
   const m = MOVES[key];
   if (m.weapon) f.weaponUses--;
-  f.move = m; f.moveKey = key; f.lastMove = key; f.hasHit = false; f.buffer = 0;
+  f.move = m; f.moveKey = key; f.lastMove = key; f.hasHit = false; f.hitSet = new Set(); f.buffer = 0;
   setState(f, 'attack');
   const inp = f.input;
   if (Math.hypot(inp.x, inp.z) > .2) f.facing = Math.atan2(inp.x, inp.z);
@@ -1151,14 +1486,14 @@ function hitCenter(f){
 }
 function checkHits(f){
   if (f.hasHit) return;
-  const hc = hitCenter(f), m = f.move;
+  const hc = hitCenter(f), m = f.move, sweep = !!m.sweep;
   for (const o of G.fighters){
-    if (o === f || !hittable(o)) continue;
+    if (o === f || !hittable(o) || (sweep && f.hitSet.has(o))) continue;
     if (hc.distanceTo(new V(o.pos.x, o.pos.y + .8, o.pos.z)) < m.rad + .55){
       let dx = o.pos.x - f.pos.x, dz = o.pos.z - f.pos.z, d = Math.hypot(dx, dz);
       if (d < .01){ dx = Math.sin(f.facing); dz = Math.cos(f.facing); d = 1; }
       applyHit(f, o, m, new V(dx/d, 0, dz/d), f);
-      f.hasHit = true; break;
+      if (sweep) f.hitSet.add(o); else { f.hasHit = true; break; }
     }
   }
 }
@@ -1291,8 +1626,12 @@ function buildGun(type){
 }
 const BULLET_GEO = new THREE.SphereGeometry(.09, 8, 6);
 const BULLET_MAT = new THREE.MeshBasicMaterial({color:0xffe066});
-const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul'];
-const PROJ_LOOK = {bullet:[0xffe066, .09, 3], arrow:[0xd9b98a, .06, 7], fireball:[0xff7a2f, .32, 1], soul:[0x8dff6a, .22, 1]};
+const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega'];
+const PROJ_LOOK = {bullet:[0xffe066, .09, 3], arrow:[0xd9b98a, .06, 7], fireball:[0xff7a2f, .32, 1], soul:[0x8dff6a, .22, 1],
+  bolt:[0xb48dff, .16, 1.6], holy:[0xffe066, .18, 1], note:[0x7fe3ff, .15, 1], rainbow:[0xff8fd6, .2, 2], beam:[0xff6bd6, .1, 9], mega:[0x7fe3ff, .5, 4]};
+const RAINBOW = [0xff5d4a, 0xffc23a, 0x3fbf5a, 0x2f8cff, 0x9b5de5];
+const TRAIL = {fireball:0xffa53a, soul:0x8dff6a, bolt:0xb48dff, holy:0xfff2a8, note:0x7fe3ff, mega:0xbff3ff};
+const trailColor = k => k === 'rainbow' ? RAINBOW[(G.frame >> 1) % 5] : TRAIL[k];
 function makeBullet(id, kind = 'bullet'){
   const [c, r, len] = PROJ_LOOK[kind] || PROJ_LOOK.bullet;
   const mesh = kind === 'bullet' ? new THREE.Mesh(BULLET_GEO, BULLET_MAT)
@@ -1437,10 +1776,10 @@ function removeBullet(b, spark){
 function stepBullets(){
   for (const b of [...G.bullets]){
     b.pos.addScaledVector(b.vel, DT); b.mesh.position.copy(b.pos); b.life--;
-    if ((b.kind === 'fireball' || b.kind === 'soul') && G.frame % 2 === 0) emit(b.pos, 1, b.kind === 'soul' ? 0x8dff6a : 0xffa53a, .6, .5, 14, 1.4, 0);
+    if (trailColor(b.kind) && G.frame % 2 === 0) emit(b.pos, 1, trailColor(b.kind), .6, .5, 14, 1.4, 0);
     let hit = null;
     for (const f of G.fighters){
-      if (f === b.owner || !hittable(f)) continue;
+      if (f === b.owner || !hittable(f) || (b.hitSet && b.hitSet.has(f))) continue;
       if (Math.hypot(f.pos.x - b.pos.x, f.pos.z - b.pos.z) < .6 && Math.abs(f.pos.y + .8 - b.pos.y) < 1){ hit = f; break; }
     }
     if (hit){
@@ -1449,11 +1788,47 @@ function stepBullets(){
         applyHit(null, hit, b.m, b.vel.clone().setY(0).normalize(), b.owner);
         if (b.kind === 'soul' && b.owner && alive(b.owner)){ b.owner.hp = Math.min(100, b.owner.hp + b.m.dmg); popup(new V(b.owner.pos.x, 2.4, b.owner.pos.z), '+' + b.m.dmg, 'heal'); }
       }
+      if (b.pierce){ (b.hitSet = b.hitSet || new Set()).add(hit); continue; }
       removeBullet(b, true); continue;
     }
     if (FUNNELS.some(fn => Math.hypot(b.pos.x - fn.x, b.pos.z - fn.z) < fn.r)) removeBullet(b, true);
     else if (b.life <= 0){ if (b.kind === 'fireball'){ explodeFx(b.pos); aoe(b.owner, b.pos, 2.4, b.m); } removeBullet(b, false); }
   }
+}
+
+function buildClassWeapon(cls){
+  const g = new THREE.Group(), silver = 0xc9d2de, wood = 0x8a5a2b, gold = 0xe0b13a;
+  const add = (geo, c, x, y, z, ol) => { const m = part(geo, toon(c), ol); m.position.set(x, y, z); g.add(m); return m; };
+  const blade = (len, w) => add(new THREE.BoxGeometry(.05, len, w), silver, 0, -.12 - len/2, 0, 1.08);
+  const glow = (geo, c, y) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:.85})); m.position.y = y; g.add(m); };
+  switch (cls){
+    case 'knight': add(new THREE.BoxGeometry(.4, .06, .12), gold, 0, -.08, 0); blade(.85, .16); break;
+    case 'samurai': case 'ninja': add(new THREE.CylinderGeometry(.11, .11, .03, 12), gold, 0, -.08, 0); blade(cls === 'samurai' ? 1.05 : .8, .09); break;
+    case 'warrior': add(new THREE.CylinderGeometry(.045, .045, .9, 8), wood, 0, -.4, 0); add(new THREE.BoxGeometry(.06, .32, .38), silver, 0, -.78, .16, 1.08); break;
+    case 'berserker': add(new THREE.CylinderGeometry(.05, .05, 1.15, 8), wood, 0, -.5, 0); for (const z of [-.22, .22]) add(new THREE.BoxGeometry(.06, .42, .42), silver, 0, -.98, z, 1.08); break;
+    case 'paladin': add(new THREE.CylinderGeometry(.04, .04, .6, 8), wood, 0, -.3, 0); add(SPH(.17), gold, 0, -.66, 0, 1.08); break;
+    case 'mage': add(new THREE.CylinderGeometry(.04, .04, 1.4, 8), wood, 0, -.45, 0); glow(SPH(.14), 0xb48dff, -1.2); break;
+    case 'priest': add(new THREE.CylinderGeometry(.04, .04, 1.3, 8), 0xf4f1ea, 0, -.45, 0); add(new THREE.TorusGeometry(.14, .03, 6, 16), gold, 0, -1.2, 0); break;
+    case 'druid': add(new THREE.CylinderGeometry(.05, .04, 1.3, 8), wood, 0, -.45, 0); add(SPH(.17), 0x3fbf5a, 0, -1.15, 0); break;
+    case 'necro': add(new THREE.CylinderGeometry(.035, .035, 1.4, 8), 0x3a3f4b, 0, -.5, 0); add(new THREE.BoxGeometry(.04, .1, .7), 0x9aa3b5, 0, -1.15, .3, 1.08); break;
+    case 'engineer': add(new THREE.BoxGeometry(.07, .55, .05), silver, 0, -.3, 0); add(new THREE.BoxGeometry(.07, .12, .22), silver, 0, -.6, .05); break;
+    case 'assassin': blade(.35, .07); break;
+    case 'gunner': { const p = buildGun('gun'); p.scale.setScalar(.85); g.add(p); break; }
+    case 'gundam': add(new THREE.CylinderGeometry(.045, .045, .25, 8), 0xf4f4f4, 0, -.1, 0); glow(new THREE.CylinderGeometry(.06, .06, 1, 10), 0xff6bd6, -.72); break;
+    default: return null;
+  }
+  return g;
+}
+function buildOffhand(cls){
+  const g = new THREE.Group();
+  if (cls === 'knight' || cls === 'paladin'){
+    const sh = part(new THREE.CylinderGeometry(.36, .36, .07, 20), toon(cls === 'knight' ? 0xb8282a : 0x2f5bd8), 1.08); sh.rotation.z = PI/2; sh.position.x = .1; g.add(sh);
+    const boss = part(SPH(.1), toon(0xe0b13a)); boss.position.x = .16; g.add(boss);
+  } else if (cls === 'archer'){ const bow = part(new THREE.TorusGeometry(.45, .03, 6, 18, PI), toon(0x8a5a2b)); bow.rotation.z = PI/2; g.add(bow); }
+  else if (cls === 'assassin'){ const d = part(new THREE.BoxGeometry(.05, .35, .07), toon(0xc9d2de), 1.08); d.position.y = -.28; g.add(d); }
+  else if (cls === 'gunner'){ const p = buildGun('gun'); p.scale.setScalar(.85); g.add(p); }
+  else return null;
+  return g;
 }
 
 /* ---------- Simulation ---------- */
@@ -1501,11 +1876,14 @@ function stepFighter(f){
     case 'attack': {
       const m = f.move, t = f.stateT;
       const inActive = t >= m.startup && t < m.startup + m.active;
-      if (m.glide && inActive){ f.vel.x = Math.sin(f.facing)*m.lunge; f.vel.z = Math.cos(f.facing)*m.lunge; }
+      if (m.glide && inActive){
+        f.vel.x = Math.sin(f.facing)*m.lunge; f.vel.z = Math.cos(f.facing)*m.lunge;
+        if (m.trail && G.frame % 2 === 0) emit(new V(f.pos.x, .8, f.pos.z), 2, RAINBOW[(G.frame >> 1) % 5], .5, .5, 30, 1.6, 0);
+      }
       else if (f.onGround) fric(.82);
       if (m.fire && t === m.startup) m.fire(f, m);
       if (m.rapid && inActive && (t - m.startup) % m.rapid === 0) fireProj(f, 'bullet', f.facing + (Math.random() - .5)*.08, 26, 36, RAPID_SHOT);
-      if (m.multi && inActive && (t - m.startup) % m.multi === 0) f.hasHit = false;
+      if (m.multi && inActive && (t - m.startup) % m.multi === 0){ f.hasHit = false; f.hitSet.clear(); }
       if (m.gun){ if (t === m.startup) fireGun(f, m); }
       else if (!m.noHit && inActive) checkHits(f);
       if (m.anim === 'slam' && t === m.startup){ const hc = hitCenter(f); hc.y = .05; dust(hc, 14); if (f.isLocal) G.shake = Math.max(G.shake, .25); }
@@ -1564,10 +1942,8 @@ function physics(f){
   }
   f.onGround = false;
   if (onDeck(f.pos.x, f.pos.z) && f.pos.y <= 0 && f.pos.y > -.9 && f.vel.y <= 0){ f.pos.y = 0; f.vel.y = 0; f.onGround = true; }
-  else if (f.pos.y < -.05 && f.pos.y > -6.3 && onDeck(f.pos.x, f.pos.z, -.35)){
-    const h = hw(f.pos.x);
-    if (h > .6) f.pos.z = Math.sign(f.pos.z || 1)*(h + .35);
-    else f.pos.x = Math.sign(f.pos.x)*(Math.abs(f.pos.x) + .4);
+  else if (f.pos.y < -.05 && f.pos.y > STAGE.wallBottom && onDeck(f.pos.x, f.pos.z, -.35)){
+    const p = STAGE.pushOut(f.pos.x, f.pos.z); f.pos.x = p.x; f.pos.z = p.z;
   }
   if (!f.splashed && f.pos.y < SEA_Y){ f.splashed = true; splash(f.pos); }
   if (f.pos.y < SEA_Y - 5) loseStock(f, 'ring');
@@ -1585,10 +1961,10 @@ function loseStock(f, why){
   else { f.state = 'wait'; f.waitT = 70; }
 }
 function announceLoss(f, why, killer){
-  const what = why === 'ring' ? 'ตกทะเล' : 'ถูก KO';
+  const what = why === 'ring' ? STAGE.fallText : 'ถูก KO';
   feed(killer && killer !== f ? `${killer.name} ส่ง ${f.name} ${what}` : `${f.name} ${what}`);
   if (f.stocks <= 0) feed(`${f.name} ตกรอบ`);
-  if (f.isLocal || G.fighters.length <= 2) banner(why === 'ring' ? 'SPLASH!' : 'K.O.', 'red');
+  if (f.isLocal || G.fighters.length <= 2) banner(why === 'ring' ? (STAGE.water ? 'SPLASH!' : 'RING OUT!') : 'K.O.', 'red');
   else if (killer && killer.isLocal) banner('K.O.!');
 }
 function respawn(f){
@@ -1617,10 +1993,7 @@ function fxTick(){
     if (f.t >= f.max) f.m.visible = false;
   }
   for (let i = pops.length - 1; i >= 0; i--){ const p = pops[i]; p.life--; p.p.y += .02; if (p.life <= 0){ p.el.remove(); pops.splice(i, 1); } }
-  if (G.frame % 9 === 0) for (let i = 0; i < 3; i++){
-    const fn = FUNNELS[i];
-    emit(new V(fn.x - .8, 7.8, fn.z), 1, 0x6b6f7c, .6, 1.6, 120, 9, -.25, .55);
-  }
+  if (STAGE.fx) STAGE.fx(G.frame);
 }
 function tick(){
   G.frame++;
@@ -1696,6 +2069,12 @@ function animAttack(f, v, t){
     case 'swing': armR.rotation.set(-1.45, 0, -.2); armL.rotation.set(-1.2, 0, -.5); tilt.rotation.y = -1*w + 1.2*e; break;
     case 'shoot': armR.rotation.set(-1.57 + .3*e, 0, -.05); armL.rotation.x = -.6; tilt.rotation.x = -.06*e; break;
     case 'blast': armR.rotation.set(-1.5 + .45*e, 0, -.05); armL.rotation.set(-1.4 + .35*e, 0, -.5); tilt.rotation.x = -.15*e; break;
+    case 'slashH2': armR.rotation.set(-1.45, 0, -.2); armL.rotation.set(-1, 0, .3); tilt.rotation.y = 1*w - 1.2*e; break;
+    case 'thrust': armR.rotation.set(-.9 + .6*w - 1*e, 0, -.1); tilt.rotation.x = .25*e; tilt.rotation.y = -.25*w + .3*e; break;
+    case 'spin': { const sp = ph === 0 ? -k*.6 : ph === 1 ? k*PI*2 : 0; tilt.rotation.y = sp; armL.rotation.set(0, 0, 1.4); armR.rotation.set(-1.4, 0, -1.2); break; }
+    case 'uppercut': armR.rotation.set(L(.5, -3, e), 0, -.2); tilt.position.y -= .15*w; tilt.rotation.x = -.2*e; break;
+    case 'headbutt': tilt.rotation.x = -.3*w + .7*e; armL.rotation.set(.5, 0, .4); armR.rotation.set(.5, 0, -.4); legL.rotation.x = .5*e; legR.rotation.x = -.5*e; break;
+    case 'stomp': legR.rotation.x = -1.2*w; tilt.rotation.x = -.1*w + .15*e; armL.rotation.z = .3 + .8*w; armR.rotation.z = -.3 - .8*w; break;
     case 'charge': armL.rotation.set(-1.5, 0, -.3); armR.rotation.set(-1.2, 0, -.3); tilt.rotation.x = .35*Math.max(w, e); break;
     case 'dash': armL.rotation.set(.8, 0, .3); armR.rotation.set(-1.6*e, 0, -.2); tilt.rotation.x = .45*Math.max(w, e); legL.rotation.x = .6; legR.rotation.x = -.6; break;
     case 'cast': { const r = Math.max(w, e); armL.rotation.set(-.6 - 1.4*r, 0, .3); armR.rotation.set(-.6 - 1.4*r, 0, -.3); tilt.rotation.x = -.15*w + .1*e; break; }
@@ -1742,8 +2121,10 @@ function pose(f){
   else if (s === 'down'){ tilt.rotation.x = -1.5; tilt.position.y = .5; armL.rotation.set(0,0,1.4); armR.rotation.set(0,0,-1.4); }
   else if (s === 'getup'){ const k = Math.min(1, t/16); tilt.rotation.x = -1.5*(1 - k); tilt.position.y = L(.5, .75, k); }
   if (f.held === 'bomb' && ['idle','run','air'].includes(s)){ armL.rotation.set(-3, 0, .35); armR.rotation.set(-3, 0, -.35); }
-  else if (f.weapon && ['idle','run','air','respawn'].includes(s)) armR.rotation.set(f.weapon === 'hammer' ? -1 : -.7, 0, -.2);
+  else if ((f.weapon || v.cw) && ['idle','run','air','respawn'].includes(s)) armR.rotation.set(f.weapon && f.weapon !== 'hammer' ? -.7 : -.95, 0, -.2);
   v.hammer.visible = f.weapon === 'hammer'; v.gun.visible = f.weapon === 'gun'; v.shotgun.visible = f.weapon === 'shotgun';
+  if (v.cw) v.cw.visible = !f.weapon;
+  if (v.oh) v.oh.visible = !f.weapon;
   v.bomb.visible = f.held === 'bomb';
   if (v.bomb.visible) v.bomb.userData.spark.scale.setScalar(.7 + Math.random()*.7);
   v.bubble.visible = s === 'guard' || s === 'guardstun';
@@ -1786,20 +2167,24 @@ function render(){
 
   if (G.mode === 'menu'){
     const a = now*.00006;
-    camPos.lerp(tmpV.set(Math.sin(a)*48, 20, Math.cos(a)*48), .04); camLook.lerp(new V(0, 0, 0), .05);
+    camPos.lerp(tmpV.set(Math.sin(a)*STAGE.orbit, STAGE.orbit*.42, Math.cos(a)*STAGE.orbit), .04); camLook.lerp(new V(0, 0, 0), .05);
   } else if (G.mode === 'custom'){
     const wide = innerWidth > 700;
-    camPos.lerp(wide ? tmpV.set(23.25, 1.6, 5.2) : tmpV.set(22, 1.2, 6.4), .1);
-    camLook.lerp(wide ? new V(23.25, .95, 0) : new V(22, -1.2, 0), .1);
+    camPos.lerp(wide ? tmpV.set(STAGE.preview.x + 1.25, 1.6, STAGE.preview.z + 5.2) : tmpV.set(STAGE.preview.x, 1.2, STAGE.preview.z + 6.4), .1);
+    camLook.lerp(wide ? new V(STAGE.preview.x + 1.25, .95, STAGE.preview.z) : new V(STAGE.preview.x, -1.2, STAGE.preview.z), .1);
   } else {
     const ts = camTargets(), mid = new V(); let spread = 0;
     if (ts.length){
       for (const f of ts) mid.add(f.pos); mid.multiplyScalar(1/ts.length);
       if (ts.length === 2) spread = ts[0].pos.distanceTo(ts[1].pos);
     }
-    mid.x = Math.max(-26, Math.min(26, mid.x)); mid.y = Math.max(0, mid.y)*.5;
-    camPos.lerp(tmpV.set(mid.x*.9, 7.5 + spread*.35 + mid.y, mid.z*.6 + 11.5 + spread*.55), .07);
-    camLook.lerp(new V(mid.x, mid.y + 1, mid.z*.8), .09);
+    mid.x = Math.max(-STAGE.camX, Math.min(STAGE.camX, mid.x)); mid.y = Math.max(0, mid.y)*.5;
+    const cz = CAM_LEVELS[G.camZoom] || CAM_LEVELS[1];
+    if (cz.all){ const d = (STAGE.camX + 6)/(Math.tan(camera.fov*PI/360)*camera.aspect)*.74; camPos.lerp(tmpV.set(0, d, d), .07); camLook.lerp(new V(0, 0, 0), .09); }
+    else {
+      camPos.lerp(tmpV.set(mid.x*.9, (7.5 + spread*.35)*cz.k + mid.y, mid.z*.6 + (11.5 + spread*.55)*cz.k), .07);
+      camLook.lerp(new V(mid.x, mid.y + 1, mid.z*.8), .09);
+    }
   }
   camera.position.copy(camPos);
   if (G.shake > .005 && !REDUCE && !G.paused){
@@ -1935,6 +2320,7 @@ function readMenuCfg(){
   G.cfg.n = +$('nf').value;
   G.cfg.st = +(document.querySelector('input[name=st]:checked') || {}).value || 2;
   G.cfg.df = (document.querySelector('input[name=diff]:checked') || {}).value || 'normal';
+  G.cfg.stage = (document.querySelector('input[name=stage]:checked') || {}).value || 'titanic';
 }
 function botSpecs(from, n){
   const out = [];
@@ -1957,6 +2343,7 @@ function startOffline(kind){
   const n = Math.max(kind === 'local2' ? 2 : 2, G.cfg.n);
   const specs = [{name:LOOKS[0].name, ctrl:'p1', look:LOOKS[0]}];
   if (kind === 'local2') specs.push({name:LOOKS[1].name, ctrl:'p2', look:LOOKS[1]});
+  setStage(G.cfg.stage);
   beginMatch(specs.concat(botSpecs(specs.length, n)), G.cfg.st);
 }
 function togglePause(force){
@@ -2203,12 +2590,12 @@ const Net = {
   },
   computeSlots(){
     const humans = [{peer:this.me || '', nm:LOOKS[0].name, lk:encLook(LOOKS[0])}]
-      .concat(this.guests().slice(0, 15).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 7) : null})));
-    const n = Math.min(16, Math.max(G.cfg.n, humans.length));
+      .concat(this.guests().slice(0, 31).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 7) : null})));
+    const n = Math.min(32, Math.max(G.cfg.n, humans.length));
     const slots = humans.map(h => [h.peer, h.nm, h.lk]);
     for (let i = humans.length, b = 1; i < n; i++, b++){
-      if (!this.botLooks[b]) this.botLooks[b] = encLook(randomLook(''));
-      slots.push(['', 'บอท ' + b, this.botLooks[b]]);
+      if (!this.botLooks[b]) this.botLooks[b] = 1 + Math.floor(Math.random()*1e6);
+      slots.push(['', this.botLooks[b]]);
     }
     this.slots = slots;
   },
@@ -2218,19 +2605,22 @@ const Net = {
   },
   publishRoom(){
     if (this.role !== 'host') return;
-    this.presence({r:'h', nm:LOOKS[0].name, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df)], ph:this.ph, ep:this.epoch, slots:this.slots});
+    this.presence({r:'h', nm:LOOKS[0].name, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage)], ph:this.ph, ep:this.epoch, slots:this.slots});
     this.adv();
   },
   start(){
     this.computeSlots();
     this.epoch++; this.ph = 'play';
-    const specs = this.slots.map(([peer, nm, lk], i) => {
+    const specs = this.slots.map((sl, i) => {
+      const [peer, nm, lk] = sl;
       if (i === 0) return {name:nm, ctrl:'p1', look:LOOKS[0]};
       if (peer) return {name:nm, ctrl:'net', peer, look:decLook(lk, nm)};
-      return {name:nm, ctrl:'bot', look:decLook(lk, nm)};
+      const bn = slotName(sl, i);
+      return {name:bn, ctrl:'bot', look:seededLook(Number(nm) || i, bn)};
     });
-    this.presence({ph:'play', ep:this.epoch, slots:this.slots, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df)], res:null, win:null, sn:null});
+    this.presence({ph:'play', ep:this.epoch, slots:this.slots, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage)], res:null, win:null, sn:null});
     this.adv();
+    setStage(G.cfg.stage);
     beginMatch(specs, G.cfg.st);
   },
   readInputs(){
@@ -2313,8 +2703,10 @@ const Net = {
   },
   applyHost(p){
     if (!p || typeof p !== 'object') return;
-    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 16);
+    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 32);
     if (Array.isArray(p.cfg)) this.cfg = p.cfg;
+    const stk = Array.isArray(p.cfg) ? STAGE_KEYS[Number(p.cfg[3])] : null;
+    if (stk && stk !== STAGE_KEY && G.mode !== 'play'){ setStage(stk); if (G.mode === 'menu') enterAttract(); }
     if (p.ph === 'wait'){
       if (G.mode === 'play' && $('result').hidden){ this.backToRoom(); return; }
       if (!$('roomView').hidden) renderRoomView();
@@ -2331,10 +2723,11 @@ const Net = {
   guestStart(p){
     const st = Array.isArray(p.cfg) ? Math.max(1, Math.min(3, Number(p.cfg[1]) || 2)) : 2;
     const specs = this.slots.map(s => {
-      const peer = typeof s[0] === 'string' ? s[0] : '', nm = cleanName(s[1], 'ผู้เล่น');
+      const peer = typeof s[0] === 'string' ? s[0] : '', isBot = !peer && s.length === 2, nm = isBot ? slotName(s, this.slots.indexOf(s)) : cleanName(s[1], 'ผู้เล่น');
       const me = !!peer && peer === this.me;
-      return {name:nm, ctrl:'remote', peer, me, look:me ? LOOKS[0] : decLook(s[2], nm)};
+      return {name:nm, ctrl:'remote', peer, me, look:me ? LOOKS[0] : isBot ? seededLook(Number(s[1]) || 1, nm) : decLook(s[2], nm)};
     });
+    setStage(STAGE_KEYS[Array.isArray(p.cfg) ? Number(p.cfg[3]) : 0] || 'titanic');
     beginMatch(specs, st);
     G.me = G.fighters.findIndex(f => f.isLocal);
     for (const f of G.fighters) f.netInit = false;
@@ -2441,7 +2834,7 @@ function guestTick(){
   }
   for (const it of G.items) if (it.netPos) it.pos.lerp(it.netPos, .4);
   for (const b of G.bombs){ if (b.netPos) b.pos.lerp(b.netPos, .5); b.mesh.position.copy(b.pos); b.mesh.rotation.x += .25; }
-  for (const b of G.bullets){ if (b.netPos){ b.netPos.addScaledVector(b.vel, DT); b.pos.lerp(b.netPos, .6); } b.mesh.position.copy(b.pos); if ((b.kind === 'fireball' || b.kind === 'soul') && G.frame % 2 === 0) emit(b.pos, 1, b.kind === 'soul' ? 0x8dff6a : 0xffa53a, .6, .5, 14, 1.4, 0); }
+  for (const b of G.bullets){ if (b.netPos){ b.netPos.addScaledVector(b.vel, DT); b.pos.lerp(b.netPos, .6); } b.mesh.position.copy(b.pos); if (trailColor(b.kind) && G.frame % 2 === 0) emit(b.pos, 1, trailColor(b.kind), .6, .5, 14, 1.4, 0); }
   if (G.countdown > 0){ G.countdown--; cdBanner(G.countdown); }
   Net.sendInput();
 }
@@ -2486,18 +2879,18 @@ function renderRoomView(){
   $('shareLink').hidden = typeof navigator.share !== 'function';
   $('rCfg').hidden = !host; $('rCfgText').hidden = host;
   if (host){
-    $('rN').value = G.cfg.n; $('rNOut').textContent = G.cfg.n; $('rSt').value = G.cfg.st; $('rDf').value = G.cfg.df;
+    $('rN').value = G.cfg.n; $('rNOut').textContent = G.cfg.n; $('rSt').value = G.cfg.st; $('rDf').value = G.cfg.df; $('rStage').value = G.cfg.stage;
   } else {
     const c = Net.cfg || [];
-    $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'}`;
+    $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'} · ด่าน${(STAGES[STAGE_KEYS[Number(c[3])]] || STAGES.titanic).name}`;
   }
   const list = $('slotList'); list.textContent = '';
   const slots = Net.slots || [];
   $('slotHead').textContent = `นักสู้ในห้อง (${slots.length})`;
   slots.forEach((s, i) => {
     const row = document.createElement('div'); row.className = 'srow';
-    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = hex(TEAM[i % 16]);
-    const n = document.createElement('span'); n.className = 'sn'; n.textContent = cleanName(s[1], 'ผู้เล่น');
+    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = hex(TEAM[i % 32]);
+    const n = document.createElement('span'); n.className = 'sn'; n.textContent = slotName(s, i);
     row.append(dot, n);
     const tag = (cls, text) => { const b = document.createElement('span'); b.className = 'badge ' + cls; b.textContent = text; row.appendChild(b); };
     if (i === 0) tag('host', 'host');
@@ -2547,7 +2940,7 @@ function setLookVals(patch){
   const i = G.editSlot;
   LOOKS[i] = {...LOOKS[i], ...patch};
   const f = G.fighters[0]; f.setLook(LOOKS[i]); f.squash = 10;
-  emit(new V(22, 1.6, .4), 8, 0xffc23a, 2.5, 3, 18, 1, 4);
+  emit(STAGE.preview.clone().add(new V(0, 1.6, .4)), 8, 0xffc23a, 2.5, 3, 18, 1, 4);
   saveLooks(); reflectCustom();
 }
 function selectSlot(i){
@@ -2562,7 +2955,7 @@ function openCustom(next){
   hideAllPanels(); clearArena();
   G.mode = 'custom';
   createFighters([{name:'', ctrl:'none', look:LOOKS[G.editSlot]}], 99, false);
-  G.fighters[0].reset(new V(22, 0, 0), 0, 99);
+  G.fighters[0].reset(STAGE.preview.clone(), 0, 99);
   $('custom').hidden = false;
   reflectCustom();
 }
@@ -2611,8 +3004,32 @@ $('myName').addEventListener('input', e => { LOOKS[0].name = cleanName(e.target.
 $('rN').addEventListener('input', e => { G.cfg.n = +e.target.value; $('rNOut').textContent = G.cfg.n; Net.computeSlots(); Net.publishRoom(); renderRoomView(); });
 $('rSt').addEventListener('change', e => { G.cfg.st = +e.target.value; Net.publishRoom(); });
 $('rDf').addEventListener('change', e => { G.cfg.df = e.target.value; Net.publishRoom(); });
+$('rStage').addEventListener('change', e => { G.cfg.stage = e.target.value; setStage(G.cfg.stage); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
+for (const r of document.querySelectorAll('input[name=stage]')) r.addEventListener('change', e => {
+  G.cfg.stage = e.target.value; setStage(G.cfg.stage); if (G.mode === 'menu') enterAttract();
+  try { localStorage.setItem('skybrawl.stage', G.cfg.stage); } catch (err) {}
+});
+try { const sp = localStorage.getItem('skybrawl.stage'); if (STAGES[sp]){ G.cfg.stage = sp; setStage(sp); $('sg-' + sp).checked = true; } } catch (err) {}
 $('rStart').onclick = () => { if (Net.role === 'host') Net.start(); };
 $('rLeave').onclick = () => { Net.leave(); hideAllPanels(); $('online').hidden = false; showLobbyView(); };
+const CAM_LEVELS = [{name:'ใกล้', k:.75}, {name:'ปกติ', k:1}, {name:'กว้าง', k:1.4}, {name:'กว้างมาก', k:1.9}, {name:'ทั้งด่าน', all:true}];
+G.camZoom = 1;
+try { const cz = Number(localStorage.getItem('skybrawl.cam')); if (cz >= 0 && cz < CAM_LEVELS.length) G.camZoom = cz; } catch (e) {}
+function camStep(d){
+  G.camZoom = Math.max(0, Math.min(CAM_LEVELS.length - 1, G.camZoom + d));
+  $('camBtn').textContent = 'กล้อง: ' + CAM_LEVELS[G.camZoom].name;
+  try { localStorage.setItem('skybrawl.cam', String(G.camZoom)); } catch (e) {}
+}
+camStep(0);
+$('camBtn').onclick = () => camStep(G.camZoom === CAM_LEVELS.length - 1 ? -G.camZoom : 1);
+{
+  let acc = 0;
+  canvas.addEventListener('wheel', e => {
+    if (G.mode !== 'play') return;
+    e.preventDefault(); acc += e.deltaY;
+    if (Math.abs(acc) > 90){ camStep(acc > 0 ? 1 : -1); acc = 0; }
+  }, {passive:false});
+}
 $('pauseBtn').onclick = () => { if ($('result').hidden) togglePause(true); };
 $('spec').onclick = () => {
   const list = G.fighters.filter(f => alive(f) && f.stocks > 0); if (!list.length) return;
