@@ -57,6 +57,8 @@ button,select,input{font-family:inherit;color:inherit}
 .skillinfo{border:2px solid var(--ink);border-radius:12px;padding:8px 10px;background:var(--white);font-size:13px;line-height:1.5}
 .skillinfo b{color:var(--skill)}
 #hudMid{display:grid;gap:6px;justify-items:center;pointer-events:auto}
+#hudBtns{display:grid;gap:6px;justify-items:center}
+#hudBtns .chipbtn[hidden]{display:none}
 .chipbtn{font-family:var(--display);font-size:13px;background:var(--paper);border:3px solid var(--ink);border-radius:10px;padding:5px 10px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;white-space:nowrap}
 #autoBtn.on{background:var(--gold)}
 #bossBar{display:grid;grid-template-columns:auto minmax(120px,32vw) auto;align-items:center;gap:8px;background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:5px 10px;font-family:var(--display);font-size:12px;white-space:nowrap}
@@ -199,7 +201,30 @@ button{touch-action:manipulation}
 #tbtns button.on{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);filter:brightness(.9)}
 #rotHint{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 120px);transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:13px;font-weight:500;padding:4px 12px;border-radius:999px;white-space:nowrap;display:none;animation:fi 6s both}
 @media (orientation:portrait){ #rotHint{display:block} }
-@media (max-height:430px){ #tbtns{transform:scale(.85);transform-origin:right bottom} #joy{transform:scale(.85)} }
+/* Phones held sideways: everything shrinks and moves to the edges so the arena stays visible.
+   The fighter list collapses to its header; tap it to open. */
+@media (max-height:520px){
+  #hud{padding:calc(env(safe-area-inset-top,0px) + 6px) calc(env(safe-area-inset-right,0px) + 8px) 0 calc(env(safe-area-inset-left,0px) + 8px);gap:8px}
+  #cards{gap:4px}
+  .pcard{width:min(190px,27vw);padding:4px 8px;border-width:2px;border-radius:10px;box-shadow:2px 2px 0 var(--ink);gap:3px}
+  .pname{font-size:13px} .pitem{font-size:10px} .hp{height:9px;border-width:1.5px} .pip{width:9px;height:9px;border-width:1.5px} .hpnum{font-size:11px}
+  .skrow{font-size:10px;gap:5px} .skbar{height:6px;border-width:1.5px;min-width:24px}
+  #hudMid{gap:4px}
+  #hudBtns{display:flex;gap:4px;flex-wrap:nowrap}
+  .chipbtn{font-size:10px;padding:3px 6px;border-width:2px;border-radius:8px;box-shadow:2px 2px 0 var(--ink)}
+  #stoneBar{padding:3px 6px;gap:6px;border-width:2px;box-shadow:2px 2px 0 var(--ink)} #stoneBar .sb{width:min(96px,18vw);font-size:9px} #stoneBar .shp{height:6px}
+  #bossBar{padding:3px 8px;gap:6px;font-size:11px;border-width:2px;box-shadow:2px 2px 0 var(--ink);grid-template-columns:auto minmax(90px,24vw) auto} #bossBar .bhp{height:8px}
+  #board{width:auto;min-width:110px;padding:3px 8px;border-width:2px;border-radius:10px;box-shadow:2px 2px 0 var(--ink);pointer-events:auto;cursor:pointer}
+  #boardHead{font-size:11px} #boardHead::after{content:'▾';margin-left:2px}
+  #brows{display:none} #board.open #brows{display:grid;max-height:62vh} #board.open #boardHead::after{content:'▴'}
+  #feed{top:calc(env(safe-area-inset-top,0px) + 58px)} #feed.low{top:calc(env(safe-area-inset-top,0px) + 82px)}
+  .fi{font-size:11px;padding:2px 9px}
+  #banner{font-size:clamp(34px,9vw,72px);-webkit-text-stroke:3px var(--ink);text-shadow:4px 4px 0 var(--ink)}
+  .pop{font-size:16px;-webkit-text-stroke:2.5px var(--ink)} .pop.combo,.pop.th{font-size:13px}
+  .tag .tn{font-size:10px;-webkit-text-stroke:2.5px var(--ink)} .tag.me .tn{font-size:11px} .tag .tb{width:34px;height:4px}
+  #tbtns{transform:scale(.8);transform-origin:right bottom} #joy{transform:scale(.8)}
+}
+@media (max-height:380px){ #tbtns{transform:scale(.7)} #joy{transform:scale(.7)} .pcard{width:min(170px,25vw)} }
 
 #custom{position:fixed;inset:0;display:flex;justify-content:flex-end;align-items:stretch;padding:16px;pointer-events:none;box-sizing:border-box}
 .cpanel{pointer-events:auto;width:min(380px,100%);max-height:100%;overflow-y:auto;background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);padding:16px;display:grid;gap:14px;align-content:start;box-sizing:border-box}
@@ -249,11 +274,13 @@ button{touch-action:manipulation}
       <div class="sb"><span id="shn0">หินแดง</span><div class="shp"><i id="shp0" style="background:#ff5d4a"></i></div></div>
       <div class="sb"><span id="shn1">หินน้ำเงิน</span><div class="shp"><i id="shp1" style="background:#2f8cff"></i></div></div>
     </div>
-    <button id="pauseBtn" class="chipbtn" type="button">II เมนู</button>
-    <button id="camBtn" class="chipbtn" type="button" title="ปรับมุมกล้อง (ปุ่ม - และ = หรือล้อเมาส์)">กล้อง: ปกติ</button>
-    <button id="touchBtn" class="chipbtn" type="button">ปุ่มจอ: ปิด</button>
-    <button id="autoBtn" class="chipbtn" type="button" title="ให้บอทเล่นแทน (ปุ่ม T)">ออโต้: ปิด</button>
-    <button id="spec" class="chipbtn" type="button" hidden>ดูคนถัดไป</button>
+    <div id="hudBtns">
+      <button id="pauseBtn" class="chipbtn" type="button">II เมนู</button>
+      <button id="camBtn" class="chipbtn" type="button" title="ปรับมุมกล้อง (ปุ่ม - และ = หรือล้อเมาส์)">กล้อง: ปกติ</button>
+      <button id="touchBtn" class="chipbtn" type="button">ปุ่มจอ: ปิด</button>
+      <button id="autoBtn" class="chipbtn" type="button" title="ให้บอทเล่นแทน (ปุ่ม T)">ออโต้: ปิด</button>
+      <button id="spec" class="chipbtn" type="button" hidden>ดูคนถัดไป</button>
+    </div>
   </div>
   <div id="board"><div id="boardHead"><span>นักสู้</span><span id="aliveCount"></span></div><div id="brows"></div></div>
 </div>
@@ -305,6 +332,7 @@ button{touch-action:manipulation}
         <span class="lbl">โหมด</span>
         <input type="radio" name="mode" id="md-ffa" value="ffa" checked><label for="md-ffa">ตะลุมบอน</label>
         <input type="radio" name="mode" id="md-team" value="team"><label for="md-team">ทีมตีหิน</label>
+        <input type="radio" name="mode" id="md-boss" value="boss"><label for="md-boss">ตีบอส</label>
       </div>
       <div class="seg" role="radiogroup" aria-label="ด่าน">
         <span class="lbl">ด่าน</span>
@@ -313,7 +341,7 @@ button{touch-action:manipulation}
         <input type="radio" name="stage" id="sg-siam" value="siam"><label for="sg-siam">สยาม</label>
         <input type="radio" name="stage" id="sg-gvg" value="gvg"><label for="sg-gvg">สนามกิลวอ</label>
         <input type="radio" name="stage" id="sg-halloween" value="halloween"><label for="sg-halloween">ฮัลโลวีน</label>
-        <input type="radio" name="stage" id="sg-christmas" value="christmas"><label for="sg-christmas">คริสต์มาส (บอส)</label>
+        <input type="radio" name="stage" id="sg-christmas" value="christmas"><label for="sg-christmas">คริสต์มาส</label>
       </div>
     </div>
     <div class="btns">
@@ -405,7 +433,7 @@ button{touch-action:manipulation}
         <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="64" value="2"><output id="rNOut" for="rN">2</output></div>
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
-        <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option></select></div>
+        <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option><option value="boss">ตีบอส (ด่านคริสต์มาส)</option></select></div>
         <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
@@ -673,6 +701,18 @@ const MOVES = {
   ay3:{name:'แสงอวยพร', anim:'cast', startup:9, active:1, recovery:16, noHit:true, dmg:7, kb:6, up:3, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'holy', f.facing, 18, 35, m)},
   sk_acolyte:  {name:'ฮีล', anim:'cast', startup:8, active:1, recovery:12, noHit:true, skill:true, heal:45,
     fire:(f, m) => healOne(f, m.heal, 10)},
+  // Ice mage: the skill freezes everyone caught in the burst (a hit breaks the ice early)
+  fr1:{name:'กระทุ้งไม้เท้า', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:2.5, up:0, stun:16, reach:1.3, rad:.75, lunge:2, next:'fr2', hitstop:4},
+  fr2:{name:'กระทุ้งซ้ำ', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:3, up:0, stun:18, reach:1.3, rad:.75, lunge:2, next:'fr3', hitstop:4},
+  fr3:{name:'โคลด์โบลต์', anim:'cast', startup:8, active:1, recovery:16, noHit:true, dmg:7, kb:6, up:3, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'ice', f.facing, 22, 40, m)},
+  sk_frost:    {name:'ฟรอสต์ไดเวอร์', anim:'cast', startup:10, active:1, recovery:14, noHit:true, dmg:8, kb:0, up:0, stun:20, blast:2.4, freeze:100, hitstop:6, shake:.3, skill:true,
+    fire:(f, m) => { const t = f.lock && hittable(f.lock) ? f.lock : nearestTarget(f, 12), a = t ? Math.atan2(t.pos.x - f.pos.x, t.pos.z - f.pos.z) : f.facing; fireProj(f, 'ice', a, 16, 55, m); }},
+  // Lightning mage: the skill jumps from target to target and leaves everyone it touches numb (ชา)
+  vo1:{name:'กระทุ้งไม้เท้า', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:2.5, up:0, stun:16, reach:1.3, rad:.75, lunge:2, next:'vo2', hitstop:4},
+  vo2:{name:'กระทุ้งซ้ำ', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:3, up:0, stun:18, reach:1.3, rad:.75, lunge:2, next:'vo3', hitstop:4},
+  vo3:{name:'ไลท์นิ่งโบลต์', anim:'cast', startup:8, active:1, recovery:16, noHit:true, dmg:7, kb:6, up:3, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'spark', f.facing, 28, 34, m)},
+  sk_volt:     {name:'สายฟ้าลูกโซ่', anim:'roar', startup:10, active:1, recovery:16, noHit:true, dmg:9, kb:3, up:0, stun:20, shock:180, chain:4, hitstop:6, shake:.35, skill:true,
+    fire:(f, m) => chainLightning(f, m)},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -705,12 +745,14 @@ const SKILL_INFO = {
   rogue:{cd:420, range:5, desc:'พุ่งฉก ขโมยอาวุธของคนที่โดน และดูดพลัง 6'},
   taekwon:{cd:360, range:2.2, desc:'เตะหมุนเป็นพายุ เตะทุกคนรอบตัวลอยขึ้นฟ้า'},
   acolyte:{cd:300, range:-1, desc:'ฮีลเพื่อนที่เลือดน้อยที่สุดในระยะ 10 ช่อง (ไม่มีเพื่อน = ฮีลตัวเอง)'},
+  frost:{cd:480, range:10, desc:'ยิงน้ำแข็งใส่ศัตรูที่ใกล้ที่สุด ระเบิดเป็นวง ทุกคนในวงถูกแช่แข็งขยับไม่ได้ 1.7 วินาที (โดนตีแล้วน้ำแข็งแตก)'},
+  volt:{cd:480, range:10, desc:'สายฟ้ากระโดดไปโดนศัตรูสูงสุด 4 คน ทุกคนที่โดนติดสถานะชา 3 วินาที: เดินช้า กระโดดไม่ได้ และกระตุกเป็นพักๆ'},
 };
 // First hit of each class's ground combo; the chain continues through each move's next
 const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
   archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1',
-  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1'};
-const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2};
+  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1', frost:'fr1', volt:'vo1'};
+const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2};
 const CLASS_STOP = {archer:6, gunner:5, hunter:6};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
 const RAPID_SHOT = {dmg:5, kb:3, up:0, stun:12, hitstop:2, shake:.03};
@@ -1409,7 +1451,7 @@ const STAGES = {
       if (fr % 12 === 0){ const o = HALLOWEEN_OBS[(fr/12 | 0) % 6]; emit(new V(o.x + (Math.random() - .5), 1.8, o.z), 1, 0x9fffd0, .3, .8, 70, 1.4, -.15, .7); }
       if (fr % 5 === 0) emit(new V(0, 4.6, 0), 1, 0xffa53a, .4, 1.2, 30, 1, -.4, .8);
     }},
-  christmas:{name:'คริสต์มาส (บอส)', fallText:'ตกหุบหิมะ', water:null, fallY:-8, wallBottom:-3.2, camX:32, orbit:60, boss:true,
+  christmas:{name:'คริสต์มาส', fallText:'ตกหุบหิมะ', water:null, fallY:-8, wallBottom:-3.2, camX:32, orbit:60,
     preview:new V(-6, 0, 6), spawn:[-28, 28, -12, 12], box:[-32, 32, -15, 15], obstacles:XMAS_OBS, blocks:XMAS_BLOCKS, fog:0x9fb6d8, fogNear:60, fogFar:220, shadow:[44, 26], noClouds:true,
     light:{sky:0xdfe9ff, ground:0x5a6f9a, hemi:.8, sun:0xfff0dc, sunI:.75},
     sky:['#1d2a5a','#3f5a9a','#9fb6d8','#e9f1fb'], build:buildChristmas, inside:rectInside(XM_W, XM_D), pushOut:rectPush(XM_W, XM_D),
@@ -1420,7 +1462,11 @@ const STAGES = {
     }},
 };
 const STAGE_KEYS = Object.keys(STAGES);
-const MODE_KEYS = ['ffa', 'team'];
+const MODE_KEYS = ['ffa', 'team', 'boss'];
+// The raid boss lives in its own mode and always fights on the Christmas stage (its walls and platforms are built around it)
+const BOSS_STAGE = 'christmas';
+const modeOf = v => MODE_KEYS.includes(v) ? v : 'ffa';
+const stageFor = (stage, mode) => mode === 'boss' ? BOSS_STAGE : stage;
 let STAGE = STAGES.titanic, STAGE_KEY = 'titanic';
 function setStage(k){
   const key = STAGES[k] ? k : 'titanic', st = STAGES[key];
@@ -1671,6 +1717,25 @@ const OUTFITS = {
     oRobe(t, 0xe8eef8); oCollar(t, 0x3f6fb5, .3, .08); oCross(t, 0x3f6fb5);
     const sash = OP(new THREE.BoxGeometry(.1, .7, .03), 0x3f6fb5); sash.position.set(-.12, -.1, .34); sash.rotation.z = -.4; t.add(sash);
   }},
+  frost:{name:'นักเวทน้ำแข็ง', body:0xbfe6f5, head:true, build(h, t){
+    const band = OP(new THREE.TorusGeometry(.56, .045, 6, 24), 0xe8f7ff); band.rotation.x = PI/2 - .15; band.position.y = .3; h.add(band);
+    const ice = new THREE.MeshBasicMaterial({color:0x9fe3ff, transparent:true, opacity:.9});
+    [[0, .62, .3, .34], [-.24, .5, .3, .24], [.24, .5, .3, .24], [-.42, .38, .2, .17], [.42, .38, .2, .17]].forEach(([x, y, z, hh]) => {
+      const c = new THREE.Mesh(new THREE.ConeGeometry(.07, hh, 5), ice); c.position.set(x, y, z); h.add(c);
+    });
+    oRobe(t, 0x3f8fc8); oCollar(t, 0xe8f7ff, .32, .1);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.08), ice); gem.position.set(0, .08, .36); t.add(gem);
+  }},
+  volt:{name:'นักเวทสายฟ้า', body:0x2b2f5a, head:true, build(h, t){
+    const brim = OP(new THREE.CylinderGeometry(.78, .78, .05, 28), 0x1d2040, 1.04); brim.position.y = .3; h.add(brim);
+    const cone = OP(new THREE.ConeGeometry(.44, .9, 20), 0x1d2040, 1.04); cone.position.set(0, .75, -.08); cone.rotation.x = -.2; h.add(cone);
+    const zap = new THREE.MeshBasicMaterial({color:0xfff27a});
+    [[.0, .0, .0], [.09, -.14, -.5], [-.02, -.28, .4]].forEach(([dx, dy, rz], i) => {
+      const s = new THREE.Mesh(new THREE.BoxGeometry(.07, .2, .03), zap); s.position.set(.2 + dx, .78 + dy, .22); s.rotation.z = rz + (i === 1 ? .9 : -.4); h.add(s);
+    });
+    oRobe(t, 0x1d2040); oCollar(t, 0xfff27a, .3, .07);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.08), zap); gem.position.set(0, .08, .36); t.add(gem);
+  }},
 };
 const OUTFIT_K = Object.keys(OUTFITS);
 
@@ -1708,7 +1773,12 @@ const CLASS_ON = new Set(OUTFIT_K);
     if (hit.dmg !== undefined || dmg !== undefined) hit.dmg = Math.round((dmg ?? hit.dmg)*mDmg*10)/10;
     if (hit.kb !== undefined || kb !== undefined) hit.kb = (kb ?? hit.kb)*mKb;
     if (heal !== undefined && hit.heal !== undefined) hit.heal = heal;
+    const fz = num(s.freeze, 0, 10, `skills.${k}.freeze`), sh = num(s.shock, 0, 20, `skills.${k}.shock`);
+    if (fz !== undefined && hit.freeze !== undefined) hit.freeze = Math.round(fz*60);
+    if (sh !== undefined && hit.shock !== undefined) hit.shock = Math.round(sh*60);
   }
+  if (MOVES.sk_frost) SKILL_INFO.frost.desc = `ยิงน้ำแข็งใส่ศัตรูที่ใกล้ที่สุด ระเบิดเป็นวง ทุกคนในวงถูกแช่แข็งขยับไม่ได้ ${Math.round(MOVES.sk_frost.freeze/6)/10} วินาที (โดนตีแล้วน้ำแข็งแตก)`;
+  if (MOVES.sk_volt) SKILL_INFO.volt.desc = `สายฟ้ากระโดดไปโดนศัตรูสูงสุด 4 คน ทุกคนที่โดนติดสถานะชา ${Math.round(MOVES.sk_volt.shock/6)/10} วินาที: เดินช้า กระโดดไม่ได้ และกระตุกเป็นพักๆ`;
   if (MOVES.sk_priest) SKILL_INFO.priest.desc = `ฮีลหมู่ ฟื้นพลัง ${MOVES.sk_priest.heal} ให้ตัวเองและเพื่อนรอบตัวในระยะ 7 ช่อง (มีผลกับเพื่อนเท่านั้น)`;
   if (MOVES.sk_acolyte) SKILL_INFO.acolyte.desc = `ฮีล ฟื้นพลัง ${MOVES.sk_acolyte.heal} ให้เพื่อนที่เลือดน้อยที่สุดในระยะ 10 ช่อง (ไม่มีเพื่อน = ฮีลตัวเอง)`;
   if (MOVES.sk_paladin) SKILL_INFO.paladin.desc = `อมตะ 1.6 วินาที ฟื้นพลัง ${MOVES.sk_paladin.heal} และผลักคนรอบตัว`;
@@ -2030,19 +2100,20 @@ class Fighter {
   setLook(look){
     if (look && !CLASS_ON.has(look.outfit || 'none')) look = {...look, outfit:'none'};
     const old = this.vis;
-    if (old) scene.remove(old.root, old.hurt, old.hit);
+    if (old){ scene.remove(old.root, old.hurt, old.hit); if (old.ice) scene.remove(old.ice); }
     this.look = look; this.vis = buildChibi(look, this.team);
     this.cls = OUTFITS[look.outfit] ? look.outfit : 'none';
     if (old) this.vis.root.rotation.y = old.root.rotation.y;
   }
   dispose(){
     scene.remove(this.vis.root, this.vis.hurt, this.vis.hit);
+    if (this.vis.ice) scene.remove(this.vis.ice);
     if (this.tag) this.tag.el.remove();
   }
   reset(p, facing, stocks){
     this.pos.copy(p); this.vel.set(0,0,0); this.netPos.copy(p); this.netVel.set(0,0,0);
     this.facing = facing; this.vis.root.rotation.y = facing;
-    Object.assign(this, {hp:100, hpLag:100, stocks, state:'idle', stateT:0, move:null, moveKey:'', hasHit:false,
+    Object.assign(this, {chill:0, shock:0, hp:100, hpLag:100, stocks, state:'idle', stateT:0, move:null, moveKey:'', hasHit:false,
       buffer:0, invuln:0, onGround:true, weapon:null, weaponUses:0, held:null, stun:16, squash:0, combo:0, freeze:0,
       hits:0, dmgDealt:0, kos:0, lastHitBy:-1, lastHitT:-9999, place:0, lr:0, waitT:0, lastMove:null,
       splashed:false, netInit:false, nc:null, skillCd:0, rage:0, lock:null, lockIdx:-1});
@@ -2436,6 +2507,65 @@ function checkHits(f){
   }
 }
 const aliveCount = () => G.fighters.filter(f => f.stocks > 0).length;
+/* ---------- Status effects: แช่แข็ง (frozen solid) and ชา (numb) ---------- */
+const ICE_GEO = new THREE.BoxGeometry(1.15, 1.95, 1.15);
+const ICE_MAT = new THREE.MeshBasicMaterial({color:0xaee8ff, transparent:true, opacity:.45, depthWrite:false});
+function freezeF(o, n){
+  if (o === G.boss || !alive(o)) return;
+  o.chill = n; o.shock = 0; setState(o, 'hitstun'); o.stun = n; o.vel.x = o.vel.z = 0;
+  const c = new V(o.pos.x, o.pos.y + 1, o.pos.z);
+  flash(c, 0xbfefff, .5, 1.8, 12); emit(c, 14, 0xdff7ff, 4, 3, 24, 1.3, 4);
+  popup(new V(o.pos.x, o.pos.y + 2.3, o.pos.z), 'แช่แข็ง!', 'combo th', 36);
+}
+function thaw(o){
+  o.chill = 0;
+  const c = new V(o.pos.x, o.pos.y + 1, o.pos.z);
+  emit(c, 18, 0xdff7ff, 6, 4, 22, 1.2, 10); flash(c, 0xffffff, .35, 1.4, 8);
+}
+function shockF(o, n){
+  if (o === G.boss || !alive(o)) return;
+  if (!(o.shock > 0)) popup(new V(o.pos.x, o.pos.y + 2.3, o.pos.z), 'ชา!', 'combo th', 36);
+  o.shock = Math.max(o.shock || 0, n);
+}
+// Lightning that jumps from the first target to the nearest unhit enemy, up to m.chain of them
+function chainLightning(f, m){
+  const first = f.lock && hittable(f.lock) && Math.hypot(f.lock.pos.x - f.pos.x, f.lock.pos.z - f.pos.z) < 12 ? f.lock : nearestTarget(f, 11);
+  const hand = new V(f.pos.x + Math.sin(f.facing)*.6, f.pos.y + 1.6, f.pos.z + Math.cos(f.facing)*.6);
+  flash(hand, 0xfff27a, .4, 1.6, 10);
+  if (!first){ for (let i = 0; i < 3; i++) zap(hand, new V(hand.x + Math.sin(f.facing + (i - 1)*.5)*5, .3, hand.z + Math.cos(f.facing + (i - 1)*.5)*5)); return; }
+  const hit = new Set(); let from = hand, cur = first;
+  for (let k = 0; k < (m.chain || 4) && cur; k++){
+    hit.add(cur);
+    const to = new V(cur.pos.x, cur.pos.y + 1, cur.pos.z);
+    zap(from, to);
+    const dx = cur.pos.x - (k ? from.x : f.pos.x), dz = cur.pos.z - (k ? from.z : f.pos.z), n = Math.hypot(dx, dz) || 1;
+    applyHit(null, cur, m, new V(dx/n, 0, dz/n), f);
+    from = to;
+    let best = null, bd = 6;
+    for (const o of G.fighters){
+      if (o === f || hit.has(o) || ally(f, o) || !hittable(o)) continue;
+      const d = Math.hypot(o.pos.x - to.x, o.pos.z - to.z);
+      if (d < bd){ bd = d; best = o; }
+    }
+    cur = best;
+  }
+  if (f.isLocal) G.shake = Math.max(G.shake, .35);
+}
+function zap(a, b){
+  const n = Math.max(4, Math.round(a.distanceTo(b)*2.5));
+  for (let i = 0; i <= n; i++){
+    const k = i/n, j = i && i < n ? .35 : 0;
+    emit(new V(a.x + (b.x - a.x)*k + (Math.random() - .5)*j, a.y + (b.y - a.y)*k + (Math.random() - .5)*j, a.z + (b.z - a.z)*k + (Math.random() - .5)*j), 1, i % 2 ? 0xffffff : 0xfff27a, .4, .3, 12, 1.5, 0);
+  }
+  flash(b, 0xfff27a, .45, 1.5, 10);
+}
+function statusFx(f, shown){
+  const v = f.vis, on = shown && f.chill > 0;
+  if (on && !v.ice){ v.ice = new THREE.Mesh(ICE_GEO, ICE_MAT); v.ice.renderOrder = 3; scene.add(v.ice); }
+  if (v.ice){ v.ice.visible = on; if (on){ v.ice.position.set(f.pos.x, f.pos.y + .97, f.pos.z); v.ice.rotation.y = f.idx*.7; } }
+  if (shown && f.shock > 0 && (G.frame + f.idx) % 5 === 0)
+    emit(new V(f.pos.x + (Math.random() - .5)*.9, f.pos.y + .3 + Math.random()*1.5, f.pos.z + (Math.random() - .5)*.9), 2, Math.random() < .5 ? 0xfff27a : 0xffffff, 2.6, 1.5, 9, 1.1, 0);
+}
 function applyHit(att, tgt, m, dir, credit){
   if (ally(credit, tgt)) return;
   if (credit && credit !== tgt && credit.rage > 0) m = {...m, dmg:Math.round(m.dmg*1.5)};
@@ -2452,6 +2582,7 @@ function applyHit(att, tgt, m, dir, credit){
     return;
   }
   if (guarding) popup(at, 'GUARD BREAK', 'combo');
+  if (tgt.chill > 0 && !m.freeze) thaw(tgt);
   const comboing = ['hitstun','tumble'].includes(tgt.state);
   tgt.hp -= m.dmg;
   if (credit && credit !== tgt){
@@ -2484,6 +2615,8 @@ function applyHit(att, tgt, m, dir, credit){
   G.shake = Math.max(G.shake, (m.shake || .08)*(local ? 1 : .3));
   emit(at, m.launch ? 16 : 9, 0xffe066, m.launch ? 7 : 5, 3, 20, 1.4, 6);
   flash(at, 0xffffff, .25, m.launch ? 1.6 : 1, m.launch ? 10 : 7);
+  if (m.freeze) freezeF(tgt, m.freeze);
+  if (m.shock) shockF(tgt, m.shock);
 }
 
 /* ---------- Items & bombs ---------- */
@@ -2579,13 +2712,13 @@ function buildGun(type){
 }
 const BULLET_GEO = new THREE.SphereGeometry(.09, 8, 6);
 const BULLET_MAT = new THREE.MeshBasicMaterial({color:0xffe066});
-const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid', 'snow'];
+const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid', 'snow', 'ice', 'spark'];
 const PROJ_LOOK = {bullet:[0xffe066, .09, 3], arrow:[0xd9b98a, .06, 7], fireball:[0xff7a2f, .32, 1], soul:[0x8dff6a, .22, 1],
   bolt:[0xb48dff, .16, 1.6], holy:[0xffe066, .18, 1], note:[0x7fe3ff, .15, 1], rainbow:[0xff8fd6, .2, 2], beam:[0xff6bd6, .1, 9], mega:[0x7fe3ff, .5, 4],
-  falcon:[0x8a5a2b, .22, 1.6], thunder:[0xfff27a, .14, 5], potion:[0xff8a3a, .14, 1], acid:[0x8dff6a, .2, 1], snow:[0xffffff, .34, 1]};
+  falcon:[0x8a5a2b, .22, 1.6], thunder:[0xfff27a, .14, 5], potion:[0xff8a3a, .14, 1], acid:[0x8dff6a, .2, 1], snow:[0xffffff, .34, 1], ice:[0xbfefff, .24, 1.6], spark:[0xfff27a, .13, 2]};
 const RAINBOW = [0xff5d4a, 0xffc23a, 0x3fbf5a, 0x2f8cff, 0x9b5de5];
-const TRAIL = {fireball:0xffa53a, soul:0x8dff6a, bolt:0xb48dff, holy:0xfff2a8, note:0x7fe3ff, mega:0xbff3ff, falcon:0xf2e6c8, thunder:0xfff27a, potion:0xffa53a, acid:0x8dff6a};
-const BLAST_COL = {snow:0xe8f4ff, fireball:0xffa53a, falcon:0xf2e6c8, potion:0xff7a2f, acid:0x8dff6a};
+const TRAIL = {fireball:0xffa53a, soul:0x8dff6a, bolt:0xb48dff, holy:0xfff2a8, note:0x7fe3ff, mega:0xbff3ff, falcon:0xf2e6c8, thunder:0xfff27a, potion:0xffa53a, acid:0x8dff6a, ice:0xdff7ff, spark:0xfff27a};
+const BLAST_COL = {ice:0xbfefff, snow:0xe8f4ff, fireball:0xffa53a, falcon:0xf2e6c8, potion:0xff7a2f, acid:0x8dff6a};
 // Projectiles that burst into an area when they land: the fireball, plus any move with a blast radius
 function burst(b){
   const r = b.kind === 'fireball' ? 2.4 : b.m && b.m.blast;
@@ -2846,6 +2979,8 @@ function buildClassWeapon(cls){
     case 'acolyte': add(new THREE.CylinderGeometry(.035, .035, .9, 8), 0xf4f1ea, 0, -.35, 0); glow(SPH(.13), 0x6fe08a, -.86); break;
     case 'merchant': add(new THREE.CylinderGeometry(.04, .04, .7, 8), wood, 0, -.3, 0); add(new THREE.BoxGeometry(.06, .24, .3), silver, 0, -.58, .12, 1.08); break;
     case 'blacksmith': add(new THREE.CylinderGeometry(.045, .045, .75, 8), wood, 0, -.32, 0); add(new THREE.BoxGeometry(.24, .2, .4), 0x5a5f6b, 0, -.72, 0, 1.08); break;
+    case 'frost': add(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0xdff4ff, 0, -.45, 0); glow(new THREE.OctahedronGeometry(.16), 0x9fe3ff, -1.2); break;
+    case 'volt': add(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0x2b2f3a, 0, -.45, 0); glow(new THREE.OctahedronGeometry(.15), 0xfff27a, -1.2); break;
     case 'wizard': add(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0x3a2a1a, 0, -.45, 0); glow(new THREE.OctahedronGeometry(.15), 0xff5d4a, -1.2); break;
     case 'crusader': add(new THREE.CylinderGeometry(.035, .035, 1.6, 8), wood, 0, -.5, 0); add(new THREE.ConeGeometry(.08, .3, 8), silver, 0, -1.42, 0, 1.08).rotation.x = PI; break;
     case 'alchemist': add(new THREE.CylinderGeometry(.03, .03, .2, 8), 0xf4f1ea, 0, -.12, 0); glow(SPH(.14), 0x6fe08a, -.32); break;
@@ -3180,6 +3315,26 @@ function stepFighter(f){
   if (f.state === 'wait'){ if (--f.waitT <= 0) respawn(f); return; }
   if (atkP) f.buffer = 8;
   if (f.freeze > 0){ f.freeze--; return; }
+  if (f.chill > 0){
+    // Frozen solid: no input at all until the ice melts or someone breaks it
+    if (f.state === 'ko' || f.state === 'respawn' || !alive(f)) f.chill = 0;
+    else {
+      f.chill--; f.stateT++; f.stun = f.stateT + f.chill + 1;
+      if (f.skillCd > 0) f.skillCd--;
+      if (f.invuln > 0) f.invuln--;
+      f.vel.x = f.vel.z = 0;
+      if (f.chill === 0){ thaw(f); setState(f, f.onGround ? 'idle' : 'air'); }
+      return;
+    }
+  }
+  if (f.shock > 0){
+    f.shock--;
+    // Numb: every so often the body locks up for a moment
+    if (f.shock % 50 === 25 && (f.state === 'idle' || f.state === 'run') && G.countdown <= 30){
+      setState(f, 'hitstun'); f.stun = 14; f.vel.x *= .2; f.vel.z *= .2;
+      emit(new V(f.pos.x, f.pos.y + 1, f.pos.z), 8, 0xfff27a, 4, 2, 12, 1.2, 0);
+    }
+  }
   if (f.skillCd > 0) f.skillCd--;
   if (f.rage > 0){ f.rage--; if (G.frame % 6 === 0) emit(new V(f.pos.x, f.pos.y + .9, f.pos.z), 1, 0xff4a3a, 1.5, 2, 18, 1.2, -1); }
   if (!atkP && f.buffer > 0) f.buffer--;
@@ -3190,11 +3345,11 @@ function stepFighter(f){
   switch (f.state){
     case 'idle': case 'run': case 'air': {
       if (G.countdown > 30){ fric(.8); break; }
-      const sp = (f.onGround ? (f.weapon ? 5.6 : 6.4) : 5.6)*(f.rage > 0 ? 1.25 : 1), k = f.onGround ? .35 : .12;
+      const sp = (f.onGround ? (f.weapon ? 5.6 : 6.4) : 5.6)*(f.rage > 0 ? 1.25 : 1)*(f.shock > 0 ? .55 : 1), k = f.onGround ? .35 : .12;
       f.vel.x += (inp.x*sp - f.vel.x)*k; f.vel.z += (inp.z*sp - f.vel.z)*k;
       if (mag > .2) f.facing = Math.atan2(inp.x, inp.z);
       f.state = f.onGround ? (mag > .2 ? 'run' : 'idle') : 'air';
-      if (jumpP && f.onGround){ f.vel.y = 12.5; f.onGround = false; f.state = 'air'; dust(f.pos); }
+      if (jumpP && f.onGround && !(f.shock > 0)){ f.vel.y = 12.5; f.onGround = false; f.state = 'air'; dust(f.pos); }
       else if (skillP && f.skillCd <= 0 && G.countdown <= 30) useSkill(f);
       else if (grabP) doGrab(f);
       else if (f.buffer > 0){
@@ -3309,7 +3464,7 @@ function loseStock(f, why){
     if (killer && killer !== f) killer.kos++;
     announceLoss(f, why, killer);
   }
-  f.weapon = null; f.held = null; f.combo = 0; f.lastHitBy = -1;
+  f.weapon = null; f.held = null; f.combo = 0; f.lastHitBy = -1; f.chill = 0; f.shock = 0;
   if (f.stocks <= 0){ f.state = 'out'; f.place = aliveCount() + 1; checkEnd(); }
   else { f.state = 'wait'; f.waitT = 70; }
 }
@@ -3324,7 +3479,7 @@ function respawn(f){
   let p = randomDeckPoint(1.5);
   if (G.teamMode) for (let k = 0; k < 20 && (p.x < 0) !== (f.side === 0); k++) p = randomDeckPoint(1.5);
   f.pos.copy(p); f.pos.y = 10; f.vel.set(0,0,0);
-  f.hp = 100; f.invuln = 150; f.onGround = false; f.splashed = false; setState(f, 'respawn');
+  f.hp = 100; f.invuln = 150; f.onGround = false; f.splashed = false; f.chill = 0; f.shock = 0; setState(f, 'respawn');
 }
 function checkEnd(){
   if (G.raid){ if (!G.fighters.some(f => f.stocks > 0)) endRaid(false); return; }
@@ -3456,6 +3611,7 @@ function pose(f){
   const shown = alive(f);
   v.root.visible = shown && !(f.invuln > 0 && s !== 'getup' && (T >> 2) % 2 === 0);
   v.hurt.visible = v.hit.visible = false;
+  statusFx(f, shown);
   if (!shown) return;
   v.root.position.copy(f.pos);
   let d = f.facing - v.root.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); v.root.rotation.y += d*.4;
@@ -3713,7 +3869,7 @@ function readMenuCfg(){
   G.cfg.st = +(document.querySelector('input[name=st]:checked') || {}).value || 2;
   G.cfg.df = (document.querySelector('input[name=diff]:checked') || {}).value || 'normal';
   G.cfg.stage = (document.querySelector('input[name=stage]:checked') || {}).value || 'titanic';
-  G.cfg.mode = (document.querySelector('input[name=mode]:checked') || {}).value === 'team' ? 'team' : 'ffa';
+  G.cfg.mode = modeOf((document.querySelector('input[name=mode]:checked') || {}).value);
 }
 function botSpecs(from, n){
   const out = [];
@@ -3723,7 +3879,7 @@ function botSpecs(from, n){
 }
 function beginMatch(specs, stocks){
   hideAllPanels(); clearArena();
-  G.raid = !!STAGE.boss; G.raidWin = null;
+  G.raid = G.cfg.mode === 'boss'; G.raidWin = null;
   G.teamMode = !G.raid && G.cfg.mode === 'team' && specs.length >= 2;
   if (G.teamMode) makeStones(specs.length); else clearStones();
   if (G.raid) makeBoss(); else clearBoss();
@@ -3745,7 +3901,7 @@ function startOffline(kind){
   const n = Math.max(kind === 'local2' ? 2 : 2, G.cfg.n);
   const specs = [{name:LOOKS[0].name, ctrl:'p1', look:LOOKS[0]}];
   if (kind === 'local2') specs.push({name:LOOKS[1].name, ctrl:'p2', look:LOOKS[1]});
-  setStage(G.cfg.stage);
+  setStage(stageFor(G.cfg.stage, G.cfg.mode));
   beginMatch(specs.concat(botSpecs(specs.length, n)), G.cfg.st);
 }
 function togglePause(force){
@@ -3858,8 +4014,8 @@ function mergePres(target, patch){
 const LOBBY_ID = 'skybrawl-lobby-v2';
 function sanitizeRoom(r){
   if (!r || typeof r !== 'object' || !CODE_RE.test(String(r.code))) return null;
-  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(64, Number(r.n) || 0)),
-    mx:Math.max(2, Math.min(64, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
+  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(124, Number(r.n) || 0)),
+    mx:Math.max(2, Math.min(124, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
 }
 const PeerLobby = {
   active:false, peer:null, holder:null, conn:null, clients:new Map(), rooms:[], online:0, mine:null,
@@ -4294,6 +4450,11 @@ function renderAccount(msg){
    One channel per relayed guest (host + that guest only). Free Supabase allows ~100 realtime events a second for the whole
    project, and a relayed player costs ~35, so relay seats per room are capped (config.js network.relayMax). */
 const NETCFG = (window.SKY_CONFIG && window.SKY_CONFIG.network) || {};
+// config.js → online: room size. maxPlayers = fighters in a room (bots fill the empty seats), maxHumans = real players
+const ONCFG = (window.SKY_CONFIG && window.SKY_CONFIG.online) || {};
+const cfgInt = (v, lo, hi, def) => { const n = Math.round(Number(v)); if (v === '' || v === null || v === undefined || !Number.isFinite(n)) return def; if (n < lo || n > hi) console.warn('[config.js] online value out of range ' + lo + '–' + hi + ':', v); return Math.max(lo, Math.min(hi, n)); };
+const ONLINE_MAX = cfgInt(ONCFG.maxPlayers, 2, 124, 64);
+const ONLINE_HUMANS = Math.min(ONLINE_MAX, cfgInt(ONCFG.maxHumans, 2, 124, 64));
 const RELAY_MODE = ['auto', 'always', 'off'].includes(NETCFG.supaRelay) ? NETCFG.supaRelay : 'auto';
 const RELAY_MAX = Math.max(0, Math.min(20, Number.isFinite(+NETCFG.relayMax) && NETCFG.relayMax !== '' ? Math.round(+NETCFG.relayMax) : 3));
 const RELAY_SNAP_MS = 95, RELAY_IN_MS = 110, RELAY_PING_MS = 3000, RELAY_DEAD_MS = 12000;
@@ -4494,8 +4655,8 @@ const Net = {
   },
   computeSlots(){
     const humans = [{peer:this.me || '', nm:LOOKS[0].name, lk:encLook(LOOKS[0])}]
-      .concat(this.guests().slice(0, 63).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 7) : null})));
-    const n = Math.min(64, Math.max(G.cfg.n, humans.length));
+      .concat(this.guests().slice(0, ONLINE_HUMANS - 1).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 7) : null})));
+    const n = Math.min(ONLINE_MAX, Math.max(G.cfg.n, humans.length));
     const slots = humans.map(h => [h.peer, h.nm, h.lk]);
     for (let i = humans.length, b = 1; i < n; i++, b++){
       if (!this.botLooks[b]) this.botLooks[b] = 1 + Math.floor(Math.random()*1e6);
@@ -4525,7 +4686,7 @@ const Net = {
     });
     this.presence({ph:'play', ep:this.epoch, slots:this.slots, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], res:null, win:null, sn:null});
     this.adv();
-    setStage(G.cfg.stage);
+    setStage(stageFor(G.cfg.stage, G.cfg.mode));
     beginMatch(specs, G.cfg.st);
   },
   readInputs(){
@@ -4545,14 +4706,14 @@ const Net = {
   },
   encF(f){
     const r = v => Math.round(v);
-    const flags = (f.weapon ? 1 : 0) | (f.held ? 2 : 0) | (f.invuln > 0 ? 4 : 0) | (f.onGround ? 8 : 0) | (f.rage > 0 ? 16 : 0);
+    const flags = (f.weapon ? 1 : 0) | (f.held ? 2 : 0) | (f.invuln > 0 ? 4 : 0) | (f.onGround ? 8 : 0) | (f.rage > 0 ? 16 : 0) | (f.chill > 0 ? 32 : 0) | (f.shock > 0 ? 64 : 0);
     return [r(f.pos.x*100), r(f.pos.y*100), r(f.pos.z*100), r(f.vel.x*10), r(f.vel.y*10), r(f.vel.z*10), r(f.facing*100),
       STATES.indexOf(f.state), Math.min(f.stateT, 999), Math.ceil(Math.max(0, f.hp)), f.stocks, flags, f.move ? MOVE_KEYS.indexOf(f.moveKey) : -1, f.weaponUses, f.lr, WEAPONS.indexOf(f.weapon), Math.ceil(f.skillCd/6), f.lock ? f.lock.idx : -1];
   },
-  // 30 / 20 / 15 / 10 snapshots a second for up to 8 / 16 / 32 / 63 guests
-  sendEvery(){ const g = this.conns.size; return g <= 8 ? 2 : g <= 16 ? 3 : g <= 32 ? 4 : 6; },
+  // 30 / 20 / 15 / 10 / 7.5 snapshots a second for up to 8 / 16 / 32 / 63 / 123 guests
+  sendEvery(){ const g = this.conns.size; return g <= 8 ? 2 : g <= 16 ? 3 : g <= 32 ? 4 : g <= 63 ? 6 : 8; },
   // Rough upload the host needs in Mbit/s: ~60 bytes per fighter + overhead, per guest, per snapshot
-  uploadMbps(fighters, guests){ const every = guests <= 8 ? 2 : guests <= 16 ? 3 : guests <= 32 ? 4 : 6; return (60*fighters + 400)*(60/every)*guests*8/1e6; },
+  uploadMbps(fighters, guests){ const every = guests <= 8 ? 2 : guests <= 16 ? 3 : guests <= 32 ? 4 : guests <= 63 ? 6 : 8; return (60*fighters + 400)*(60/every)*guests*8/1e6; },
   hostSend(){
     if (this.role !== 'host') return;
     const r = v => Math.round(v*100);
@@ -4704,9 +4865,9 @@ const Net = {
   },
   applyHost(p){
     if (!p || typeof p !== 'object') return;
-    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 64);
+    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 124);
     if (Array.isArray(p.cfg)) this.cfg = p.cfg;
-    const stk = Array.isArray(p.cfg) ? STAGE_KEYS[Number(p.cfg[3])] : null;
+    const stk = Array.isArray(p.cfg) && STAGE_KEYS[Number(p.cfg[3])] ? stageFor(STAGE_KEYS[Number(p.cfg[3])], MODE_KEYS[Number(p.cfg[4])]) : null;
     if (stk && stk !== STAGE_KEY && G.mode !== 'play'){ setStage(stk); if (G.mode === 'menu') enterAttract(); }
     if (p.ph === 'wait'){
       if (G.mode === 'play' && $('result').hidden){ this.backToRoom(); return; }
@@ -4730,8 +4891,8 @@ const Net = {
       const me = !!peer && peer === this.me;
       return {name:nm, ctrl:'remote', peer, me, look:me ? LOOKS[0] : isBot ? seededLook(Number(s[1]) || 1, nm) : decLook(s[2], nm)};
     });
-    setStage(STAGE_KEYS[Array.isArray(p.cfg) ? Number(p.cfg[3]) : 0] || 'titanic');
-    G.cfg.mode = Array.isArray(p.cfg) && Number(p.cfg[4]) === 1 ? 'team' : 'ffa';
+    G.cfg.mode = Array.isArray(p.cfg) ? modeOf(MODE_KEYS[Number(p.cfg[4])]) : 'ffa';
+    setStage(stageFor(STAGE_KEYS[Array.isArray(p.cfg) ? Number(p.cfg[3]) : 0] || 'titanic', G.cfg.mode));
     beginMatch(specs, st);
     G.me = G.fighters.findIndex(f => f.isLocal);
     for (const f of G.fighters) f.netInit = false;
@@ -4761,7 +4922,7 @@ const Net = {
       else if (Math.abs(f.stateT - n(8)) > 6) f.stateT = n(8);
       f.hp = hp; f.stocks = stk; f.stun = 18;
       f.weapon = a.length > 15 ? (WEAPONS[n(15)] || null) : (fl & 1 ? 'hammer' : null); f.held = fl & 2 ? 'bomb' : null; f.invuln = fl & 4 ? 10 : 0; f.onGround = !!(fl & 8);
-      f.weaponUses = n(13); f.skillCd = n(16)*6; f.rage = fl & 16 ? 30 : 0; f.lockIdx = a.length > 17 ? n(17) : -1;
+      f.weaponUses = n(13); f.skillCd = n(16)*6; f.rage = fl & 16 ? 30 : 0; f.chill = fl & 32 ? 30 : 0; f.shock = fl & 64 ? 30 : 0; f.lockIdx = a.length > 17 ? n(17) : -1;
     });
     if (Array.isArray(sn.it)){
       const seen = new Set();
@@ -4912,7 +5073,7 @@ function renderRoomView(){
     $('rN').value = G.cfg.n; $('rNOut').textContent = G.cfg.n; $('rSt').value = G.cfg.st; $('rDf').value = G.cfg.df; $('rStage').value = G.cfg.stage; $('rMode').value = G.cfg.mode;
   } else {
     const c = Net.cfg || [];
-    $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'} · ด่าน${(STAGES[STAGE_KEYS[Number(c[3])]] || STAGES.titanic).name}${Number(c[4]) === 1 ? ' · ทีมตีหิน' : ''}`;
+    $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'} · ด่าน${(STAGES[stageFor(STAGE_KEYS[Number(c[3])], MODE_KEYS[Number(c[4])])] || STAGES.titanic).name}${Number(c[4]) === 1 ? ' · ทีมตีหิน' : Number(c[4]) === 2 ? ' · ตีบอส' : ''}`;
   }
   const list = $('slotList'); list.textContent = '';
   const slots = Net.slots || [];
@@ -5062,17 +5223,22 @@ $('mkRoom').onclick = () => Net.create();
 $('codeGo').onclick = () => Net.join($('codeIn').value.trim().toLowerCase());
 $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('codeGo').click(); });
 $('myName').addEventListener('input', e => { LOOKS[0].name = cleanName(e.target.value, 'P1'); saveLooks(); });
+$('rN').max = ONLINE_MAX;
+$('board').addEventListener('click', () => $('board').classList.toggle('open'));
 $('rN').addEventListener('input', e => { G.cfg.n = +e.target.value; $('rNOut').textContent = G.cfg.n; Net.computeSlots(); Net.publishRoom(); renderRoomView(); });
 $('rSt').addEventListener('change', e => { G.cfg.st = +e.target.value; Net.publishRoom(); });
 $('rDf').addEventListener('change', e => { G.cfg.df = e.target.value; Net.publishRoom(); });
-$('rMode').addEventListener('change', e => { G.cfg.mode = e.target.value === 'team' ? 'team' : 'ffa'; Net.publishRoom(); });
-$('rStage').addEventListener('change', e => { G.cfg.stage = e.target.value; setStage(G.cfg.stage); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
+$('rMode').addEventListener('change', e => { G.cfg.mode = modeOf(e.target.value); setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
+$('rStage').addEventListener('change', e => { G.cfg.stage = e.target.value; setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
 for (const r of document.querySelectorAll('input[name=stage]')) r.addEventListener('change', e => {
-  G.cfg.stage = e.target.value; setStage(G.cfg.stage); if (G.mode === 'menu') enterAttract();
+  G.cfg.stage = e.target.value; setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract();
   try { localStorage.setItem('skybrawl.stage', G.cfg.stage); } catch (err) {}
 });
-try { if (localStorage.getItem('skybrawl.mode') === 'team'){ G.cfg.mode = 'team'; $('md-team').checked = true; } } catch (err) {}
-for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListener('change', e => { try { localStorage.setItem('skybrawl.mode', e.target.value); } catch (err) {} });
+try { const m = localStorage.getItem('skybrawl.mode'); if (m === 'team' || m === 'boss'){ G.cfg.mode = m; $('md-' + m).checked = true; } } catch (err) {}
+for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListener('change', e => {
+  try { localStorage.setItem('skybrawl.mode', e.target.value); } catch (err) {}
+  G.cfg.mode = modeOf(e.target.value); setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract();
+});
 try { const sp = localStorage.getItem('skybrawl.stage'); if (STAGES[sp]){ G.cfg.stage = sp; setStage(sp); $('sg-' + sp).checked = true; } } catch (err) {}
 $('rStart').onclick = () => { if (Net.role === 'host') Net.start(); };
 $('rLeave').onclick = () => { Net.leave(); hideAllPanels(); $('online').hidden = false; showLobbyView(); };
