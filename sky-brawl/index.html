@@ -164,7 +164,13 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;border:2px solid var(
 .srow .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);flex:none}
 .badge{font-size:11px;font-weight:700;border:2px solid var(--ink);border-radius:999px;padding:0 7px;white-space:nowrap}
 .badge.me{background:var(--gold)} .badge.bot{background:var(--track)} .badge.host{background:var(--ink);color:var(--paper)}
-.slots{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));max-height:34vh;overflow-y:auto}
+.slots{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));max-height:34vh;overflow-y:auto}
+.srow{flex-wrap:wrap;row-gap:3px;column-gap:6px}
+.srow .sn{flex:1 1 70px;min-width:70px}
+.srow .badge{flex:none}
+.teamrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.teamrow button.red[aria-pressed="true"]{background:#ff5d4a;border-color:#ff5d4a;color:#fff}
+.teamrow button.blue[aria-pressed="true"]{background:#2f8cff;border-color:#2f8cff;color:#fff}
 .joinrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .joinrow label{font-weight:500}
 .tin{font-size:16px;padding:7px 10px;border:2px solid var(--ink);border-radius:10px;background:var(--white);color:var(--ink);min-width:0;flex:1 1 120px;box-sizing:border-box}
@@ -345,6 +351,7 @@ button{touch-action:manipulation}
         <input type="radio" name="stage" id="sg-christmas" value="christmas"><label for="sg-christmas">คริสต์มาส</label>
         <input type="radio" name="stage" id="sg-ice" value="ice"><label for="sg-ice">น้ำแข็ง</label>
         <input type="radio" name="stage" id="sg-hospital" value="hospital"><label for="sg-hospital">โรงพยาบาล</label>
+        <input type="radio" name="stage" id="sg-japan" value="japan"><label for="sg-japan">ญี่ปุ่นโบราณ</label>
       </div>
     </div>
     <div class="btns">
@@ -439,10 +446,12 @@ button{touch-action:manipulation}
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
         <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option><option value="boss">ตีบอส (ด่านคริสต์มาส)</option></select></div>
-        <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option><option value="ice">ทะเลสาบน้ำแข็ง</option><option value="hospital">โรงพยาบาล</option></select></div>
+        <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option><option value="ice">ทะเลสาบน้ำแข็ง</option><option value="hospital">โรงพยาบาล</option><option value="japan">เมืองญี่ปุ่นโบราณ</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
-      <div class="opt"><h4 id="slotHead">นักสู้ในห้อง</h4><div id="slotList" class="slots"></div></div>
+      <div class="opt"><h4 id="slotHead">นักสู้ในห้อง</h4>
+        <div id="teamRow" class="teamrow chips" hidden><span class="lbl">ทีมของคุณ</span><button type="button" data-tm="-1">อัตโนมัติ</button><button type="button" class="red" data-tm="0">ทีมแดง</button><button type="button" class="blue" data-tm="1">ทีมน้ำเงิน</button></div>
+        <div id="slotList" class="slots"></div></div>
       <p id="netWarn" class="note" hidden style="color:var(--p1)"></p>
       <div class="btns">
         <button class="btn red" id="rStart" type="button">เริ่มแข่ง</button>
@@ -629,6 +638,7 @@ const SFX_R = {
   roar:    {gap:200, v:1, dur:1, prio:1, f(k, t, o){ k.T(t, 120, 55, .8, .8, 'sawtooth', o, .03); k.T(t, 240, 80, .6, .4, 'square', o, .03); k.N(t, .7, 1, 'lowpass', 1400, 180, o); }},
   spirit:  {gap:200, v:.8, dur:1, prio:1, f(k, t, o){ k.T(t, 520, 260, .8, .35, 'triangle', o, .08); k.T(t, 527, 263, .8, .3, 'triangle', o, .08); k.T(t + .1, 1040, 700, .6, .12, 'sine', o, .05); k.N(t, .7, .3, 'bandpass', 1500, 500, o, 2); }},
   lance:   {gap:150, v:.7, dur:.4, f(k, t, o){ k.N(t, .3, 1.4, 'bandpass', 900, 3000, o, 1.3); k.T(t, 600, 1400, .25, .25, 'sawtooth', o); }},
+  skyslash:{gap:120, v:.9, dur:.5, prio:1, f(k, t, o){ k.N(t, .4, 1.6, 'bandpass', 4200, 700, o, 2); k.T(t, 1900, 420, .35, .35, 'sawtooth', o); k.T(t + .02, 3800, 900, .2, .15, 'sine', o); }},
   claw:    {gap:60, v:.65, dur:.25, f(k, t, o){ k.N(t, .14, 1.5, 'bandpass', 1200, 4200, o, 1.4); k.T(t, 900, 280, .1, .3, 'sawtooth', o); }},
   flame:   {gap:110, v:.7, dur:.3, f(k, t, o){ k.N(t, .26, 1, 'bandpass', 500, 1700, o, .9); k.T(t, 180, 90, .2, .3, 'sawtooth', o); }},
   click:   {ui:1, gap:30, v:.5, dur:.06, f(k, t, o){ k.T(t, 900, 700, .045, .4, 'square', o); }},
@@ -817,7 +827,14 @@ const MOVES = {
     fire:f => shadowStep(f)},
   sk_ninja:    {name:'พุ่งเงา', anim:'dash', startup:4, active:1, recovery:16, noHit:true, dmg:9, kb:6, up:4, launch:true, hitstop:5, skill:true,
     fire:(f, m) => ninjaDash(f, m)},
-  sk_samurai:  {name:'อิไอ', anim:'iai', startup:18, active:4, recovery:22, dmg:18, kb:13, up:8, launch:true, reach:1.6, rad:1.5, lunge:3, hitstop:12, shake:.5, skill:true},
+  // เพลงดาบร่องนภา: one draw, one crescent of sword wind that flies about 9 squares and cuts through everyone in its path
+  sk_samurai:  {name:'เพลงดาบร่องนภา', anim:'iai', startup:18, active:1, recovery:22, noHit:true, dmg:18, kb:13, up:8, launch:true, hitstop:12, shake:.5, reach:0, rad:0, skill:true, snd:'skyslash',
+    fire:(f, m) => {
+      const a = aimAngle(f, 10), b = fireProj(f, 'skyslash', a, 26, 16, m); b.pierce = true; b.rad = 1.5;
+      const c = new V(f.pos.x + Math.sin(a)*1.2, f.pos.y + 1, f.pos.z + Math.cos(a)*1.2);
+      flash(c, 0xdff4ff, .6, 2.6, 12); emit(c, 18, 0xffffff, 7, 2, 18, 1.3, 0);
+      if (f.isLocal) G.shake = Math.max(G.shake, .35);
+    }},
   sk_monk:     {name:'หมัดร้อยครั้ง', anim:'flurry', startup:4, active:24, recovery:14, multi:4, dmg:3, kb:1.2, up:0, stun:14, reach:.85, rad:.75, hitstop:2, skill:true},
   sk_bard:     {name:'คลื่นเสียง', anim:'roar', startup:10, active:1, recovery:16, noHit:true, dmg:6, kb:12, up:3, launch:true, hitstop:5, shake:.3, skill:true,
     fire:(f, m) => { const c = f.pos.clone(); flash(new V(c.x, 1, c.z), 0x7fe3ff, .5, 4.6, 18); emit(new V(c.x, 1, c.z), 24, 0x7fe3ff, 8, 1, 22, 1.2, 0); aoe(f, c, 4.6, m); }},
@@ -860,8 +877,11 @@ const MOVES = {
   ni1:{name:'ฟันเร็ว', anim:'swing', startup:4, active:3, recovery:8, dmg:5, kb:2.5, up:0, stun:16, reach:1.1, rad:.85, lunge:3, next:'ni2', hitstop:4},
   ni2:{name:'ฟันย้อนเร็ว', anim:'slashH2', startup:4, active:3, recovery:8, dmg:5, kb:2.5, up:0, stun:16, reach:1.1, rad:.85, lunge:3, next:'ni3', hitstop:4},
   ni3:{name:'พุ่งฟัน', anim:'dash', startup:6, active:8, recovery:16, dmg:9, kb:8, up:5, launch:true, lunge:10, glide:true, reach:1, rad:.9, hitstop:7, shake:.2},
-  sa1:{name:'ฟันลง', anim:'slam', startup:8, active:3, recovery:14, dmg:9, kb:5, up:0, stun:24, reach:1.4, rad:1, lunge:2.5, next:'sa2', hitstop:8, shake:.15, hy:-.2},
-  sa2:{name:'ฟันกวาด', anim:'swing', startup:9, active:4, recovery:22, sweep:true, dmg:12, kb:11, up:6, launch:true, reach:1.5, rad:1.3, lunge:2, hitstop:11, shake:.35},
+  sa1:{name:'ฟันลง', anim:'slam', startup:8, active:3, recovery:14, dmg:9, kb:5, up:0, stun:24, reach:2, rad:1.15, lunge:2.5, next:'sa2', hitstop:8, shake:.15, hy:-.2},
+  sa2:{name:'ฟันกวาด', anim:'swing', startup:9, active:4, recovery:16, sweep:true, dmg:12, kb:11, up:6, launch:true, reach:2.1, rad:1.5, lunge:2, next:'sa3', hitstop:11, shake:.35},
+  // The wanderer's finisher: a short sword wave (about 4 squares)
+  sa3:{name:'คลื่นดาบสั้น', anim:'iai', startup:10, active:1, recovery:18, noHit:true, dmg:7, kb:8, up:5, launch:true, hitstop:6, shake:.2, reach:0, rad:0,
+    fire:(f, m) => { const b = fireProj(f, 'skyslash', aimAngle(f, 6), 24, 11, m); b.pierce = true; b.rad = 1.2; b.mesh.scale.setScalar(.7); }},
   mo1:{name:'หมัดไว', anim:'punchL', startup:3, active:2, recovery:6, dmg:3, kb:1.5, up:0, stun:14, reach:.85, rad:.7, lunge:2.5, next:'mo2', hitstop:3},
   mo2:{name:'หมัดไวขวา', anim:'punchR', startup:3, active:2, recovery:6, dmg:3, kb:1.5, up:0, stun:14, reach:.85, rad:.7, lunge:2.5, next:'mo3', hitstop:3},
   mo3:{name:'เตะหมุน', anim:'kick', startup:6, active:4, recovery:16, dmg:8, kb:9, up:6, launch:true, reach:1, rad:.85, lunge:4, hitstop:8, shake:.2, hy:-.2},
@@ -999,7 +1019,7 @@ const SKILL_INFO = {
   archer:{cd:300, range:12, desc:'ยิงธนู 3 ดอกพร้อมกัน ระยะไกล'},
   assassin:{cd:480, range:9, desc:'วาร์ปไปข้างหลังศัตรูที่ใกล้ที่สุดแล้วแทง'},
   ninja:{cd:360, range:6, desc:'พุ่งทะลุไปข้างหน้า 6 ช่อง ฟันทุกคนที่ผ่าน'},
-  samurai:{cd:420, range:2.4, desc:'ชักดาบฟันกว้าง ช้าแต่แรงที่สุด'},
+  samurai:{cd:420, range:8, desc:'เพลงดาบร่องนภา: ชักดาบปล่อยคลื่นดาบรูปจันทร์เสี้ยวพุ่งไกลราว 9 ช่อง ทะลุทุกคนที่ขวาง ดาเมจสูง (ท่าต่อยที่ 3 ก็ปล่อยคลื่นดาบสั้น 4 ช่อง)'},
   monk:{cd:420, range:1.8, desc:'รัวหมัด 6 ครั้งติดกัน'},
   bard:{cd:540, range:4, desc:'คลื่นเสียงผลักทุกคนรอบตัวกระเด็นไกล'},
   gunner:{cd:480, range:10, desc:'ยิงรัว 6 นัดใส่ข้างหน้า'},
@@ -1037,7 +1057,7 @@ const GHOST_SLASH = {dmg:10, kb:9, up:6, launch:true, hitstop:6, shake:.25};
 const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
   archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1',
   merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1', frost:'fr1', volt:'vo1', demon:'dm1', spacecop:'lz1', soldier:'so1', werewolf:'ww1', tamer:'tm1', shaman:'sm1', lancer:'ln1'};
-const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2, demon:4, spacecop:2.2, soldier:2, werewolf:2.2, tamer:2.9, shaman:2.2, lancer:2.6};
+const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:3, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2, demon:4, spacecop:2.2, soldier:2, werewolf:2.2, tamer:2.9, shaman:2.2, lancer:2.6};
 const CLASS_STOP = {archer:6, gunner:5, hunter:6, demon:3};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
 const RAPID_SHOT = {dmg:5, kb:3, up:0, stun:12, hitstop:2, shake:.03};
@@ -1960,6 +1980,126 @@ function healPads(){
     }
   }
 }
+/* ---------- Ancient Japanese town: a stone-walled square over a moat; shops to hide behind, wooden stages to jump on,
+   stone lanterns and cherry trees in the way, a torii, pagoda, castle and Mount Fuji behind, petals falling ---------- */
+const JP_W = 30, JP_D = 15;
+const JP_OBS = [[-11, -2, 1.1, 'tree'], [11, 2, 1.1, 'tree'], [-4, 8, .55, 'toro'], [4, -8, .55, 'toro'], [-19, 1, .55, 'toro'], [19, -1, .55, 'toro']].map(([x, z, r, kind]) => ({x, z, r, kind}));
+const JP_BLOCKS = [
+  {x:-22, z:-9.5, hx:3.5, hz:2.2, h:3.4, kind:'house'}, {x:22, z:9.5, hx:3.5, hz:2.2, h:3.4, kind:'house'},
+  {x:0, z:-11.5, hx:3, hz:1.4, h:1.1, kind:'deck'}, {x:0, z:11.5, hx:3, hz:1.4, h:1.1, kind:'deck'},
+];
+function jpTex(){
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const t = c.getContext('2d');
+  t.fillStyle = '#c9ad7f'; t.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 900; i++){ t.fillStyle = Math.random() < .5 ? 'rgba(120,90,50,.18)' : 'rgba(255,240,210,.2)'; const s = 1 + Math.random()*3; t.fillRect(Math.random()*512, Math.random()*512, s, s); }
+  // A flagstone path across the middle
+  for (let y = 176; y < 336; y += 40) for (let x = (y/40 % 2)*30 - 30; x < 512; x += 60){
+    const g = 150 + Math.floor(Math.random()*30);
+    t.fillStyle = `rgb(${g},${g - 4},${g - 12})`; t.fillRect(x + 3, y + 3, 54, 34);
+    t.strokeStyle = 'rgba(70,60,50,.5)'; t.lineWidth = 2; t.strokeRect(x + 3, y + 3, 54, 34);
+  }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.anisotropy = 4;
+  return tex;
+}
+function buildSakura(s){
+  const g = new THREE.Group();
+  const trunk = part(new THREE.CylinderGeometry(.28*s, .42*s, 3.2*s, 7), toon(0x5a3a2a), 1.04); trunk.position.y = 1.6*s; trunk.rotation.z = .08; g.add(trunk);
+  for (const [x, y, z, r, c] of [[0, 3.9, 0, 1.9, 0xffb7d0], [1.3, 3.4, .4, 1.3, 0xffc9dc], [-1.2, 3.5, -.3, 1.4, 0xff9fc2], [.2, 4.6, -.6, 1.2, 0xffd6e5]]){
+    const b = part(new THREE.IcosahedronGeometry(r*s, 1), toon(c), 1.03); b.position.set(x*s, y*s, z*s); g.add(b);
+  }
+  return g;
+}
+function buildToro(){
+  const g = new THREE.Group(), stone = toon(0x9a958a), dark = toon(0x6f6b62);
+  const base = part(new THREE.CylinderGeometry(.5, .6, .3, 6), dark, 1.05); base.position.y = .15; g.add(base);
+  const post = part(new THREE.CylinderGeometry(.18, .22, 1.1, 6), stone, 1.05); post.position.y = .85; g.add(post);
+  const tray = part(new THREE.CylinderGeometry(.48, .4, .2, 6), stone, 1.05); tray.position.y = 1.5; g.add(tray);
+  const box = part(new THREE.BoxGeometry(.58, .5, .58), stone, 1.05); box.position.y = 1.85; g.add(box);
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(.6, .26, .3), new THREE.MeshBasicMaterial({color:0xffd27a})); glow.position.y = 1.85; g.add(glow);
+  const roof = part(new THREE.ConeGeometry(.65, .55, 6), dark, 1.05); roof.position.y = 2.38; g.add(roof);
+  const knob = part(SPH(.12), dark); knob.position.y = 2.7; g.add(knob);
+  return g;
+}
+// A two-storey shop with a dark tiled roof, a noren curtain and a paper lantern
+function buildMachiya(w, d, h, face){
+  const g = new THREE.Group(), wood = toon(0x6b4a32), plaster = toon(0xf1e6cf), roofC = toon(0x3a3f4b);
+  const body = part(new THREE.BoxGeometry(w, h, d), plaster, 1.02); body.position.y = h/2; g.add(body);
+  for (const x of [-w/2 + .1, -w/6, w/6, w/2 - .1]){ const p = part(new THREE.BoxGeometry(.2, h, .2), wood); p.position.set(x, h/2, d/2 + .02); g.add(p); }
+  const beam = part(new THREE.BoxGeometry(w + .2, .25, .25), wood); beam.position.set(0, h*.55, d/2 + .05); g.add(beam);
+  for (let x = -w/2 + .4; x < w/2 - .2; x += .32){ const s = part(new THREE.BoxGeometry(.08, h*.4, .06), wood); s.position.set(x, h*.28, d/2 + .06); g.add(s); }   // lattice
+  const roof1 = part(new THREE.BoxGeometry(w + 1.2, .3, d + 1.2), roofC, 1.02); roof1.position.y = h*.58; roof1.rotation.x = .05; g.add(roof1);
+  const roof2 = part(new THREE.CylinderGeometry(.01, Math.max(w, d)*.75, 1.4, 4), roofC, 1.02); roof2.rotation.y = PI/4; roof2.scale.set(w/Math.max(w, d), 1, d/Math.max(w, d)); roof2.position.y = h + .7; g.add(roof2);
+  const noren = part(new THREE.BoxGeometry(w*.5, .7, .04), toon(0x2f4f8a)); noren.position.set(0, h*.42, d/2 + .3); g.add(noren);
+  const lantern = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, .55, 10), new THREE.MeshBasicMaterial({color:0xff5a3a})); lantern.position.set(w/2 - .5, h*.45, d/2 + .45); g.add(lantern);
+  g.rotation.y = face;
+  return {g, lantern};
+}
+function buildJapan(){
+  const g = new THREE.Group(), W = JP_W, D = JP_D, GY = -3.8;
+  const tex = jpTex(); tex.repeat.set(W/12, D/12);
+  const top = new THREE.MeshToonMaterial({map:tex, gradientMap:gmap}), stoneWall = toon(0x8f8a80);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W*2, 8, D*2), [stoneWall, stoneWall, top, stoneWall, stoneWall, stoneWall]); base.position.y = -4; base.receiveShadow = true; g.add(base);
+  // Stone walls drop straight into the moat; a darker coping runs round the edge
+  
+  for (const [x, z, w, d] of [[0, D - .25, W*2, .5], [0, -D + .25, W*2, .5], [W - .25, 0, .5, D*2], [-W + .25, 0, .5, D*2]]){
+    const r = part(new THREE.BoxGeometry(w, .3, d), toon(0x6f6b62)); r.position.set(x, .1, z); g.add(r);
+  }
+  const lanterns = [];
+  // Cherry trees and stone lanterns (the round obstacles)
+  for (const o of JP_OBS){
+    const m = o.kind === 'tree' ? buildSakura(1.15) : buildToro();
+    m.position.set(o.x, 0, o.z); g.add(m);
+  }
+  // Shops and wooden stages (the blocks)
+  for (const b of JP_BLOCKS){
+    if (b.kind === 'house'){ const {g:h, lantern} = buildMachiya(b.hx*2, b.hz*2, b.h, b.z < 0 ? 0 : PI); h.position.set(b.x, 0, b.z); g.add(h); lanterns.push(lantern); }
+    else {
+      const deck = part(new THREE.BoxGeometry(b.hx*2, b.h, b.hz*2), toon(0x8a5a35), 1.02); deck.position.set(b.x, b.h/2, b.z); g.add(deck);
+      const plank = new THREE.Mesh(new THREE.BoxGeometry(b.hx*2 + .05, .06, b.hz*2 + .05), toon(0xa8744a)); plank.position.set(b.x, b.h + .02, b.z); g.add(plank);
+      for (const sx of [-1, 1]){ const p = part(new THREE.CylinderGeometry(.12, .12, 2.6, 6), toon(0xc0392b)); p.position.set(b.x + sx*(b.hx - .2), b.h + 1.3, b.z + (b.z < 0 ? -b.hz + .2 : b.hz - .2)); g.add(p); }
+      const l = new THREE.Mesh(new THREE.CylinderGeometry(.28, .28, .5, 10), new THREE.MeshBasicMaterial({color:0xff5a3a})); l.position.set(b.x, b.h + 2.3, b.z + (b.z < 0 ? -b.hz + .2 : b.hz - .2)); g.add(l); lanterns.push(l);
+      const rope = new THREE.Mesh(new THREE.BoxGeometry(b.hx*2, .05, .05), toon(0xf1e6cf)); rope.position.set(b.x, b.h + 2.55, l.position.z); g.add(rope);
+    }
+  }
+  // Moat water ring is the stage's own water; around it: rows of houses, a torii, a pagoda, the castle and Fuji
+  // Grass banks on the far side of the moat (the moat itself is the stage's water at fallY)
+  const M = 12, grass = toon(0x6f8a4f);
+  for (const [x, z, w, d] of [[0, -(D + M) - 150, 640, 300], [0, D + M + 150, 640, 300], [-(W + M) - 150, 0, 300, 2*(D + M)], [W + M + 150, 0, 300, 2*(D + M)]]){
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, 1, d), grass); b.position.set(x, GY - .5, z); g.add(b);
+  }
+  for (let i = 0; i < 16; i++){
+    const side = i < 8 ? -1 : 1, k = i % 8, x = -70 + k*20 + (side > 0 ? 10 : 0), z = side*(D + 26 + (k % 2)*6);
+    const {g:h} = buildMachiya(9, 6, 4.5 + (k % 3), side < 0 ? 0 : PI); h.position.set(x, GY, z); g.add(h);
+  }
+  for (let i = 0; i < 6; i++){ const t = buildSakura(1.6 + (i % 2)*.4); t.position.set((i - 2.5)*28, GY, -D - 18 - (i % 2)*8); g.add(t); }
+  const torii = new THREE.Group(), red = toon(0xd2382a), black = toon(0x2a2a2a);
+  for (const sx of [-1, 1]){ const p = part(new THREE.CylinderGeometry(.55, .65, 11, 10), red, 1.03); p.position.set(sx*5, 5.5, 0); torii.add(p); }
+  const kasagi = part(new THREE.BoxGeometry(14, .9, 1.3), black, 1.02); kasagi.position.y = 11.2; torii.add(kasagi);
+  const shimaki = part(new THREE.BoxGeometry(13, .7, 1), red, 1.02); shimaki.position.y = 10.5; torii.add(shimaki);
+  const nuki = part(new THREE.BoxGeometry(12, .6, .7), red, 1.02); nuki.position.y = 8.4; torii.add(nuki);
+  torii.position.set(-W - 14, GY, 0); torii.rotation.y = PI/2; g.add(torii);
+  const pagoda = new THREE.Group();
+  for (let i = 0; i < 5; i++){
+    const s = 1 - i*.14, body = part(new THREE.BoxGeometry(6*s, 2.6, 6*s), toon(0xc0392b), 1.02); body.position.y = 1.3 + i*3.4; pagoda.add(body);
+    const roof = part(new THREE.CylinderGeometry(.5, 6.2*s, 1.3, 4), toon(0x2f3440), 1.02); roof.rotation.y = PI/4; roof.position.y = 3.2 + i*3.4; pagoda.add(roof);
+  }
+  const spire = part(new THREE.CylinderGeometry(.15, .25, 5, 6), toon(0xd9a92a)); spire.position.y = 19.5; pagoda.add(spire);
+  pagoda.position.set(48, GY, -D - 40); g.add(pagoda);
+  const castle = new THREE.Group();
+  const keepBase = part(new THREE.CylinderGeometry(11, 14, 8, 4), toon(0x8f8a80), 1.02); keepBase.rotation.y = PI/4; keepBase.position.y = 4; castle.add(keepBase);
+  for (let i = 0; i < 3; i++){
+    const s = 1 - i*.25, b = part(new THREE.BoxGeometry(12*s, 4, 9*s), toon(0xf4efe4), 1.02); b.position.y = 10 + i*5; castle.add(b);
+    const r = part(new THREE.CylinderGeometry(1, 9.5*s, 2.2, 4), toon(0x2f4a5a), 1.02); r.rotation.y = PI/4; r.scale.z = .78; r.position.y = 13 + i*5; castle.add(r);
+  }
+  castle.position.set(-40, GY, -D - 70); g.add(castle);
+  const fuji = new THREE.Mesh(new THREE.ConeGeometry(70, 60, 24), toon(0x5d6f9a)); fuji.position.set(30, 18, -230); g.add(fuji);
+  const cap = new THREE.Mesh(new THREE.ConeGeometry(25, 21.5, 24), toon(0xf4f6fb)); cap.position.set(30, 37.5, -230); g.add(cap);
+  for (let i = 0; i < 5; i++){ const m = new THREE.Mesh(new THREE.ConeGeometry(40 + i*6, 26 + (i % 2)*10, 7), toon(0x4f6a5a)); m.position.set(-160 + i*80, 4, -170 - (i % 2)*20); g.add(m); }
+  g.userData = {lanterns};
+  return g;
+}
+
 const rectInside = (W, D) => (x, z, m) => Math.abs(x) < W - m && Math.abs(z) < D - m;
 const rectPush = (W, D) => (x, z) => (W - Math.abs(x) < D - Math.abs(z)) ? {x:Math.sign(x || 1)*(W + .35), z} : {x, z:Math.sign(z || 1)*(D + .35)};
 const STAGES = {
@@ -2024,6 +2164,15 @@ const STAGES = {
       u.pads.forEach((p, i) => { p.userData.disc.material.opacity = .38 + Math.sin(fr*.06 + i*2)*.16; });
       u.siren.material.color.setHex((fr >> 4) % 2 ? 0xff3b30 : 0x5a1612);
       u.ambulances.forEach((a, i) => a.userData.lamp.material.color.setHex(((fr >> 3) + i) % 2 ? 0xff3b30 : 0x3a8bff));
+    }},
+  japan:{name:'เมืองญี่ปุ่นโบราณ', fallText:'ตกคูปราสาท', water:0x2f6f8f, fallY:-4.5, wallBottom:-4.2, camX:28, orbit:54,
+    preview:new V(-6, 0, 4), spawn:[-25, 25, -9, 9], box:[-28, 28, -13, 13], obstacles:JP_OBS, blocks:JP_BLOCKS, fog:0xf2c6b4, fogNear:80, fogFar:260, shadow:[40, 26],
+    light:{sky:0xffe2d0, ground:0x6f8a4f, hemi:.85, sun:0xffe6c8, sunI:.75},
+    sky:['#3a3f7a', '#b3679a', '#f29b84', '#ffd9a8'], build:buildJapan, inside:rectInside(JP_W, JP_D), pushOut:rectPush(JP_W, JP_D),
+    fx:fr => {
+      const u = STAGE.group.userData;
+      u.lanterns.forEach((l, i) => l.material.color.setHex(Math.sin(fr*.12 + i*1.7) > .85 ? 0xffa060 : 0xff5a3a));
+      if (fr % 4 === 0) emit(new V((Math.random() - .5)*JP_W*2.2, 9, (Math.random() - .5)*JP_D*2.2), 1, Math.random() < .5 ? 0xffc0d8 : 0xffe0ec, .8, -.4, 160, 1, .25, .95);
     }},
 };
 const STAGE_KEYS = Object.keys(STAGES);
@@ -2155,12 +2304,16 @@ const OUTFITS = {
     for (const s of [-1, 1]){ const tl = OP(new THREE.BoxGeometry(.06, .4, .03), 0x3a3f4b); tl.position.set(s*.08, 0, -.62); tl.rotation.z = s*.35; h.add(tl); }
     const sword = OP(new THREE.BoxGeometry(.06, .9, .03), 0x2b2f3a); sword.position.set(0, .15, -.4); sword.rotation.z = .7; t.add(sword);
   }},
-  samurai:{name:'ซามูไร', body:0xa82828, head:true, noHair:true, build(h, t){
-    oDome(h, 0x2b2f3a);
-    const guard = OP(new THREE.CylinderGeometry(.6, .82, .28, 20, 1, true, PI/2, PI), 0x2b2f3a); guard.position.y = 0; h.add(guard);
-    const crest = OP(new THREE.TorusGeometry(.3, .04, 6, 20, PI), 0xe0b13a); crest.position.set(0, .5, .48); h.add(crest);
-    for (const s of [-1, 1]){ const pl = OP(new THREE.BoxGeometry(.3, .08, .34), 0xa82828, 1.06); pl.position.set(s*.48, .22, 0); pl.rotation.z = -s*.4; t.add(pl); }
-    const kat = OP(new THREE.BoxGeometry(.05, .95, .04), 0x1d2233); kat.position.set(.3, -.1, -.3); kat.rotation.set(.3, 0, -1.1); t.add(kat);
+  // The wanderer: a wide straw kasa, a faded indigo kimono, a white sash and a spare blade at the hip
+  samurai:{name:'ซามูไรพเนจร', body:0x3f4f6f, head:true, build(h, t){
+    const kasa = OP(new THREE.ConeGeometry(.98, .42, 24), 0xd9b66a, 1.04); kasa.position.y = .62; h.add(kasa);
+    const rim = OP(new THREE.TorusGeometry(.95, .03, 5, 28), 0xb8924a); rim.rotation.x = PI/2; rim.position.y = .42; h.add(rim);
+    for (const s of [-1, 1]){ const cord = OP(new THREE.BoxGeometry(.025, .45, .025), 0x6b4a32); cord.position.set(s*.42, .1, .2); cord.rotation.z = s*.25; h.add(cord); }
+    for (const s of [-1, 1]){ const lap = OP(new THREE.BoxGeometry(.12, .55, .03), 0xe8e0d0); lap.position.set(s*.08, .15, .37); lap.rotation.z = s*.45; t.add(lap); }
+    const obi = OP(new THREE.TorusGeometry(.4, .07, 6, 20), 0xe8e0d0); obi.rotation.x = PI/2; obi.position.y = -.1; t.add(obi);
+    const hakama = OP(new THREE.CylinderGeometry(.36, .54, .42, 16, 1, true), 0x2b2f3a); hakama.position.y = -.36; t.add(hakama);
+    const kat = OP(new THREE.BoxGeometry(.05, 1.05, .05), 0x1d2233); kat.position.set(.32, -.12, -.28); kat.rotation.set(.3, 0, -1.15); t.add(kat);
+    const tsuba = OP(new THREE.CylinderGeometry(.08, .08, .03, 10), 0xd9a92a); tsuba.position.set(-.08, .05, -.12); tsuba.rotation.z = -1.15 + PI/2; t.add(tsuba);
   }},
   monk:{name:'มังก์', body:0xe8892c, head:true, noHair:true, build(h, t){
     for (let i = 0; i < 14; i++){ const a = i/14*PI*2; const bd = OP(SPH(.055), 0x6b3f1e); bd.position.set(Math.cos(a)*.3, .33 - Math.max(0, Math.sin(a))*.12, Math.sin(a)*.3); t.add(bd); }
@@ -3076,7 +3229,7 @@ const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[],
 
 class Fighter {
   constructor(idx, spec){
-    this.idx = idx; this.side = G.raid ? 0 : G.teamMode ? idx % 2 : -1;
+    this.idx = idx; this.side = G.raid ? 0 : G.teamMode ? (spec.side === 0 || spec.side === 1 ? spec.side : idx % 2) : -1;
     this.team = G.teamMode ? SIDES[this.side].col : TEAM[idx % TEAM.length];
     this.name = spec.name; this.ctrl = spec.ctrl; this.peer = spec.peer || '';
     this.isLocal = spec.ctrl === 'p1' || spec.ctrl === 'p2' || !!spec.me;
@@ -3136,8 +3289,9 @@ function spawnPoint(i, n){
   return {p:new V(x, 0, z), facing:Math.atan2(-x, -z)};
 }
 // Team mode: each side lines up in its own half of the deck, in front of its stone
-function teamSpawn(i, n){
-  const side = i % 2, k = i >> 1, m = Math.ceil((n - side)/2) || 1;
+// side = 0 red / 1 blue, k = this fighter's place among its side, m = how many on that side
+function teamSpawn(side, k, m){
+  m = m || 1;
   const sp = spawnPoint(k, m), [x0, x1] = STAGE.spawn, w = (x1 - x0)*.42;
   const t = m === 1 ? .5 : (sp.p.x - x0)/(x1 - x0);
   let x = side ? x1 - t*w : x0 + t*w, z = sp.p.z;
@@ -3164,8 +3318,10 @@ function createFighters(specs, stocks, tags){
   G.fighters = specs.map((s, i) => new Fighter(i, s));
   // Big crowds: skip per-fighter shadow casting, it doubles the draw calls and phones can't keep up
   const crowd = specs.length > 40;
+  const sideN = [0, 0], sideK = [0, 0];
+  if (G.teamMode) for (const f of G.fighters) sideN[f.side]++;
   G.fighters.forEach((f, i) => {
-    const sp = G.teamMode ? teamSpawn(i, specs.length) : spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
+    const sp = G.teamMode ? teamSpawn(f.side, sideK[f.side]++, sideN[f.side]) : spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
     if (crowd) f.vis.root.traverse(o => { o.castShadow = false; });
     if (tags) makeTag(f);
   });
@@ -3775,7 +3931,7 @@ function buildGun(type){
 }
 const BULLET_GEO = new THREE.SphereGeometry(.09, 8, 6);
 const BULLET_MAT = new THREE.MeshBasicMaterial({color:0xffe066});
-const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid', 'snow', 'ice', 'spark', 'dark', 'darkbig', 'saber'];
+const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid', 'snow', 'ice', 'spark', 'dark', 'darkbig', 'saber', 'skyslash'];
 const PROJ_LOOK = {bullet:[0xffe066, .09, 3], arrow:[0xd9b98a, .06, 7], fireball:[0xff7a2f, .32, 1], soul:[0x8dff6a, .22, 1],
   bolt:[0xb48dff, .16, 1.6], holy:[0xffe066, .18, 1], note:[0x7fe3ff, .15, 1], rainbow:[0xff8fd6, .2, 2], beam:[0xff6bd6, .1, 9], mega:[0x7fe3ff, .5, 4],
   falcon:[0x8a5a2b, .22, 1.6], thunder:[0xfff27a, .14, 5], potion:[0xff8a3a, .14, 1], acid:[0x8dff6a, .2, 1], snow:[0xffffff, .34, 1], ice:[0xbfefff, .24, 1.6], spark:[0xfff27a, .13, 2], dark:[0x241433, .5, .3], darkbig:[0x2a0f3f, .8, .3], saber:[0x7fe3ff, .09, 10]};
@@ -3792,6 +3948,7 @@ function burst(b){
   aoe(b.owner, b.pos, r, b.m);
   return true;
 }
+PROJ_LOOK.skyslash = [0xdff4ff, .3, 1]; TRAIL.skyslash = 0xbfe9ff; PROJ_SND.skyslash = 'skyslash';
 const trailColor = k => k === 'rainbow' ? RAINBOW[(G.frame >> 1) % 5] : TRAIL[k];
 function makeBullet(id, kind = 'bullet'){
   const [c, r, len] = PROJ_LOOK[kind] || PROJ_LOOK.bullet;
@@ -3800,6 +3957,13 @@ function makeBullet(id, kind = 'bullet'){
   mesh.scale.set(1, 1, len); scene.add(mesh);
   // Dark waves are wide flat crescents standing on edge; the thrown laser sword spins flat
   if (kind === 'dark' || kind === 'darkbig'){ mesh.scale.set(kind === 'dark' ? 1.8 : 1.9, .75, .28); mesh.material.opacity = .85; }
+  // The sword wave: a flat white-blue crescent bowed forward
+  if (kind === 'skyslash'){
+    mesh.geometry.dispose(); mesh.geometry = new THREE.TorusGeometry(1.25, .1, 5, 28, PI).rotateX(PI/2).translate(0, 0, -.9);
+    mesh.scale.set(1, 1, 1); mesh.material.color.setHex(0xeaf8ff); mesh.material.opacity = .95; mesh.material.side = THREE.DoubleSide;
+    const glow = new THREE.Mesh(new THREE.TorusGeometry(1.25, .26, 5, 28, PI).rotateX(PI/2).translate(0, 0, -.95), new THREE.MeshBasicMaterial({color:0x7fd0ff, transparent:true, opacity:.35, depthWrite:false}));
+    mesh.add(glow);
+  }
   if (kind === 'saber'){ mesh.geometry.dispose(); mesh.geometry = new THREE.BoxGeometry(.09, .09, 1.3); mesh.scale.set(1, 1, 1); }
   return {id, kind, mesh, pos:new V(), vel:new V(), life:0};
 }
@@ -4045,7 +4209,7 @@ function buildClassWeapon(cls){
   const glow = (geo, c, y) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:.85})); m.position.y = y; g.add(m); };
   switch (cls){
     case 'knight': add(new THREE.BoxGeometry(.4, .06, .12), gold, 0, -.08, 0); blade(.85, .16); break;
-    case 'samurai': case 'ninja': add(new THREE.CylinderGeometry(.11, .11, .03, 12), gold, 0, -.08, 0); blade(cls === 'samurai' ? 1.05 : .8, .09); break;
+    case 'samurai': case 'ninja': add(new THREE.CylinderGeometry(.11, .11, .03, 12), gold, 0, -.08, 0); blade(cls === 'samurai' ? 1.35 : .8, .09); break;
     case 'warrior': add(new THREE.CylinderGeometry(.045, .045, .9, 8), wood, 0, -.4, 0); add(new THREE.BoxGeometry(.06, .32, .38), silver, 0, -.78, .16, 1.08); break;
     case 'berserker': add(new THREE.CylinderGeometry(.05, .05, 1.15, 8), wood, 0, -.5, 0); for (const z of [-.22, .22]) add(new THREE.BoxGeometry(.06, .42, .42), silver, 0, -.98, z, 1.08); break;
     case 'paladin': add(new THREE.CylinderGeometry(.04, .04, .6, 8), wood, 0, -.3, 0); add(SPH(.17), gold, 0, -.66, 0, 1.08); break;
@@ -5147,7 +5311,7 @@ const ID_PREFIX = 'skybrawl-v1-';
 const CODE_RE = /^[a-z0-9]{3,8}$/;
 // Signalling hiccups (the phone backgrounded the page for the share sheet or to open LINE) must not end a room
 const SOFT_ERRORS = new Set(['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected', 'webrtc', 'peer-unavailable', 'unavailable-id']);
-const PRES_KEYS = new Set(['r', 'nm', 'lk', 'in', 'cfg', 'ph', 'ep', 'slots', 'sn', 'res', 'win']);
+const PRES_KEYS = new Set(['r', 'nm', 'lk', 'in', 'tm', 'cfg', 'ph', 'ep', 'slots', 'sd', 'sn', 'res', 'win']);
 function mergePres(target, patch){
   if (!patch || typeof patch !== 'object') return;
   for (const k of Object.keys(patch)){
@@ -5734,7 +5898,7 @@ const Net = {
     this.hostConn = null;
     if (p) try { p.destroy(); } catch (err) {}
     Relay.hostStop(); Relay.guestStop();
-    Object.assign(this, {role:null, code:null, me:null, myPres:{}, hostPres:{}, slots:[], gotHost:false, viaRelay:false});
+    Object.assign(this, {role:null, code:null, me:null, myPres:{}, hostPres:{}, slots:[], sides:[], gotHost:false, viaRelay:false});
     G.net = null;
   },
   leave(msg){
@@ -5782,9 +5946,9 @@ const Net = {
     conn.on('data', msg => {
       if (!msg || msg.t !== 'p' || !msg.d || typeof msg.d !== 'object') return;
       const d = {};
-      for (const k of ['r', 'nm', 'lk', 'in']) if (k in msg.d) d[k] = msg.d[k];
+      for (const k of ['r', 'nm', 'lk', 'in', 'tm']) if (k in msg.d) d[k] = msg.d[k];
       mergePres(entry.pres, d);
-      if (('nm' in d || 'lk' in d || 'r' in d) && this.ph === 'wait' && G.mode !== 'play') this.refreshSlots();
+      if (('nm' in d || 'lk' in d || 'r' in d || 'tm' in d) && this.ph === 'wait' && G.mode !== 'play') this.refreshSlots();
     });
     const gone = () => {
       if (this.conns.get(conn.peer) !== entry) return;
@@ -5796,17 +5960,18 @@ const Net = {
     conn.on('close', gone); conn.on('error', gone);
   },
   refreshSlots(){
-    const before = JSON.stringify(this.slots);
+    const before = JSON.stringify([this.slots, this.sides]);
     this.computeSlots();
-    if (JSON.stringify(this.slots) !== before) this.publishRoom();
+    if (JSON.stringify([this.slots, this.sides]) !== before) this.publishRoom();
     if (!$('roomView').hidden) renderRoomView();
   },
   guests(){
     return [...this.conns.entries()].filter(([, e]) => e.pres.r === 'g').map(([peer, e]) => ({peer, presence:e.pres}));
   },
   computeSlots(){
-    const humans = [{peer:this.me || '', nm:LOOKS[0].name, lk:encLook(LOOKS[0])}]
-      .concat(this.guests().slice(0, ONLINE_HUMANS - 1).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 8) : null})));
+    const tmOf = v => v === 0 || v === 1 ? v : -1;
+    const humans = [{peer:this.me || '', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:tmOf(G.myTeam)}]
+      .concat(this.guests().slice(0, ONLINE_HUMANS - 1).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 8) : null, tm:tmOf(p.presence.tm)})));
     const n = Math.min(ONLINE_MAX, Math.max(G.cfg.n, humans.length));
     const slots = humans.map(h => [h.peer, h.nm, h.lk]);
     for (let i = humans.length, b = 1; i < n; i++, b++){
@@ -5814,6 +5979,11 @@ const Net = {
       slots.push(['', this.botLooks[b]]);
     }
     this.slots = slots;
+    const sides = new Array(n).fill(-1), cnt = [0, 0], fill = i => { const sd = cnt[0] <= cnt[1] ? 0 : 1; sides[i] = sd; cnt[sd]++; };
+    humans.forEach((h, i) => { if (h.tm >= 0){ sides[i] = h.tm; cnt[h.tm]++; } });
+    humans.forEach((h, i) => { if (h.tm < 0) fill(i); });
+    for (let i = humans.length; i < n; i++) fill(i);
+    this.sides = sides;
   },
   adv(){
     // !peer: cleanup has started; closing the guests' connections must not re-list the room
@@ -5822,7 +5992,7 @@ const Net = {
   },
   publishRoom(){
     if (this.role !== 'host') return;
-    this.presence({r:'h', nm:LOOKS[0].name, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], ph:this.ph, ep:this.epoch, slots:this.slots});
+    this.presence({r:'h', nm:LOOKS[0].name, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], ph:this.ph, ep:this.epoch, slots:this.slots, sd:this.sides});
     this.adv();
   },
   start(){
@@ -5830,12 +6000,13 @@ const Net = {
     this.epoch++; this.ph = 'play';
     const specs = this.slots.map((sl, i) => {
       const [peer, nm, lk] = sl;
-      if (i === 0) return {name:nm, ctrl:'p1', look:LOOKS[0]};
-      if (peer) return {name:nm, ctrl:'net', peer, look:decLook(lk, nm)};
+      const side = this.sides[i];
+      if (i === 0) return {name:nm, ctrl:'p1', look:LOOKS[0], side};
+      if (peer) return {name:nm, ctrl:'net', peer, look:decLook(lk, nm), side};
       const bn = slotName(sl, i);
-      return {name:bn, ctrl:'bot', look:seededLook(Number(nm) || i, bn)};
+      return {name:bn, ctrl:'bot', look:seededLook(Number(nm) || i, bn), side};
     });
-    this.presence({ph:'play', ep:this.epoch, slots:this.slots, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], res:null, win:null, sn:null});
+    this.presence({ph:'play', ep:this.epoch, slots:this.slots, sd:this.sides, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], res:null, win:null, sn:null});
     this.adv();
     setStage(stageFor(G.cfg.stage, G.cfg.mode));
     beginMatch(specs, G.cfg.st);
@@ -5917,7 +6088,7 @@ const Net = {
         // counters carry over from earlier connections; sending zeros would register as a phantom button press on the host
         const c = this.counts;
         this.lastIn = '';
-        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), in:[0,0,0,c.a,c.j,c.g,c.s,c.l]});
+        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:G.myTeam, in:[0,0,0,c.a,c.j,c.g,c.s,c.l]});
         if (G.mode !== 'play') showRoomView();
       });
       conn.on('data', msg => {
@@ -6019,6 +6190,7 @@ const Net = {
   applyHost(p){
     if (!p || typeof p !== 'object') return;
     if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 124);
+    if (Array.isArray(p.sd)) this.sides = p.sd.slice(0, 124).map(v => v === 0 || v === 1 ? v : -1);
     if (Array.isArray(p.cfg)) this.cfg = p.cfg;
     const stk = Array.isArray(p.cfg) && STAGE_KEYS[Number(p.cfg[3])] ? stageFor(STAGE_KEYS[Number(p.cfg[3])], MODE_KEYS[Number(p.cfg[4])]) : null;
     if (stk && stk !== STAGE_KEY && G.mode !== 'play'){ setStage(stk); if (G.mode === 'menu') enterAttract(); }
@@ -6042,7 +6214,8 @@ const Net = {
     const specs = this.slots.map(s => {
       const peer = typeof s[0] === 'string' ? s[0] : '', isBot = !peer && s.length === 2, nm = isBot ? slotName(s, this.slots.indexOf(s)) : cleanName(s[1], 'ผู้เล่น');
       const me = !!peer && peer === this.me;
-      return {name:nm, ctrl:'remote', peer, me, look:me ? LOOKS[0] : isBot ? seededLook(Number(s[1]) || 1, nm) : decLook(s[2], nm)};
+      const side = (this.sides || [])[this.slots.indexOf(s)];
+      return {name:nm, ctrl:'remote', peer, me, side, look:me ? LOOKS[0] : isBot ? seededLook(Number(s[1]) || 1, nm) : decLook(s[2], nm)};
     });
     G.cfg.mode = Array.isArray(p.cfg) ? modeOf(MODE_KEYS[Number(p.cfg[4])]) : 'ffa';
     setStage(stageFor(STAGE_KEYS[Array.isArray(p.cfg) ? Number(p.cfg[3]) : 0] || 'titanic', G.cfg.mode));
@@ -6256,11 +6429,15 @@ function renderRoomView(){
     $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'} · ด่าน${(STAGES[stageFor(STAGE_KEYS[Number(c[3])], MODE_KEYS[Number(c[4])])] || STAGES.titanic).name}${Number(c[4]) === 1 ? ' · ทีมตีหิน' : Number(c[4]) === 2 ? ' · ตีบอส' : ''}`;
   }
   const list = $('slotList'); list.textContent = '';
-  const slots = Net.slots || [];
-  $('slotHead').textContent = `นักสู้ในห้อง (${slots.length})`;
+  const slots = Net.slots || [], sides = Net.sides || [];
+  const team = (host ? G.cfg.mode : MODE_KEYS[Number((Net.cfg || [])[4])]) === 'team';
+  $('teamRow').hidden = !team;
+  for (const b of $('teamRow').querySelectorAll('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.tm) === G.myTeam));
+  const nSide = sd => sides.slice(0, slots.length).filter(v => v === sd).length;
+  $('slotHead').textContent = team ? `นักสู้ในห้อง (${slots.length}) · แดง ${nSide(0)} · น้ำเงิน ${nSide(1)}` : `นักสู้ในห้อง (${slots.length})`;
   slots.forEach((s, i) => {
     const row = document.createElement('div'); row.className = 'srow';
-    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = hex(TEAM[i % TEAM.length]);
+    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = hex(team && sides[i] >= 0 ? SIDES[sides[i]].col : TEAM[i % TEAM.length]);
     const n = document.createElement('span'); n.className = 'sn'; n.textContent = slotName(s, i);
     row.append(dot, n);
     const tag = (cls, text) => { const b = document.createElement('span'); b.className = 'badge ' + cls; b.textContent = text; row.appendChild(b); };
@@ -6437,7 +6614,7 @@ $('board').addEventListener('click', () => $('board').classList.toggle('open'));
 $('rN').addEventListener('input', e => { G.cfg.n = +e.target.value; $('rNOut').textContent = G.cfg.n; Net.computeSlots(); Net.publishRoom(); renderRoomView(); });
 $('rSt').addEventListener('change', e => { G.cfg.st = +e.target.value; Net.publishRoom(); });
 $('rDf').addEventListener('change', e => { G.cfg.df = e.target.value; Net.publishRoom(); });
-$('rMode').addEventListener('change', e => { G.cfg.mode = modeOf(e.target.value); setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
+$('rMode').addEventListener('change', e => { G.cfg.mode = modeOf(e.target.value); if (!$('roomView').hidden) renderRoomView(); setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
 $('rStage').addEventListener('change', e => { G.cfg.stage = e.target.value; setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
 for (const r of document.querySelectorAll('input[name=stage]')) r.addEventListener('change', e => {
   G.cfg.stage = e.target.value; setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract();
@@ -6451,6 +6628,15 @@ for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListene
 try { const sp = localStorage.getItem('skybrawl.stage'); if (STAGES[sp]){ G.cfg.stage = sp; setStage(sp); $('sg-' + sp).checked = true; } } catch (err) {}
 $('rStart').onclick = () => { if (Net.role === 'host') Net.start(); };
 $('lobbyCust').onclick = $('roomCust').onclick = customizeFromOnline;
+G.myTeam = -1;
+try { const t = Number(localStorage.getItem('skybrawl.team')); if (t === 0 || t === 1) G.myTeam = t; } catch (e) {}
+for (const b of $('teamRow').querySelectorAll('button')) b.onclick = () => {
+  G.myTeam = Number(b.dataset.tm);
+  try { localStorage.setItem('skybrawl.team', String(G.myTeam)); } catch (e) {}
+  if (Net.role === 'host') Net.refreshSlots();
+  else if (Net.role === 'guest') Net.presence({tm:G.myTeam});
+  renderRoomView();
+};
 $('rLeave').onclick = () => { Net.leave(); hideAllPanels(); $('online').hidden = false; showLobbyView(); };
 const CAM_LEVELS = [{name:'ใกล้', k:.75}, {name:'ปกติ', k:1}, {name:'กว้าง', k:1.4}, {name:'กว้างมาก', k:1.9}, {name:'ทั้งด่าน', all:true}];
 G.camZoom = 1;
