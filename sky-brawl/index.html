@@ -3821,6 +3821,26 @@ let TURN_OWN = false;
       if (!$('online').hidden) renderLobby();
     }).catch(e => console.warn('[config.js] network.turnApi failed', e));
   }
+  // A Metered Realtime Messaging publishable key (pk_live_…) also works: its welcome message carries TURN credentials
+  // when the app has a TURN service and "Auto-inject TURN" is on for the key.
+  const pk = [N.rmsKey, N.turnApi].find(k => typeof k === 'string' && /^pk_live_[A-Za-z0-9]+$/.test(k.trim()));
+  if (pk && typeof WebSocket === 'function'){
+    let ws; try { ws = new WebSocket('wss://rms.metered.ca/v1?key=' + encodeURIComponent(pk.trim())); } catch(e){ console.warn('[config.js] rms failed', e); return; }
+    const done = () => { clearTimeout(to); try { ws.close(); } catch(e){} };
+    const to = setTimeout(() => { console.warn('[config.js] rms: no welcome within 8 s'); done(); }, 8000);
+    ws.onmessage = ev => {
+      let m; try { m = JSON.parse(ev.data); } catch(e){ return; }
+      if (!m || m.type !== 'welcome') return;
+      const list = m.metadata && m.metadata.iceServers;
+      if (Array.isArray(list) && list.length){
+        ICE_SERVERS.splice(0, ICE_SERVERS.length, {urls:'stun:stun.l.google.com:19302'}, ...list); TURN_OWN = true;
+        console.info('[config.js] TURN relay ready via Metered key (' + list.length + ' servers)');
+        if (!$('online').hidden) renderLobby();
+      } else console.warn('[config.js] rms welcome had no iceServers: turn on a TURN service in Metered and "Auto-inject TURN" on this key');
+      done();
+    };
+    ws.onerror = () => { console.warn('[config.js] rms connection failed'); done(); };
+  }
 })();
 const ID_PREFIX = 'skybrawl-v1-';
 const CODE_RE = /^[a-z0-9]{3,8}$/;
