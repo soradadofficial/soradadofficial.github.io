@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#3f6fb5">
-<meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติบนดาดฟ้าเรือไททานิก เล่นกับบอทหรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 16 คน">
+<meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 32 คน">
 <title>Sky Brawl</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -225,11 +225,11 @@ button{touch-action:manipulation}
   <div class="card">
     <div>
       <h1 class="logo">SKY <span>BRAWL</span></h1>
-      <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 16 คน ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
+      <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 124 คน (ออนไลน์ 32 คน) ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
       <p class="note" id="touchNote" hidden style="margin-top:8px">เล่นบนมือถือ: แตะครึ่งซ้ายของจอแล้วลากเพื่อเดิน ใช้ปุ่มด้านขวาเพื่อต่อย กระโดด กัน และหยิบของ หมุนจอแนวนอนจะเล่นง่ายขึ้น</p>
     </div>
     <div class="settings">
-      <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="32" value="8"><output id="nfOut" for="nf">8</output></div>
+      <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="124" value="8"><output id="nfOut" for="nf">8</output></div>
       <div class="seg" role="radiogroup" aria-label="จำนวนชีวิต">
         <span class="lbl">ชีวิตต่อคน</span>
         <input type="radio" name="st" id="st1" value="1"><label for="st1">1</label>
@@ -481,6 +481,49 @@ const MOVES = {
   gd1:{name:'บีมเซเบอร์', anim:'swing', startup:5, active:3, recovery:10, sweep:true, dmg:7, kb:4, up:0, stun:18, reach:1.3, rad:1, lunge:3, next:'gd2', hitstop:5},
   gd2:{name:'เซเบอร์ฟันลง', anim:'slam', startup:8, active:3, recovery:14, dmg:9, kb:6, up:4, stun:22, reach:1.4, rad:1, lunge:3, next:'gd3', hitstop:7, hy:-.2},
   gd3:{name:'บีมไรเฟิล', anim:'shoot', startup:9, active:1, recovery:18, noHit:true, dmg:10, kb:9, up:4, launch:true, hitstop:6, shake:.2, fire:(f, m) => fireProj(f, 'beam', f.facing, 34, 34, m)},
+  // Ragnarok-style jobs
+  mc1:{name:'ฟาดถุงเงิน', anim:'swing', startup:6, active:3, recovery:12, dmg:6, kb:3.5, up:0, stun:18, reach:1.1, rad:.9, lunge:2.5, next:'mc2', hitstop:5},
+  mc2:{name:'ฟาดย้อน', anim:'slashH2', startup:6, active:3, recovery:12, dmg:6, kb:3.5, up:0, stun:18, reach:1.1, rad:.9, lunge:2.5, next:'mc3', hitstop:5},
+  mc3:{name:'แมมโมไนต์', anim:'slam', startup:12, active:4, recovery:22, dmg:13, kb:9, up:7, launch:true, reach:1.25, rad:1, lunge:2.5, hitstop:10, shake:.35, hy:-.3,
+    fire:f => { const c = hitCenter(f); emit(c, 14, 0xffd23a, 5, 6, 26, 1.3, 10); }},
+  bs1:{name:'ตีค้อน', anim:'swing', startup:8, active:3, recovery:13, dmg:7, kb:4, up:0, stun:22, reach:1.2, rad:.95, lunge:2, next:'bs2', hitstop:7, shake:.1},
+  bs2:{name:'ตีค้อนย้อน', anim:'slashH2', startup:8, active:3, recovery:13, dmg:7, kb:4, up:0, stun:22, reach:1.2, rad:.95, lunge:2, next:'bs3', hitstop:7, shake:.1},
+  bs3:{name:'ทุบทั่ง', anim:'slam', startup:14, active:4, recovery:24, dmg:14, kb:10, up:8, launch:true, breakGuard:true, reach:1.3, rad:1.05, lunge:2, hitstop:11, shake:.45, hy:-.3},
+  hn1:{name:'ยิงธนู', anim:'shoot', startup:5, active:1, recovery:11, noHit:true, dmg:5, kb:3, up:0, stun:14, next:'hn2', hitstop:3, fire:(f, m) => fireProj(f, 'arrow', f.facing, 30, 40, m)},
+  hn2:{name:'ดับเบิลสเตรฟ', anim:'shoot', startup:6, active:1, recovery:14, noHit:true, dmg:4, kb:3, up:0, stun:16, next:'hn3', hitstop:3,
+    fire:(f, m) => { for (const da of [-.05, .05]) fireProj(f, 'arrow', f.facing + da, 32, 40, m); }},
+  hn3:{name:'เตะไล่', anim:'kick', startup:7, active:4, recovery:16, dmg:7, kb:9, up:5, launch:true, reach:.95, rad:.8, lunge:4, hitstop:7, shake:.15, hy:-.25},
+  wz1:{name:'กระทุ้งไม้เท้า', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:2.5, up:0, stun:16, reach:1.3, rad:.75, lunge:2, next:'wz2', hitstop:4},
+  wz2:{name:'กระทุ้งซ้ำ', anim:'thrust', startup:5, active:3, recovery:10, dmg:4, kb:3, up:0, stun:18, reach:1.3, rad:.75, lunge:2, next:'wz3', hitstop:4},
+  wz3:{name:'จูปิเตลธันเดอร์', anim:'cast', startup:9, active:1, recovery:16, noHit:true, dmg:8, kb:9, up:3, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'thunder', f.facing, 26, 36, m)},
+  cr1:{name:'แทงหอก', anim:'thrust', startup:5, active:3, recovery:11, dmg:5, kb:3, up:0, stun:18, reach:1.45, rad:.75, lunge:2.5, next:'cr2', hitstop:5},
+  cr2:{name:'แทงหอกซ้ำ', anim:'thrust', startup:5, active:3, recovery:11, dmg:5, kb:3.5, up:0, stun:18, reach:1.45, rad:.75, lunge:2.5, next:'cr3', hitstop:5},
+  cr3:{name:'กระแทกโล่', anim:'charge', startup:8, active:5, recovery:18, dmg:9, kb:9, up:5, launch:true, reach:.9, rad:.95, lunge:6, glide:true, hitstop:8, shake:.25},
+  ac1:{name:'ฟาดขวด', anim:'swing', startup:5, active:3, recovery:11, dmg:5, kb:3, up:0, stun:18, reach:1, rad:.85, lunge:2.5, next:'ac2', hitstop:5},
+  ac2:{name:'ฟาดย้อน', anim:'slashH2', startup:5, active:3, recovery:11, dmg:5, kb:3.5, up:0, stun:18, reach:1, rad:.85, lunge:2.5, next:'ac3', hitstop:5},
+  ac3:{name:'ขว้างขวดไฟ', anim:'cast', startup:8, active:1, recovery:16, noHit:true, dmg:7, kb:6, up:4, launch:true, blast:1.5, hitstop:5, fire:(f, m) => fireProj(f, 'potion', f.facing, 16, 36, m)},
+  rg1:{name:'แทงเร็ว', anim:'punchL', startup:3, active:2, recovery:8, dmg:4, kb:2, up:0, stun:14, reach:.9, rad:.7, lunge:3, next:'rg2', hitstop:3},
+  rg2:{name:'แทงซ้ำ', anim:'punchR', startup:3, active:2, recovery:8, dmg:4, kb:2, up:0, stun:14, reach:.9, rad:.7, lunge:3, next:'rg3', hitstop:3},
+  rg3:{name:'ยิงธนูสั้น', anim:'shoot', startup:7, active:1, recovery:14, noHit:true, dmg:7, kb:7, up:4, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'arrow', f.facing, 30, 34, m)},
+  tk1:{name:'เตะเฉียง', anim:'kick', startup:4, active:3, recovery:9, dmg:4, kb:2.5, up:0, stun:15, reach:.95, rad:.75, lunge:3, next:'tk2', hitstop:4, hy:-.2},
+  tk2:{name:'เตะตัด', anim:'kick', startup:5, active:3, recovery:10, dmg:5, kb:3, up:0, stun:17, reach:1, rad:.8, lunge:3, next:'tk3', hitstop:5, hy:-.25},
+  tk3:{name:'เตะส้นเท้า', anim:'kick', startup:8, active:4, recovery:18, dmg:9, kb:8, up:9, launch:true, reach:1, rad:.85, lunge:3.5, hitstop:8, shake:.25, hy:-.2},
+  sk_merchant: {name:'คาร์ทรีโวลูชั่น', anim:'spin', startup:8, active:1, recovery:18, noHit:true, dmg:10, kb:12, up:6, launch:true, hitstop:7, shake:.35, skill:true,
+    fire:(f, m) => { const c = f.pos.clone(); emit(new V(c.x, .6, c.z), 20, 0xc69b3c, 7, 2, 24, 1.5, 6); emit(new V(c.x, .8, c.z), 12, 0xffd23a, 6, 5, 26, 1.1, 10); flash(new V(c.x, .8, c.z), 0xffd23a, .5, 2.8, 14); aoe(f, c, 2.8, m); }},
+  sk_blacksmith:{name:'แฮมเมอร์ฟอล', anim:'slam', startup:14, active:1, recovery:20, noHit:true, dmg:8, hitstop:6, shake:.5, skill:true,
+    fire:(f, m) => { const c = new V(f.pos.x + Math.sin(f.facing)*1.4, 0, f.pos.z + Math.cos(f.facing)*1.4); dust(c, 20); flash(c, 0xffd23a, .5, 3, 14); emit(new V(c.x, .5, c.z), 18, 0xffe066, 5, 5, 24, 1.3, 8); aoe(f, c, 3, m, {root:95, col:0xffd23a}); if (f.isLocal) G.shake = Math.max(G.shake, .5); }},
+  sk_hunter:   {name:'บลิทซ์บีท', anim:'cast', startup:10, active:1, recovery:14, noHit:true, dmg:12, kb:8, up:5, launch:true, blast:1.6, hitstop:6, shake:.25, skill:true,
+    fire:(f, m) => { const t = nearestTarget(f, 15), a = t ? Math.atan2(t.pos.x - f.pos.x, t.pos.z - f.pos.z) : f.facing; const b = fireProj(f, 'falcon', a, 17, 90, m); b.home = t; }},
+  sk_wizard:   {name:'มีทีโอสตอร์ม', anim:'roar', startup:14, active:1, recovery:18, noHit:true, dmg:11, kb:9, up:8, launch:true, hitstop:6, shake:.35, skill:true,
+    fire:(f, m) => meteorStorm(f, m)},
+  sk_crusader: {name:'แกรนด์ครอส', anim:'roar', startup:12, active:1, recovery:16, noHit:true, dmg:13, kb:9, up:7, launch:true, hitstop:7, shake:.4, skill:true,
+    fire:(f, m) => grandCross(f, m)},
+  sk_alchemist:{name:'แอซิดเทอเรอร์', anim:'cast', startup:10, active:1, recovery:16, noHit:true, dmg:12, kb:8, up:5, launch:true, breakGuard:true, blast:2.4, hitstop:6, shake:.3, skill:true,
+    fire:(f, m) => fireProj(f, 'acid', f.facing, 15, 55, m)},
+  sk_rogue:    {name:'ฉกอาวุธ', anim:'dash', startup:5, active:8, recovery:14, dmg:8, kb:5, up:3, launch:true, lunge:12, glide:true, reach:.8, rad:.85, hitstop:7, shake:.2, skill:true,
+    onHit:(f, o) => steal(f, o)},
+  sk_taekwon:  {name:'ทอร์นาโดคิก', anim:'spin', startup:6, active:12, recovery:16, multi:6, sweep:true, dmg:6, kb:6, up:9, launch:true, reach:0, rad:2, hitstop:5, shake:.25, skill:true,
+    fire:f => { const c = new V(f.pos.x, .6, f.pos.z); emit(c, 22, 0xf4f4f4, 6, 3, 22, 1.4, 0); flash(c, 0xffffff, .4, 2.4, 12); }},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -504,12 +547,21 @@ const SKILL_INFO = {
   engineer:{cd:900, range:10, desc:'วางป้อมปืนที่ยิงศัตรูเอง 8 วินาที'},
   pony:{cd:420, range:6, desc:'พุ่งทะยานทิ้งสายรุ้ง ชนทุกคนที่ขวาง'},
   gundam:{cd:600, range:12, desc:'ยิงบีมยักษ์ทะลุทุกคนในแนวยิง'},
+  merchant:{cd:420, range:2.6, desc:'เหวี่ยงรถเข็นรอบตัว ซัดทุกคนกระเด็นไกล'},
+  blacksmith:{cd:540, range:3.4, desc:'ทุบค้อนลงพื้นข้างหน้า ทุกคนในวงมึน ขยับไม่ได้ 1.6 วินาที'},
+  hunter:{cd:420, range:13, desc:'ปล่อยเหยี่ยวบินไล่ศัตรูที่ใกล้ที่สุด จิกแล้วระเบิดเป็นวงเล็ก'},
+  wizard:{cd:660, range:10, desc:'เรียกอุกกาบาต 5 ลูกถล่มรอบศัตรูที่ใกล้ที่สุด'},
+  crusader:{cd:480, range:3, desc:'เสียพลัง 6 ปล่อยแสงกางเขนสี่ทิศรอบตัว ซัดทุกคนในแนวลอย'},
+  alchemist:{cd:420, range:8, desc:'ขว้างขวดกรด ระเบิดเป็นวง ทะลุการกัน'},
+  rogue:{cd:420, range:5, desc:'พุ่งฉก ขโมยอาวุธของคนที่โดน และดูดพลัง 6'},
+  taekwon:{cd:360, range:2.2, desc:'เตะหมุนเป็นพายุ เตะทุกคนรอบตัวลอยขึ้นฟ้า'},
 };
 // First hit of each class's ground combo; the chain continues through each move's next
 const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
-  archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1'};
-const CLASS_REACH = {archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2};
-const CLASS_STOP = {archer:6, gunner:5};
+  archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1',
+  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1'};
+const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2};
+const CLASS_STOP = {archer:6, gunner:5, hunter:6};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
 const RAPID_SHOT = {dmg:5, kb:3, up:0, stun:12, hitstop:2, shake:.03};
 const TURRET_SHOT = {dmg:6, kb:3, up:0, stun:12, hitstop:2, shake:.03};
@@ -522,7 +574,7 @@ const DIFF = {
 const DIFF_KEYS = ['easy','normal','hard'];
 const STATES = ['idle','run','air','attack','guard','guardstun','hitstun','tumble','down','getup','ko','respawn','wait','out'];
 const RAILED = new Set(['idle','run','air','attack','guard','guardstun','hitstun','down','getup']);
-const TEAM = Array.from({length:32}, (_, i) => new THREE.Color().setHSL((i*.618034 + .02) % 1, .78, .55).getHex());
+const TEAM = Array.from({length:128}, (_, i) => new THREE.Color().setHSL((i*.618034 + .02) % 1, .78, .55).getHex());
 TEAM[0] = 0xff5d4a; TEAM[1] = 0x2f8cff;
 
 /* ---------- The ship: deck outline drives both the model and the physics ---------- */
@@ -904,6 +956,12 @@ const oCross = (t, c) => { const v = OP(new THREE.BoxGeometry(.06, .22, .03), c)
 const oHood = (h, c) => { const m = OP(new THREE.SphereGeometry(.66, 24, 16, 0, PI*2, 0, PI*.56), c, 1.03); m.rotation.x = -.5; h.add(m); };
 const oMask = (h, c) => { h.add(OP(new THREE.SphereGeometry(.585, 24, 12, 0, PI*2, PI*.57, PI*.28), c)); };
 const oCollar = (t, c, r = .32, tube = .11) => { const m = OP(new THREE.TorusGeometry(r, tube, 8, 18), c); m.rotation.x = PI/2; m.position.y = .32; t.add(m); };
+const goggles = (h, frame, y) => {
+  for (const s of [-1, 1]){
+    const g = OP(new THREE.TorusGeometry(.11, .035, 6, 14), frame); g.position.set(s*.16, y, .55); g.rotation.x = -.6; h.add(g);
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(.1, 14), new THREE.MeshBasicMaterial({color:0x9fd8ff})); lens.position.set(s*.16, y, .56); lens.rotation.x = -.6; h.add(lens);
+  }
+};
 const OUTFITS = {
   none:{name:'ไม่ใส่'},
   knight:{name:'อัศวิน', body:0x9aa7b8, head:true, noHair:true, build(h, t){
@@ -1043,6 +1101,66 @@ const OUTFITS = {
     const chest = OP(new THREE.BoxGeometry(.6, .32, .12), 0x2f5bd8, 1.05); chest.position.set(0, .12, .3); t.add(chest);
     const pack = OP(new THREE.BoxGeometry(.5, .45, .22), 0xf4f4f4, 1.05); pack.position.set(0, .1, -.42); t.add(pack);
     const skirt = OP(new THREE.BoxGeometry(.55, .18, .5), 0xd8342c); skirt.position.y = -.22; t.add(skirt);
+  }},
+  merchant:{name:'พ่อค้า', body:0xc68a3a, head:true, build(h, t){
+    const cap = OP(SPH(.62), 0x3f7a3a, 1.04); cap.scale.set(1.05, .42, 1.05); cap.position.y = .36; h.add(cap);
+    const peak = OP(new THREE.BoxGeometry(.5, .04, .26), 0x2f5a2a); peak.position.set(0, .3, .58); h.add(peak);
+    const apron = OP(new THREE.BoxGeometry(.5, .55, .04), 0xf2e6c8); apron.position.set(0, -.15, .35); t.add(apron);
+    const bag = OP(SPH(.14), 0xc69b3c); bag.position.set(-.4, -.22, .15); t.add(bag);
+    const cart = OP(new THREE.BoxGeometry(.6, .34, .42), 0x8a5a2b, 1.05); cart.position.set(0, -.05, -.58); t.add(cart);
+    for (const s of [-1, 1]){ const w = OP(new THREE.CylinderGeometry(.16, .16, .06, 14), 0x3a2a1a); w.rotation.z = PI/2; w.position.set(s*.34, -.24, -.58); t.add(w); }
+  }},
+  blacksmith:{name:'ช่างตีเหล็ก', body:0x5a4636, head:true, build(h, t){
+    const band = OP(new THREE.TorusGeometry(.58, .07, 6, 28), 0xa8322c); band.rotation.x = PI/2 - .25; band.position.y = .16; h.add(band);
+    goggles(h, 0x3a3f4b, .42);
+    const apron = OP(new THREE.BoxGeometry(.56, .62, .05), 0x6b3f1e); apron.position.set(0, -.12, .35); t.add(apron);
+    oPads(t, 0x3a3f4b);
+  }},
+  hunter:{name:'ฮันเตอร์', body:0x5f7f3a, head:true, build(h, t){
+    oDome(h, 0x3f5a2a, .63);
+    const brim = OP(new THREE.CylinderGeometry(.74, .74, .04, 24), 0x3f5a2a); brim.position.y = .12; h.add(brim);
+    const feather = OP(new THREE.ConeGeometry(.05, .6, 6), 0xf4f1ea); feather.position.set(.4, .62, -.15); feather.rotation.set(-.4, 0, -.7); h.add(feather);
+    const bird = new THREE.Group(); bird.position.set(.66, .42, .05); bird.scale.setScalar(1.25);
+    const bb = OP(SPH(.15), 0x8a5a2b); bb.scale.set(.85, 1, 1.15); bird.add(bb);
+    const bh = OP(SPH(.1), 0xf2e6c8); bh.position.set(0, .16, .06); bird.add(bh);
+    const beak = OP(new THREE.ConeGeometry(.04, .1, 6), 0xffc23a); beak.rotation.x = PI/2; beak.position.set(0, .15, .17); bird.add(beak);
+    for (const s of [-1, 1]){ const w = OP(new THREE.BoxGeometry(.04, .2, .26), 0x6b3f1e); w.position.set(s*.13, 0, -.02); w.rotation.z = s*.25; bird.add(w); }
+    t.add(bird);
+    const quiver = OP(new THREE.CylinderGeometry(.11, .09, .55, 10), 0x6b3f1e, 1.08); quiver.position.set(-.15, .08, -.4); quiver.rotation.z = .4; t.add(quiver);
+  }},
+  wizard:{name:'วิซาร์ด', body:0x7a1f3a, head:true, build(h, t){
+    const circ = OP(new THREE.TorusGeometry(.6, .04, 6, 28), 0xe0b13a); circ.rotation.x = PI/2 - .2; circ.position.y = .2; h.add(circ);
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.09), new THREE.MeshBasicMaterial({color:0xff5d4a})); gem.position.set(0, .32, .58); h.add(gem);
+    oCollar(t, 0x3d1a5a, .34, .12); oCape(t, 0x3d1a5a); oRobe(t, 0x5a1a3a);
+  }},
+  crusader:{name:'ครูเสด', body:0xe8e2d4, head:true, noHair:true, build(h, t){
+    oDome(h, 0xc9d2de);
+    const guard = OP(new THREE.CylinderGeometry(.6, .66, .4, 20, 1, true, PI/2 + .7, PI*2 - 1.4), 0xc9d2de); guard.position.y = -.05; h.add(guard);
+    const v = OP(new THREE.BoxGeometry(.07, .34, .04), 0x2b2f3a); v.position.set(0, .05, .6); h.add(v);
+    const w = OP(new THREE.BoxGeometry(.5, .07, .04), 0x2b2f3a); w.position.set(0, .14, .59); h.add(w);
+    oPads(t, 0xc9d2de); oCape(t, 0xb8282a); oCross(t, 0xb8282a);
+  }},
+  alchemist:{name:'อัลเคมิสต์', body:0xf2efe6, head:true, build(h, t){
+    goggles(h, 0x8a5a2b, .4);
+    oRobe(t, 0xe8e4da); oCollar(t, 0x3f8f8f, .3, .07);
+    [0x6fe08a, 0x7fe3ff, 0xff8fd6].forEach((c, i) => {
+      const fl = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .16, 8), new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:.85}));
+      fl.position.set(-.22 + i*.22, -.2, .36); t.add(fl);
+    });
+  }},
+  rogue:{name:'โร้ก', body:0x3a2f4a, head:true, noHair:true, build(h, t){
+    h.add(OP(new THREE.SphereGeometry(.6, 24, 12, 0, PI*2, 0, PI*.46), 0x5a2a7a));
+    for (const s of [-1, 1]){ const tl = OP(new THREE.BoxGeometry(.07, .34, .03), 0x5a2a7a); tl.position.set(s*.1, -.02, -.6); tl.rotation.z = s*.4; h.add(tl); }
+    const patch = OP(new THREE.BoxGeometry(.21, .19, .04), 0x1d1d1d); patch.position.set(.2, .03, .56); patch.rotation.y = .36; h.add(patch);
+    const strap = new THREE.Mesh(new THREE.TorusGeometry(.6, .015, 4, 28), toon(0x1d1d1d)); strap.rotation.set(PI/2 - .1, 0, 0); strap.position.y = .1; h.add(strap);
+    oCollar(t, 0xa8322c, .3, .08);
+  }},
+  taekwon:{name:'เทควันโด', body:0xf4f4f4, head:true, build(h, t){
+    const band = OP(new THREE.TorusGeometry(.58, .06, 6, 28), 0xd8342c); band.rotation.x = PI/2 - .2; band.position.y = .18; h.add(band);
+    for (const s of [-1, 1]){ const tl = OP(new THREE.BoxGeometry(.06, .36, .03), 0xd8342c); tl.position.set(s*.08, .02, -.6); tl.rotation.z = s*.35; h.add(tl); }
+    const belt = OP(new THREE.TorusGeometry(.36, .05, 6, 20), 0x1d1d1d); belt.rotation.x = PI/2; belt.position.y = -.18; t.add(belt);
+    for (const s of [-1, 1]){ const k = OP(new THREE.BoxGeometry(.06, .24, .03), 0x1d1d1d); k.position.set(s*.06, -.3, .36); k.rotation.z = s*.25; t.add(k); }
+    const lap = OP(new THREE.BoxGeometry(.06, .4, .02), 0x1d1d1d); lap.position.set(.06, .12, .35); lap.rotation.z = -.5; t.add(lap);
   }},
 };
 const OUTFIT_K = Object.keys(OUTFITS);
@@ -1282,7 +1400,7 @@ const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[],
 
 class Fighter {
   constructor(idx, spec){
-    this.idx = idx; this.team = TEAM[idx % 32];
+    this.idx = idx; this.team = TEAM[idx % TEAM.length];
     this.name = spec.name; this.ctrl = spec.ctrl; this.peer = spec.peer || '';
     this.isLocal = spec.ctrl === 'p1' || spec.ctrl === 'p2' || !!spec.me;
     this.pos = new V(); this.vel = new V(); this.netPos = new V(); this.netVel = new V();
@@ -1318,7 +1436,8 @@ const hittable = f => alive(f) && !['ko','down','respawn'].includes(f.state) && 
 
 function spawnPoint(i, n){
   const [x0, x1, z0, z1] = STAGE.spawn;
-  const rows = n <= 2 ? 1 : n <= 8 ? 2 : n <= 18 ? 3 : 4, cols = Math.ceil(n/rows);
+  // Big crowds get extra rows so nobody spawns stacked on a neighbour
+  const rows = n <= 2 ? 1 : n <= 8 ? 2 : n <= 18 ? 3 : n <= 32 ? 4 : Math.min(8, Math.ceil(Math.sqrt(n/3))), cols = Math.ceil(n/rows);
   const r = i % rows, c = Math.floor(i/rows);
   let x = cols === 1 ? (x0 + x1)/2 : x0 + (x1 - x0)*c/(cols - 1);
   let z = rows === 1 ? 0 : z0 + (z1 - z0)*r/(rows - 1);
@@ -1340,8 +1459,11 @@ function randomDeckPoint(margin){
 function createFighters(specs, stocks, tags){
   for (const f of G.fighters) f.dispose();
   G.fighters = specs.map((s, i) => new Fighter(i, s));
+  // Big crowds: skip per-fighter shadow casting, it doubles the draw calls and phones can't keep up
+  const crowd = specs.length > 40;
   G.fighters.forEach((f, i) => {
     const sp = spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
+    if (crowd) f.vis.root.traverse(o => { o.castShadow = false; });
     if (tags) makeTag(f);
   });
 }
@@ -1521,6 +1643,7 @@ function checkHits(f){
       let dx = o.pos.x - f.pos.x, dz = o.pos.z - f.pos.z, d = Math.hypot(dx, dz);
       if (d < .01){ dx = Math.sin(f.facing); dz = Math.cos(f.facing); d = 1; }
       applyHit(f, o, m, new V(dx/d, 0, dz/d), f);
+      if (m.onHit) m.onHit(f, o);
       if (sweep) f.hitSet.add(o); else { f.hasHit = true; break; }
     }
   }
@@ -1616,7 +1739,14 @@ function doGrab(f){
   emit(best.pos, 8, 0xffc23a, 3, 3, 18, 1.2, 4);
   removeItem(best);
 }
-function makeBomb(id){ const mesh = buildBomb(); scene.add(mesh); return {id, mesh, pos:new V(), vel:new V(), t:0}; }
+function makeBomb(id, kind = 'bomb'){ const mesh = kind === 'meteor' ? buildMeteor() : buildBomb(); scene.add(mesh); return {id, kind, mesh, pos:new V(), vel:new V(), t:0}; }
+function buildMeteor(){
+  const g = new THREE.Group();
+  g.add(part(SPH(.4), toon(0x6b2a1a), 1.06));
+  const glow = new THREE.Mesh(SPH(.55), new THREE.MeshBasicMaterial({color:0xff7a2f, transparent:true, opacity:.55, depthWrite:false}));
+  g.add(glow); g.userData.spark = glow;
+  return g;
+}
 function throwBomb(f){
   f.held = null;
   const b = makeBomb(G.nextId++), fx = Math.sin(f.facing), fz = Math.cos(f.facing);
@@ -1625,17 +1755,19 @@ function throwBomb(f){
   b.vel.set(fx*11 + f.vel.x*.3, 7, fz*11 + f.vel.z*.3);
   G.bombs.push(b);
 }
-function explode(pos, owner){
+function explode(pos, owner, m){
+  // m = a meteor's move: smaller blast that spares the caster
+  const hit = m || BOMB_HIT, R = m ? 2.4 : 3;
   explodeFx(pos);
-  G.shake = Math.max(G.shake, BOMB_HIT.shake*.6);
+  G.shake = Math.max(G.shake, hit.shake*.6);
   for (const f of G.fighters){
-    if (!hittable(f)) continue;
+    if (!hittable(f) || (m && f === owner)) continue;
     let dx = f.pos.x - pos.x, dz = f.pos.z - pos.z;
     const d3 = Math.hypot(dx, f.pos.y + .8 - pos.y, dz);
-    if (d3 > 3) continue;
+    if (d3 > R) continue;
     let d = Math.hypot(dx, dz); if (d < .01){ dx = 1; dz = 0; d = 1; }
-    const k = 1 - d3/3*.5;
-    applyHit(null, f, {...BOMB_HIT, dmg:Math.round(BOMB_HIT.dmg*k)}, new V(dx/d, 0, dz/d), owner);
+    const k = 1 - d3/R*.5;
+    applyHit(null, f, {...hit, dmg:Math.round(hit.dmg*k)}, new V(dx/d, 0, dz/d), owner);
   }
 }
 
@@ -1654,11 +1786,23 @@ function buildGun(type){
 }
 const BULLET_GEO = new THREE.SphereGeometry(.09, 8, 6);
 const BULLET_MAT = new THREE.MeshBasicMaterial({color:0xffe066});
-const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega'];
+const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid'];
 const PROJ_LOOK = {bullet:[0xffe066, .09, 3], arrow:[0xd9b98a, .06, 7], fireball:[0xff7a2f, .32, 1], soul:[0x8dff6a, .22, 1],
-  bolt:[0xb48dff, .16, 1.6], holy:[0xffe066, .18, 1], note:[0x7fe3ff, .15, 1], rainbow:[0xff8fd6, .2, 2], beam:[0xff6bd6, .1, 9], mega:[0x7fe3ff, .5, 4]};
+  bolt:[0xb48dff, .16, 1.6], holy:[0xffe066, .18, 1], note:[0x7fe3ff, .15, 1], rainbow:[0xff8fd6, .2, 2], beam:[0xff6bd6, .1, 9], mega:[0x7fe3ff, .5, 4],
+  falcon:[0x8a5a2b, .22, 1.6], thunder:[0xfff27a, .14, 5], potion:[0xff8a3a, .14, 1], acid:[0x8dff6a, .2, 1]};
 const RAINBOW = [0xff5d4a, 0xffc23a, 0x3fbf5a, 0x2f8cff, 0x9b5de5];
-const TRAIL = {fireball:0xffa53a, soul:0x8dff6a, bolt:0xb48dff, holy:0xfff2a8, note:0x7fe3ff, mega:0xbff3ff};
+const TRAIL = {fireball:0xffa53a, soul:0x8dff6a, bolt:0xb48dff, holy:0xfff2a8, note:0x7fe3ff, mega:0xbff3ff, falcon:0xf2e6c8, thunder:0xfff27a, potion:0xffa53a, acid:0x8dff6a};
+const BLAST_COL = {fireball:0xffa53a, falcon:0xf2e6c8, potion:0xff7a2f, acid:0x8dff6a};
+// Projectiles that burst into an area when they land: the fireball, plus any move with a blast radius
+function burst(b){
+  const r = b.kind === 'fireball' ? 2.4 : b.m && b.m.blast;
+  if (!r) return false;
+  const c = BLAST_COL[b.kind] || 0xffa53a;
+  flash(b.pos, c, .4, r*1.3, 16); emit(b.pos, 20, c, 6, 4, 26, 1.6, 6);
+  if (b.kind === 'fireball') explodeFx(b.pos);
+  aoe(b.owner, b.pos, r, b.m);
+  return true;
+}
 const trailColor = k => k === 'rainbow' ? RAINBOW[(G.frame >> 1) % 5] : TRAIL[k];
 function makeBullet(id, kind = 'bullet'){
   const [c, r, len] = PROJ_LOOK[kind] || PROJ_LOOK.bullet;
@@ -1687,7 +1831,7 @@ function aoe(src, center, radius, m, opt = {}){
     if (opt.root){
       o.hp = Math.max(1, o.hp - m.dmg); setState(o, 'hitstun'); o.stun = opt.root; o.vel.set(0, 0, 0); o.squash = 10;
       popup(new V(o.pos.x, o.pos.y + .9, o.pos.z), String(m.dmg));
-      emit(new V(o.pos.x, .3, o.pos.z), 10, 0x3fbf5a, 2, 3, 30, 1.4, 2);
+      emit(new V(o.pos.x, opt.col ? 1.9 : .3, o.pos.z), 10, opt.col || 0x3fbf5a, 2, 3, 30, 1.4, 2);
       if (src){ src.hits++; src.dmgDealt += m.dmg; o.lastHitBy = src.idx; o.lastHitT = G.frame; }
       continue;
     }
@@ -1735,6 +1879,53 @@ function ninjaDash(f, m){
       applyHit(null, o, m, new V(fx*.6 - fz*side*.8, 0, fz*.6 + fx*side*.8).normalize(), f);
     }
   }
+}
+function nearestTarget(f, maxD){
+  let best = null, bd = maxD;
+  for (const o of G.fighters){
+    if (o === f || !hittable(o)) continue;
+    const d = Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z);
+    if (d < bd){ bd = d; best = o; }
+  }
+  return best;
+}
+function meteorStorm(f, m){
+  const t = nearestTarget(f, 12);
+  const cx = t ? t.pos.x : f.pos.x + Math.sin(f.facing)*5, cz = t ? t.pos.z : f.pos.z + Math.cos(f.facing)*5;
+  flash(new V(f.pos.x, 2.5, f.pos.z), 0xff7a2f, .4, 2, 14);
+  for (let i = 0; i < 5; i++){
+    const a = Math.random()*PI*2, r = i === 0 ? 0 : 1 + Math.random()*1.8;
+    const b = makeBomb(G.nextId++, 'meteor');
+    b.owner = f; b.meteor = m;
+    b.pos.set(cx + Math.cos(a)*r - 2, 9 + i*2.2, cz + Math.sin(a)*r);
+    b.vel.set(3, -3, 0);
+    b.mesh.position.copy(b.pos); G.bombs.push(b);
+  }
+}
+function grandCross(f, m){
+  f.hp = Math.max(1, f.hp - 6);
+  const fx = Math.sin(f.facing), fz = Math.cos(f.facing), c = f.pos.clone(), L = 3.6, W = .8;
+  for (const [ax, az] of [[fx, fz], [-fx, -fz], [fz, -fx], [-fz, fx]])
+    for (let st = .6; st <= L; st += .6) emit(new V(c.x + ax*st, .8, c.z + az*st), 2, 0xfff2a8, 1, 3, 22, 1.5, -2);
+  flash(new V(c.x, 1, c.z), 0xfff2a8, .5, 2.2, 16);
+  for (const o of G.fighters){
+    if (o === f || !hittable(o) || Math.abs(o.pos.y - f.pos.y) > 2.5) continue;
+    const dx = o.pos.x - c.x, dz = o.pos.z - c.z, u = dx*fx + dz*fz, v = -dx*fz + dz*fx;
+    if ((Math.abs(u) < L && Math.abs(v) < W) || (Math.abs(v) < L && Math.abs(u) < W)){
+      const d = Math.hypot(dx, dz) || 1;
+      applyHit(null, o, m, new V(dx/d, 0, dz/d), f);
+    }
+  }
+}
+function steal(f, o){
+  const at = new V(o.pos.x, 2.4, o.pos.z);
+  if (o.weapon){
+    if (!f.weapon){ f.weapon = o.weapon; f.weaponUses = o.weaponUses; }
+    else dropItem(o.weapon, o.pos);
+    o.weapon = null; o.weaponUses = 0;
+    popup(at, 'ฉกอาวุธ!', 'th');
+  }
+  if (alive(f)){ f.hp = Math.min(100, f.hp + 6); popup(new V(f.pos.x, 2.4, f.pos.z), '+6', 'heal'); }
 }
 function makeTurret(id){
   const g = new THREE.Group();
@@ -1803,6 +1994,13 @@ function removeBullet(b, spark){
 }
 function stepBullets(){
   for (const b of [...G.bullets]){
+    if (b.home && hittable(b.home)){
+      // Homing: turn the velocity a little toward the target each frame, keeping speed
+      const sp = Math.hypot(b.vel.x, b.vel.z), tx = b.home.pos.x - b.pos.x, tz = b.home.pos.z - b.pos.z, td = Math.hypot(tx, tz) || 1;
+      b.vel.x += (tx/td*sp - b.vel.x)*.12; b.vel.z += (tz/td*sp - b.vel.z)*.12;
+      const k = sp/(Math.hypot(b.vel.x, b.vel.z) || 1); b.vel.x *= k; b.vel.z *= k;
+      b.mesh.rotation.y = Math.atan2(b.vel.x, b.vel.z);
+    }
     b.pos.addScaledVector(b.vel, DT); b.mesh.position.copy(b.pos); b.life--;
     if (trailColor(b.kind) && G.frame % 2 === 0) emit(b.pos, 1, trailColor(b.kind), .6, .5, 14, 1.4, 0);
     let hit = null;
@@ -1811,7 +2009,7 @@ function stepBullets(){
       if (Math.hypot(f.pos.x - b.pos.x, f.pos.z - b.pos.z) < .6 && Math.abs(f.pos.y + .8 - b.pos.y) < 1){ hit = f; break; }
     }
     if (hit){
-      if (b.kind === 'fireball'){ explodeFx(b.pos); aoe(b.owner, b.pos, 2.4, b.m); }
+      if (burst(b)){}
       else {
         applyHit(null, hit, b.m, b.vel.clone().setY(0).normalize(), b.owner);
         if (b.kind === 'soul' && b.owner && alive(b.owner)){ b.owner.hp = Math.min(100, b.owner.hp + b.m.dmg); popup(new V(b.owner.pos.x, 2.4, b.owner.pos.z), '+' + b.m.dmg, 'heal'); }
@@ -1820,7 +2018,7 @@ function stepBullets(){
       removeBullet(b, true); continue;
     }
     if (FUNNELS.some(fn => Math.hypot(b.pos.x - fn.x, b.pos.z - fn.z) < fn.r)) removeBullet(b, true);
-    else if (b.life <= 0){ if (b.kind === 'fireball'){ explodeFx(b.pos); aoe(b.owner, b.pos, 2.4, b.m); } removeBullet(b, false); }
+    else if (b.life <= 0){ burst(b); removeBullet(b, false); }
   }
 }
 
@@ -1841,6 +2039,12 @@ function buildClassWeapon(cls){
     case 'necro': add(new THREE.CylinderGeometry(.035, .035, 1.4, 8), 0x3a3f4b, 0, -.5, 0); add(new THREE.BoxGeometry(.04, .1, .7), 0x9aa3b5, 0, -1.15, .3, 1.08); break;
     case 'engineer': add(new THREE.BoxGeometry(.07, .55, .05), silver, 0, -.3, 0); add(new THREE.BoxGeometry(.07, .12, .22), silver, 0, -.6, .05); break;
     case 'assassin': blade(.35, .07); break;
+    case 'rogue': blade(.42, .08); break;
+    case 'merchant': add(new THREE.CylinderGeometry(.04, .04, .7, 8), wood, 0, -.3, 0); add(new THREE.BoxGeometry(.06, .24, .3), silver, 0, -.58, .12, 1.08); break;
+    case 'blacksmith': add(new THREE.CylinderGeometry(.045, .045, .75, 8), wood, 0, -.32, 0); add(new THREE.BoxGeometry(.24, .2, .4), 0x5a5f6b, 0, -.72, 0, 1.08); break;
+    case 'wizard': add(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0x3a2a1a, 0, -.45, 0); glow(new THREE.OctahedronGeometry(.15), 0xff5d4a, -1.2); break;
+    case 'crusader': add(new THREE.CylinderGeometry(.035, .035, 1.6, 8), wood, 0, -.5, 0); add(new THREE.ConeGeometry(.08, .3, 8), silver, 0, -1.42, 0, 1.08).rotation.x = PI; break;
+    case 'alchemist': add(new THREE.CylinderGeometry(.03, .03, .2, 8), 0xf4f1ea, 0, -.12, 0); glow(SPH(.14), 0x6fe08a, -.32); break;
     case 'gunner': { const p = buildGun('gun'); p.scale.setScalar(.85); g.add(p); break; }
     case 'gundam': add(new THREE.CylinderGeometry(.045, .045, .25, 8), 0xf4f4f4, 0, -.1, 0); glow(new THREE.CylinderGeometry(.06, .06, 1, 10), 0xff6bd6, -.72); break;
     default: return null;
@@ -1853,6 +2057,11 @@ function buildOffhand(cls){
     const sh = part(new THREE.CylinderGeometry(.36, .36, .07, 20), toon(cls === 'knight' ? 0xb8282a : 0x2f5bd8), 1.08); sh.rotation.z = PI/2; sh.position.x = .1; g.add(sh);
     const boss = part(SPH(.1), toon(0xe0b13a)); boss.position.x = .16; g.add(boss);
   } else if (cls === 'archer'){ const bow = part(new THREE.TorusGeometry(.45, .03, 6, 18, PI), toon(0x8a5a2b)); bow.rotation.z = PI/2; g.add(bow); }
+  else if (cls === 'crusader'){
+    const sh = part(new THREE.CylinderGeometry(.34, .34, .07, 20), toon(0xf4f1ea), 1.08); sh.rotation.z = PI/2; sh.position.x = .1; g.add(sh);
+    for (const [w, hgt] of [[.06, .4], [.06, .22]]){ const c = new THREE.Mesh(new THREE.BoxGeometry(.02, hgt, w), toon(0xb8282a)); c.position.x = .15; if (hgt < .3) c.rotation.x = PI/2; g.add(c); }
+  }
+  else if (cls === 'hunter'){ const bow = part(new THREE.TorusGeometry(.45, .03, 6, 18, PI), toon(0x6b3f1e)); bow.rotation.z = PI/2; g.add(bow); }
   else if (cls === 'assassin'){ const d = part(new THREE.BoxGeometry(.05, .35, .07), toon(0xc9d2de), 1.08); d.position.y = -.28; g.add(d); }
   else if (cls === 'gunner'){ const p = buildGun('gun'); p.scale.setScalar(.85); g.add(p); }
   else return null;
@@ -2045,7 +2254,7 @@ function tick(){
     if (d < .9 && d > .001){ const push = (.9 - d)/2; a.pos.x -= dx/d*push; a.pos.z -= dz/d*push; b.pos.x += dx/d*push; b.pos.z += dz/d*push; }
   }
   if (G.countdown <= 30 && --G.itemTimer <= 0){
-    if (G.items.length < 3 + (fs.length >> 2)) spawnItem();
+    if (G.items.length < Math.min(10, 3 + (fs.length >> 2))) spawnItem();
     G.itemTimer = Math.max(150, 420 - fs.length*15) + (Math.random()*200 | 0);
   }
   for (const it of [...G.items]){
@@ -2066,12 +2275,13 @@ function tick(){
   for (const bm of [...G.bombs]){
     bm.t++; bm.vel.y -= GRAV*DT*.8; bm.pos.addScaledVector(bm.vel, DT);
     bm.mesh.position.copy(bm.pos); bm.mesh.rotation.x += .25;
+    if (bm.meteor && G.frame % 2 === 0) emit(bm.pos, 2, 0xff7a2f, 1, 1, 18, 1.8, -1);
     let boom = bm.t > 150;
-    for (const f of fs) if (hittable(f) && (f !== bm.owner || bm.t > 20) && bm.pos.distanceTo(new V(f.pos.x, f.pos.y + .8, f.pos.z)) < .9) boom = true;
+    for (const f of fs) if (hittable(f) && (f !== bm.owner || (bm.t > 20 && !bm.meteor)) && bm.pos.distanceTo(new V(f.pos.x, f.pos.y + .8, f.pos.z)) < .9) boom = true;
     if (onDeck(bm.pos.x, bm.pos.z) && bm.pos.y <= .3 && bm.pos.y > -1) boom = true;
     if (bm.pos.y < 6.5 && FUNNELS.some(fn => Math.hypot(bm.pos.x - fn.x, bm.pos.z - fn.z) < fn.r + .3)) boom = true;
     const sunk = bm.pos.y < SEA_Y;
-    if (boom) explode(bm.pos, bm.owner); else if (sunk) splash(bm.pos);
+    if (boom) explode(bm.pos, bm.owner, bm.meteor); else if (sunk) splash(bm.pos);
     if (boom || sunk){ scene.remove(bm.mesh); G.bombs.splice(G.bombs.indexOf(bm), 1); }
   }
   stepTurrets();
@@ -2237,6 +2447,7 @@ function makeTag(f){
   const el = document.createElement('div'); el.className = 'tag' + (f.isLocal ? ' me' : '');
   const n = document.createElement('div'); n.className = 'tn'; n.textContent = f.isLocal ? '▼ ' + f.name : f.name;
   if (!f.isLocal) n.style.color = hex(f.team);
+  if (!f.isLocal && G.fighters.length > 40) n.style.display = 'none';
   const b = document.createElement('div'); b.className = 'tb'; const i = document.createElement('i'); b.appendChild(i);
   el.append(n, b); $('tags').appendChild(el);
   f.tag = {el, bar:i, hp:-1, name:n};
@@ -2678,7 +2889,7 @@ const Net = {
     const r = v => Math.round(v*100);
     const sn = {cd:G.countdown, f:G.fighters.map(f => this.encF(f)),
       it:G.items.slice(0, 10).map(it => [it.id, ITEM_TYPES.indexOf(it.type), r(it.pos.x), r(it.pos.y), r(it.pos.z), it.landed ? 1 : 0, it.t > 60*17 ? 1 : 0]),
-      b:G.bombs.slice(0, 10).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z)]),
+      b:G.bombs.slice(0, 12).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), b.kind === 'meteor' ? 1 : 0]),
       bl:G.bullets.slice(0, 24).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), Math.round(b.vel.x*10), Math.round(b.vel.z*10), PROJ_KINDS.indexOf(b.kind || 'bullet')]),
       tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)])};
     this.presence({ph:this.ph, sn});
@@ -2831,7 +3042,7 @@ const Net = {
         if (!Array.isArray(a)) continue;
         const id = Number(a[0]); seen.add(id);
         let b = G.bombs.find(x => x.id === id);
-        if (!b){ b = makeBomb(id); b.pos.set(a[1]/100, a[2]/100, a[3]/100); G.bombs.push(b); }
+        if (!b){ b = makeBomb(id, a[4] === 1 ? 'meteor' : 'bomb'); b.pos.set(a[1]/100, a[2]/100, a[3]/100); G.bombs.push(b); }
         b.netPos = new V(Number(a[1])/100, Number(a[2])/100, Number(a[3])/100);
       }
       for (const b of [...G.bombs]) if (!seen.has(b.id)){
@@ -2918,7 +3129,7 @@ function renderRoomView(){
   $('slotHead').textContent = `นักสู้ในห้อง (${slots.length})`;
   slots.forEach((s, i) => {
     const row = document.createElement('div'); row.className = 'srow';
-    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = hex(TEAM[i % 32]);
+    const dot = document.createElement('span'); dot.className = 'dot'; dot.style.background = hex(TEAM[i % TEAM.length]);
     const n = document.createElement('span'); n.className = 'sn'; n.textContent = slotName(s, i);
     row.append(dot, n);
     const tag = (cls, text) => { const b = document.createElement('span'); b.className = 'badge ' + cls; b.textContent = text; row.appendChild(b); };
