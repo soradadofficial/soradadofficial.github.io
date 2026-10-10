@@ -59,6 +59,11 @@ button,select,input{font-family:inherit;color:inherit}
 #hudMid{display:grid;gap:6px;justify-items:center;pointer-events:auto}
 .chipbtn{font-family:var(--display);font-size:13px;background:var(--paper);border:3px solid var(--ink);border-radius:10px;padding:5px 10px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;white-space:nowrap}
 #autoBtn.on{background:var(--gold)}
+#bossBar{display:grid;grid-template-columns:auto minmax(120px,32vw) auto;align-items:center;gap:8px;background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:5px 10px;font-family:var(--display);font-size:12px;white-space:nowrap}
+#bossBar[hidden]{display:none}
+#bossBar .bhp{height:12px;border:2px solid var(--ink);border-radius:7px;background:var(--track);overflow:hidden}
+#bossBar .bhp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7fb5ff,#d8342c)}
+#bossBar.rage .bhp i{background:#d8342c}
 #stoneBar{display:flex;gap:8px;background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:5px 8px}
 #stoneBar .sb{display:grid;gap:2px;width:min(120px,26vw);font-family:var(--display);font-size:11px;white-space:nowrap}
 #stoneBar .shp{height:9px;border:2px solid var(--ink);border-radius:6px;background:var(--track);overflow:hidden}
@@ -239,6 +244,7 @@ button{touch-action:manipulation}
 <div id="hud" hidden>
   <div id="cards"></div>
   <div id="hudMid">
+    <div id="bossBar" hidden><span id="bossName">ยักษ์หิมะ</span><div class="bhp"><i id="bossHp"></i></div><span id="bossNum"></span></div>
     <div id="stoneBar" hidden>
       <div class="sb"><span id="shn0">หินแดง</span><div class="shp"><i id="shp0" style="background:#ff5d4a"></i></div></div>
       <div class="sb"><span id="shn1">หินน้ำเงิน</span><div class="shp"><i id="shp1" style="background:#2f8cff"></i></div></div>
@@ -307,6 +313,7 @@ button{touch-action:manipulation}
         <input type="radio" name="stage" id="sg-siam" value="siam"><label for="sg-siam">สยาม</label>
         <input type="radio" name="stage" id="sg-gvg" value="gvg"><label for="sg-gvg">สนามกิลวอ</label>
         <input type="radio" name="stage" id="sg-halloween" value="halloween"><label for="sg-halloween">ฮัลโลวีน</label>
+        <input type="radio" name="stage" id="sg-christmas" value="christmas"><label for="sg-christmas">คริสต์มาส (บอส)</label>
       </div>
     </div>
     <div class="btns">
@@ -399,7 +406,7 @@ button{touch-action:manipulation}
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
         <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option></select></div>
-        <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option></select></div>
+        <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
       <div class="opt"><h4 id="slotHead">นักสู้ในห้อง</h4><div id="slotList" class="slots"></div></div>
@@ -543,8 +550,8 @@ const MOVES = {
     fire:(f, m) => { f.invuln = Math.max(f.invuln, 100); f.hp = Math.min(100, f.hp + m.heal); const c = f.pos.clone(); flash(new V(c.x, 1, c.z), 0xffd23a, .5, 2.6, 16); emit(new V(c.x, 1, c.z), 18, 0xffe9a0, 4, 5, 26, 1.4, 1); aoe(f, c, 2.4, m); }},
   sk_mage:     {name:'ลูกไฟ', anim:'cast', startup:12, active:1, recovery:16, noHit:true, dmg:14, kb:10, up:8, launch:true, hitstop:6, shake:.4, skill:true,
     fire:(f, m) => fireProj(f, 'fireball', f.facing, 13, 70, m)},
-  sk_priest:   {name:'ฟื้นฟู', anim:'cast', startup:10, active:1, recovery:14, noHit:true, skill:true, heal:35,
-    fire:(f, m) => { f.hp = Math.min(100, f.hp + m.heal); popup(new V(f.pos.x, 2.4, f.pos.z), '+' + m.heal, 'heal'); emit(new V(f.pos.x, 1, f.pos.z), 22, 0x6fe08a, 3, 5, 30, 1.4, -1); flash(new V(f.pos.x, 1, f.pos.z), 0xd8ffe0, .5, 2, 14); }},
+  sk_priest:   {name:'ฮีลหมู่', anim:'cast', startup:10, active:1, recovery:14, noHit:true, skill:true, heal:35,
+    fire:(f, m) => groupHeal(f, m.heal, 7)},
   sk_necro:    {name:'ดูดวิญญาณ', anim:'cast', startup:10, active:1, recovery:16, noHit:true, dmg:10, kb:4, up:2, stun:20, hitstop:4, skill:true,
     fire:(f, m) => fireProj(f, 'soul', f.facing, 15, 60, m)},
   sk_druid:    {name:'รากพันธนาการ', anim:'cast', startup:12, active:1, recovery:14, noHit:true, dmg:5, skill:true,
@@ -660,6 +667,12 @@ const MOVES = {
     onHit:(f, o) => steal(f, o)},
   sk_taekwon:  {name:'ทอร์นาโดคิก', anim:'spin', startup:6, active:12, recovery:16, multi:6, sweep:true, dmg:6, kb:6, up:9, launch:true, reach:0, rad:2, hitstop:5, shake:.25, skill:true,
     fire:f => { const c = new V(f.pos.x, .6, f.pos.z); emit(c, 22, 0xf4f4f4, 6, 3, 22, 1.4, 0); flash(c, 0xffffff, .4, 2.4, 12); }},
+  // Acolyte: a support class whose skill heals the most hurt ally in range
+  ay1:{name:'ฟาดคทา', anim:'swing', startup:6, active:3, recovery:12, dmg:5, kb:3, up:0, stun:18, reach:1.15, rad:.85, lunge:2, next:'ay2', hitstop:5},
+  ay2:{name:'กระทุ้งคทา', anim:'thrust', startup:5, active:3, recovery:11, dmg:5, kb:3.5, up:0, stun:18, reach:1.25, rad:.75, lunge:2, next:'ay3', hitstop:5},
+  ay3:{name:'แสงอวยพร', anim:'cast', startup:9, active:1, recovery:16, noHit:true, dmg:7, kb:6, up:3, launch:true, hitstop:5, fire:(f, m) => fireProj(f, 'holy', f.facing, 18, 35, m)},
+  sk_acolyte:  {name:'ฮีล', anim:'cast', startup:8, active:1, recovery:12, noHit:true, skill:true, heal:45,
+    fire:(f, m) => healOne(f, m.heal, 10)},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -691,11 +704,12 @@ const SKILL_INFO = {
   alchemist:{cd:420, range:8, desc:'ขว้างขวดกรด ระเบิดเป็นวง ทะลุการกัน'},
   rogue:{cd:420, range:5, desc:'พุ่งฉก ขโมยอาวุธของคนที่โดน และดูดพลัง 6'},
   taekwon:{cd:360, range:2.2, desc:'เตะหมุนเป็นพายุ เตะทุกคนรอบตัวลอยขึ้นฟ้า'},
+  acolyte:{cd:300, range:-1, desc:'ฮีลเพื่อนที่เลือดน้อยที่สุดในระยะ 10 ช่อง (ไม่มีเพื่อน = ฮีลตัวเอง)'},
 };
 // First hit of each class's ground combo; the chain continues through each move's next
 const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
   archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1',
-  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1'};
+  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1'};
 const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2};
 const CLASS_STOP = {archer:6, gunner:5, hunter:6};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
@@ -717,6 +731,10 @@ TEAM[0] = 0xff5d4a; TEAM[1] = 0x2f8cff;
 let SEA_Y = -4.5;
 const SHIP_FUNNELS = [-17, -6, 5, 16].map(x => ({x, z:0, r:1.6}));
 let FUNNELS = SHIP_FUNNELS;   // obstacles of the current stage
+// Solid boxes {x, z, hx, hz, h}: low ones (h ≤ 1.8) can be jumped onto and fought from, tall ones are walls
+let BLOCKS = [];
+const inBlock = (x, z, m = 0) => BLOCKS.find(b => Math.abs(x - b.x) < b.hx + m && Math.abs(z - b.z) < b.hz + m);
+const blockAt = (x, y, z) => BLOCKS.some(b => Math.abs(x - b.x) < b.hx && Math.abs(z - b.z) < b.hz && y < b.h);
 function hw(x){
   if (x > 18) return x >= 32 ? 0 : 8*Math.sqrt(1 - ((x - 18)/14)**2);
   if (x < -26) return x <= -32 ? 0 : 8*Math.sqrt(1 - ((x + 26)/6)**2);
@@ -1275,6 +1293,87 @@ function buildHalloween(){
   g.userData = {bats, lanterns};
   return g;
 }
+
+/* ---------- Christmas: a snowy town square with walls to hide behind and platforms to fight from ---------- */
+const XM_W = 34, XM_D = 17;
+const XMAS_OBS = [[-15, 0, .5, 'lamp'], [15, 0, .5, 'lamp'], [0, -14, .5, 'lamp'], [0, 14, .5, 'lamp']].map(([x, z, r, kind]) => ({x, z, r, kind}));
+// Low platforms (h 1.4) with a step, tall snow walls (h 3) forming hiding corners, gift stacks (h 1.1)
+const XMAS_BLOCKS = [
+  {x:-21, z:-10, hx:4.5, hz:2.5, h:1.4, kind:'deck'}, {x:-21, z:-6.6, hx:1.2, hz:.9, h:.7, kind:'step'},
+  {x:21, z:10, hx:4.5, hz:2.5, h:1.4, kind:'deck'}, {x:21, z:6.6, hx:1.2, hz:.9, h:.7, kind:'step'},
+  {x:-28, z:8, hx:.5, hz:3.5, h:3, kind:'wall'}, {x:-25, z:11, hx:3, hz:.5, h:3, kind:'wall'},
+  {x:28, z:-8, hx:.5, hz:3.5, h:3, kind:'wall'}, {x:25, z:-11, hx:3, hz:.5, h:3, kind:'wall'},
+  {x:-8, z:11, hx:2.2, hz:.5, h:3, kind:'wall'}, {x:8, z:-11, hx:2.2, hz:.5, h:3, kind:'wall'},
+  {x:-10, z:-12, hx:1, hz:1, h:1.1, kind:'gift'}, {x:10, z:12, hx:1, hz:1, h:1.1, kind:'gift'},
+  {x:-30, z:-2, hx:1, hz:1, h:1.1, kind:'gift'}, {x:30, z:2, hx:1, hz:1, h:1.1, kind:'gift'},
+];
+function buildChristmas(){
+  const g = new THREE.Group(), W = XM_W, D = XM_D;
+  const tex = tileTex('#f4f8fc', '#e6eef7', '#c9d6e6', 4); tex.repeat.set(W/4, D/4);
+  const top = new THREE.MeshToonMaterial({map:tex, gradientMap:gmap}), side = toon(0xd9e4f0), snow = toon(0xf7fbff);
+  const base = new THREE.Mesh(new THREE.BoxGeometry(W*2, 3, D*2), [side, side, top, side, side, side]); base.position.y = -1.5; base.receiveShadow = true; g.add(base);
+  const cliff = part(new THREE.CylinderGeometry(D*1.25, D*.6, 12, 10), toon(0xbfcde0)); cliff.scale.x = W/D*.9; cliff.position.y = -9; g.add(cliff);
+  // Candy-cane posts at the corners and along the edge
+  for (const [x, z] of [[W - .5, D - .5], [-W + .5, D - .5], [W - .5, -D + .5], [-W + .5, -D + .5], [0, D - .5], [0, -D + .5], [W - .5, 0], [-W + .5, 0]]){
+    for (let i = 0; i < 5; i++){ const seg = part(new THREE.CylinderGeometry(.16, .16, .3, 10), toon(i % 2 ? 0xffffff : 0xd8342c)); seg.position.set(x, .15 + i*.3, z); g.add(seg); }
+    const hook = part(new THREE.TorusGeometry(.3, .16, 8, 12, PI), toon(0xd8342c)); hook.position.set(x + .3, 1.6, z); g.add(hook);
+  }
+  for (const b of XMAS_BLOCKS){
+    const w = b.hx*2, d = b.hz*2;
+    if (b.kind === 'deck' || b.kind === 'step'){
+      const wood = part(new THREE.BoxGeometry(w, b.h, d), toon(0x9b6a3c), 1.02); wood.position.set(b.x, b.h/2, b.z); g.add(wood);
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(w + .1, .14, d + .1), snow); cap.position.set(b.x, b.h + .03, b.z); g.add(cap);
+      if (b.kind === 'deck') for (const sx of [-1, 1]) for (const sz of [-1, 1]){
+        const post = part(new THREE.CylinderGeometry(.12, .12, 1.4, 8), toon(0x6b3f1e)); post.position.set(b.x + sx*(b.hx - .2), b.h + .7, b.z + sz*(b.hz - .2)); g.add(post);
+      }
+    } else if (b.kind === 'wall'){
+      const wall = part(new THREE.BoxGeometry(w, b.h, d), toon(0xeaf2fb), 1.02); wall.position.set(b.x, b.h/2, b.z); g.add(wall);
+      const along = w > d;
+      for (let k = -(along ? b.hx : b.hz) + .5; k < (along ? b.hx : b.hz); k += 1){
+        const lump = part(SPH(.42), snow); lump.scale.y = .6; lump.position.set(b.x + (along ? k : 0), b.h + .05, b.z + (along ? 0 : k)); g.add(lump);
+      }
+    } else {
+      const cols = [0xd8342c, 0x3fbf5a, 0x2f8cff, 0xffc23a];
+      const box = part(new THREE.BoxGeometry(w, b.h, d), toon(cols[(Math.abs(b.x) + Math.abs(b.z)) % 4 | 0]), 1.03); box.position.set(b.x, b.h/2, b.z); g.add(box);
+      for (const rot of [0, PI/2]){ const rib = new THREE.Mesh(new THREE.BoxGeometry(w + .04, b.h + .04, .18), toon(0xffe066)); rib.position.set(b.x, b.h/2, b.z); rib.rotation.y = rot; g.add(rib); }
+      const bow = part(new THREE.TorusGeometry(.22, .08, 6, 12), toon(0xffe066)); bow.position.set(b.x, b.h + .15, b.z); g.add(bow);
+    }
+  }
+  for (const o of XMAS_OBS){
+    const pole = part(new THREE.CylinderGeometry(.18, .24, 4, 10), toon(0x2b2f3a), 1.05); pole.position.set(o.x, 2, o.z); g.add(pole);
+    const lamp = new THREE.Mesh(SPH(.4), new THREE.MeshBasicMaterial({color:0xfff1b8})); lamp.position.set(o.x, 4.2, o.z); g.add(lamp);
+    const wreath = part(new THREE.TorusGeometry(.42, .14, 8, 16), toon(0x2f7a3a)); wreath.position.set(o.x, 3.2, o.z); wreath.rotation.y = Math.atan2(-o.x, -o.z); g.add(wreath);
+  }
+  // Giant tree and houses behind the square
+  const tree = new THREE.Group(); tree.position.set(0, -2, -D - 12);
+  const trunk = part(new THREE.CylinderGeometry(1.4, 1.8, 5, 10), toon(0x6b3f1e)); trunk.position.y = 2.5; tree.add(trunk);
+  for (let i = 0; i < 5; i++){ const c = part(new THREE.ConeGeometry(9 - i*1.6, 7, 12), toon(i % 2 ? 0x2f7a3a : 0x3f8f4a), 1.02); c.position.y = 7 + i*4.2; tree.add(c); }
+  const star = new THREE.Mesh(new THREE.OctahedronGeometry(1.6), new THREE.MeshBasicMaterial({color:0xffe066})); star.position.y = 28.5; tree.add(star);
+  const baubles = [0xd8342c, 0xffc23a, 0x2f8cff, 0xff8fd6, 0xffffff];
+  for (let i = 0; i < 46; i++){ const lv = i % 5, a = i*2.4, r = (8.4 - lv*1.6)*.75; const b = new THREE.Mesh(SPH(.38), new THREE.MeshBasicMaterial({color:baubles[i % 5]})); b.position.set(Math.cos(a)*r, 5.2 + lv*4.2 + (i % 3)*.6, Math.sin(a)*r); tree.add(b); }
+  g.add(tree);
+  for (let i = 0; i < 9; i++){
+    const hx = -60 + i*15, hz = -D - 30 - (i % 2)*6, hh = 9 + (i % 3)*3;
+    if (Math.abs(hx) < 12) continue;
+    const h = part(new THREE.BoxGeometry(10, hh, 8), toon([0xb8423a, 0x6f8fb5, 0xe0c38a, 0x8a6fb5][i % 4])); h.position.set(hx, -4 + hh/2, hz); g.add(h);
+    const roof = gable(11, 4, 9, 0xf7fbff); roof.position.set(hx, -4 + hh, hz); roof.rotation.y = 0; g.add(roof);
+    for (const wx of [-2.5, 2.5]){ const w = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2, .2), new THREE.MeshBasicMaterial({color:0xffd27a})); w.position.set(hx + wx, -4 + hh*.55, hz + 4.05); g.add(w); }
+  }
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), toon(0xe8f0f8)); ground.rotation.x = -PI/2; ground.position.y = -15; g.add(ground);
+  for (let i = 0; i < 40; i++){
+    const a = Math.random()*PI*2, r = 60 + Math.random()*90;
+    const pine = part(new THREE.ConeGeometry(3 + Math.random()*2, 9 + Math.random()*6, 8), toon(0x2f6b45)); pine.position.set(Math.cos(a)*r, -10, Math.sin(a)*r); g.add(pine);
+  }
+  // String lights over the square (animated, so kept out of the bake)
+  const bulbs = [];
+  for (let i = 0; i < 36; i++){
+    const u = i/35, x = -W + 2 + u*(W*2 - 4), z = Math.sin(u*PI*4)*3;
+    const bm = new THREE.Mesh(SPH(.18), new THREE.MeshBasicMaterial({color:baubles[i % 4]}));
+    bm.position.set(x, 6.5 - Math.abs(Math.sin(u*PI*4))*1.2, z); g.add(bm); bulbs.push(bm);
+  }
+  g.userData = {bulbs};
+  return g;
+}
 const rectInside = (W, D) => (x, z, m) => Math.abs(x) < W - m && Math.abs(z) < D - m;
 const rectPush = (W, D) => (x, z) => (W - Math.abs(x) < D - Math.abs(z)) ? {x:Math.sign(x || 1)*(W + .35), z} : {x, z:Math.sign(z || 1)*(D + .35)};
 const STAGES = {
@@ -1310,6 +1409,15 @@ const STAGES = {
       if (fr % 12 === 0){ const o = HALLOWEEN_OBS[(fr/12 | 0) % 6]; emit(new V(o.x + (Math.random() - .5), 1.8, o.z), 1, 0x9fffd0, .3, .8, 70, 1.4, -.15, .7); }
       if (fr % 5 === 0) emit(new V(0, 4.6, 0), 1, 0xffa53a, .4, 1.2, 30, 1, -.4, .8);
     }},
+  christmas:{name:'คริสต์มาส (บอส)', fallText:'ตกหุบหิมะ', water:null, fallY:-8, wallBottom:-3.2, camX:32, orbit:60, boss:true,
+    preview:new V(-6, 0, 6), spawn:[-28, 28, -12, 12], box:[-32, 32, -15, 15], obstacles:XMAS_OBS, blocks:XMAS_BLOCKS, fog:0x9fb6d8, fogNear:60, fogFar:220, shadow:[44, 26], noClouds:true,
+    light:{sky:0xdfe9ff, ground:0x5a6f9a, hemi:.8, sun:0xfff0dc, sunI:.75},
+    sky:['#1d2a5a','#3f5a9a','#9fb6d8','#e9f1fb'], build:buildChristmas, inside:rectInside(XM_W, XM_D), pushOut:rectPush(XM_W, XM_D),
+    fx:fr => {
+      const u = STAGE.group.userData;
+      if (fr % 8 === 0) u.bulbs.forEach((b, i) => { b.visible = ((fr >> 3) + i) % 3 !== 0; });
+      for (let k = 0; k < 2; k++) emit(new V((Math.random() - .5)*XM_W*2.4, 16, (Math.random() - .5)*XM_D*2.4), 1, 0xffffff, .3, -.5, 260, .9, .35, .9);
+    }},
 };
 const STAGE_KEYS = Object.keys(STAGES);
 const MODE_KEYS = ['ffa', 'team'];
@@ -1321,7 +1429,7 @@ function setStage(k){
   STAGE = st; STAGE_KEY = key;
   if (!st.group){ st.group = st.build(); mergeMeshes(st.group, stageSkip(st.group)); }
   scene.add(st.group);
-  FUNNELS = st.obstacles; SEA_Y = st.fallY;
+  FUNNELS = st.obstacles; SEA_Y = st.fallY; BLOCKS = st.blocks || [];
   sea.visible = st.water != null; sea.position.y = st.fallY;
   if (st.water != null) sea.material.color.setHex(st.water);
   if (!st.skyTex) st.skyTex = paintSky(st.sky);
@@ -1557,6 +1665,12 @@ const OUTFITS = {
     for (const s of [-1, 1]){ const k = OP(new THREE.BoxGeometry(.06, .24, .03), 0x1d1d1d); k.position.set(s*.06, -.3, .36); k.rotation.z = s*.25; t.add(k); }
     const lap = OP(new THREE.BoxGeometry(.06, .4, .02), 0x1d1d1d); lap.position.set(.06, .12, .35); lap.rotation.z = -.5; t.add(lap);
   }},
+  acolyte:{name:'อะโคไลต์', body:0xe8eef8, head:true, build(h, t){
+    const cap = OP(new THREE.SphereGeometry(.6, 24, 12, 0, PI*2, 0, PI*.32), 0x3f6fb5, 1.03); cap.position.y = .06; h.add(cap);
+    const band = OP(new THREE.TorusGeometry(.5, .04, 6, 24), 0xe0b13a); band.rotation.x = PI/2; band.position.y = .36; h.add(band);
+    oRobe(t, 0xe8eef8); oCollar(t, 0x3f6fb5, .3, .08); oCross(t, 0x3f6fb5);
+    const sash = OP(new THREE.BoxGeometry(.1, .7, .03), 0x3f6fb5); sash.position.set(-.12, -.1, .34); sash.rotation.z = -.4; t.add(sash);
+  }},
 };
 const OUTFIT_K = Object.keys(OUTFITS);
 
@@ -1595,7 +1709,8 @@ const CLASS_ON = new Set(OUTFIT_K);
     if (hit.kb !== undefined || kb !== undefined) hit.kb = (kb ?? hit.kb)*mKb;
     if (heal !== undefined && hit.heal !== undefined) hit.heal = heal;
   }
-  if (MOVES.sk_priest) SKILL_INFO.priest.desc = `ฟื้นพลัง ${MOVES.sk_priest.heal} ทันที`;
+  if (MOVES.sk_priest) SKILL_INFO.priest.desc = `ฮีลหมู่ ฟื้นพลัง ${MOVES.sk_priest.heal} ให้ตัวเองและเพื่อนรอบตัวในระยะ 7 ช่อง (มีผลกับเพื่อนเท่านั้น)`;
+  if (MOVES.sk_acolyte) SKILL_INFO.acolyte.desc = `ฮีล ฟื้นพลัง ${MOVES.sk_acolyte.heal} ให้เพื่อนที่เลือดน้อยที่สุดในระยะ 10 ช่อง (ไม่มีเพื่อน = ฮีลตัวเอง)`;
   if (MOVES.sk_paladin) SKILL_INFO.paladin.desc = `อมตะ 1.6 วินาที ฟื้นพลัง ${MOVES.sk_paladin.heal} และผลักคนรอบตัว`;
 })();
 // Classes that players can pick and bots can roll; a disabled class worn by anyone shows up as "ไม่ใส่"
@@ -1896,13 +2011,13 @@ function feed(text){
 /* ---------- Game state ---------- */
 const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[], frame:0, itemTimer:300, slow:0, shake:0,
   countdown:0, cdShown:new Set(), paused:false, debug:false, endT:0, winner:null, stocks:2,
-  cfg:{n:8, st:2, df:'normal', stage:'titanic', mode:'ffa'}, teamMode:false, stones:[], winTeam:null, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0,
+  cfg:{n:8, st:2, df:'normal', stage:'titanic', mode:'ffa'}, teamMode:false, stones:[], winTeam:null, raid:false, raidWin:null, boss:null, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0,
   auto:{p1:false, p2:false}};
 
 class Fighter {
   constructor(idx, spec){
-    this.idx = idx; this.side = G.teamMode ? idx % 2 : -1;
-    this.team = this.side >= 0 ? SIDES[this.side].col : TEAM[idx % TEAM.length];
+    this.idx = idx; this.side = G.raid ? 0 : G.teamMode ? idx % 2 : -1;
+    this.team = G.teamMode ? SIDES[this.side].col : TEAM[idx % TEAM.length];
     this.name = spec.name; this.ctrl = spec.ctrl; this.peer = spec.peer || '';
     this.isLocal = spec.ctrl === 'p1' || spec.ctrl === 'p2' || !!spec.me;
     this.pos = new V(); this.vel = new V(); this.netPos = new V(); this.netVel = new V();
@@ -1952,6 +2067,11 @@ function spawnPoint(i, n){
     const dx = x - fn.x, dz = z - fn.z, d = Math.hypot(dx, dz), need = fn.r + .8;
     if (d < need){ if (d < .01) z += need; else { x = fn.x + dx/d*need; z = fn.z + dz/d*need; } }
   }
+  for (let k = 0; k < 4; k++){
+    const b = inBlock(x, z, .7); if (!b) break;
+    if (b.hx - Math.abs(x - b.x) < b.hz - Math.abs(z - b.z)) x = b.x + Math.sign(x - b.x || 1)*(b.hx + .8); else z = b.z + Math.sign(z - b.z || 1)*(b.hz + .8);
+  }
+  if (G.raid && Math.hypot(x, z) < 6){ const d = Math.hypot(x, z) || 1; x = x/d*6; z = z/d*6; }
   return {p:new V(x, 0, z), facing:Math.atan2(-x, -z)};
 }
 // Team mode: each side lines up in its own half of the deck, in front of its stone
@@ -1970,7 +2090,7 @@ function randomDeckPoint(margin){
   const bx = STAGE.box;
   for (let k = 0; k < 60; k++){
     const x = bx[0] + Math.random()*(bx[1] - bx[0]), z = bx[2] + Math.random()*(bx[3] - bx[2]);
-    if (onDeck(x, z, margin) && FUNNELS.every(fn => Math.hypot(x - fn.x, z - fn.z) > fn.r + 1)) return new V(x, 0, z);
+    if (onDeck(x, z, margin) && FUNNELS.every(fn => Math.hypot(x - fn.x, z - fn.z) > fn.r + 1) && !inBlock(x, z, 1) && !(G.boss && Math.hypot(x - G.boss.pos.x, z - G.boss.pos.z) < 5)) return new V(x, 0, z);
   }
   return STAGE.preview.clone();
 }
@@ -1980,7 +2100,7 @@ function createFighters(specs, stocks, tags){
   // Big crowds: skip per-fighter shadow casting, it doubles the draw calls and phones can't keep up
   const crowd = specs.length > 40;
   G.fighters.forEach((f, i) => {
-    const sp = f.side >= 0 ? teamSpawn(i, specs.length) : spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
+    const sp = G.teamMode ? teamSpawn(i, specs.length) : spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
     if (crowd) f.vis.root.traverse(o => { o.castShadow = false; });
     if (tags) makeTag(f);
   });
@@ -2084,11 +2204,19 @@ function steerAroundObstacles(b, inp){
       if (toward > .2){ const tx = -oz/od, tz = ox/od, s = (tx*inp.x + tz*inp.z) >= 0 ? 1 : -1; inp.x += tx*s*toward; inp.z += tz*s*toward; }
     }
   }
+  for (const bk of BLOCKS){
+    if (b.pos.y >= bk.h - .1) continue;
+    const ax = Math.abs(b.pos.x - bk.x) - bk.hx, az = Math.abs(b.pos.z - bk.z) - bk.hz;
+    if (ax > 1.1 || az > 1.1) continue;
+    if (ax > az){ if (Math.sign(inp.x) === -Math.sign(b.pos.x - bk.x)){ const k = inp.x; inp.x = 0; inp.z += (inp.z >= 0 ? 1 : -1)*Math.abs(k); } }
+    else if (Math.sign(inp.z) === -Math.sign(b.pos.z - bk.z)){ const k = inp.z; inp.z = 0; inp.x += (inp.x >= 0 ? 1 : -1)*Math.abs(k); }
+    if (bk.h < 1.8 && b.onGround && Math.random() < .04) inp.jump = !b.prev.jump;
+  }
   const im = Math.hypot(inp.x, inp.z); if (im > 1){ inp.x /= im; inp.z /= im; }
 }
 function thinkStone(b, st, D){
   const inp = b.input, ai = b.ai, press = k => { inp[k] = !b.prev[k]; };
-  const dx = st.pos.x - b.pos.x, dz = st.pos.z - b.pos.z, dist = Math.max(.001, Math.hypot(dx, dz) - 1);
+  const dx = st.pos.x - b.pos.x, dz = st.pos.z - b.pos.z, dist = Math.max(.001, Math.hypot(dx, dz) - (st.r || 1));
   const ranged = !!CLASS_STOP[b.cls] || b.weapon === 'gun' || b.weapon === 'shotgun';
   const reach = ranged ? 6 : (b.weapon ? 1.6 : Math.min(1.5, CLASS_REACH[b.cls] || 1.3));
   inp.x = inp.z = 0;
@@ -2110,6 +2238,7 @@ function think(b){
   if (ai.guardT > 0){ ai.guardT--; inp.guard = ai.guardT > 0; inp.x = inp.z = 0; return; }
   inp.guard = false;
   if (!ai.tgt || !alive(ai.tgt) || ai.tgt.state === 'ko' || --ai.tgtT <= 0){ ai.tgt = nearestFoe(b); ai.tgtT = 90 + Math.random()*120 | 0; }
+  if (G.raid && G.boss && G.boss.hp > 0 && ai.retreat <= 0) return thinkBoss(b, D);
   if (G.teamMode && b.side >= 0){
     // Defenders peel onto anyone threatening their own stone; raiders head for the enemy stone
     const own = G.stones[b.side], es = G.stones[1 - b.side], raid = ((b.idx >> 1) % 10) < 3;
@@ -2136,20 +2265,13 @@ function think(b){
     const mx = goal.x - b.pos.x, mz = goal.z - b.pos.z, md = Math.hypot(mx, mz);
     if (md > stop + .1){ inp.x = mx/md; inp.z = mz/md; }
   }
-  for (const fn of FUNNELS){
-    const ox = b.pos.x - fn.x, oz = b.pos.z - fn.z, od = Math.hypot(ox, oz);
-    if (od < 2.6 && od > .01){
-      const toward = -(inp.x*ox + inp.z*oz)/od;
-      if (toward > .2){ const tx = -oz/od, tz = ox/od, s = (tx*inp.x + tz*inp.z) >= 0 ? 1 : -1; inp.x += tx*s*toward; inp.z += tz*s*toward; }
-    }
-  }
-  const im = Math.hypot(inp.x, inp.z); if (im > 1){ inp.x /= im; inp.z /= im; }
+  steerAroundObstacles(b, inp);
   if (ai.cd > 0){ ai.cd--; return; }
   if (tOk && t.state === 'attack' && t.stateT <= t.move.startup && dist < 2.6 && Math.random() < D.guard){
     ai.guardT = 12 + t.move.startup; inp.guard = true; inp.x = inp.z = 0; ai.cd = D.react; return;
   }
   const si = SKILL_INFO[b.cls] || SKILL_INFO.none;
-  if (b.skillCd <= 0 && Math.random() < .35*D.aggr && (si.range < 0 ? b.hp < 55 : tOk && dist < si.range)){
+  if (b.skillCd <= 0 && Math.random() < .35*D.aggr && (si.range < 0 ? wantsHeal(b) : tOk && dist < si.range)){
     if (tOk){ inp.x = dx/dist*.3; inp.z = dz/dist*.3; }
     press('skill'); ai.cd = D.react; return;
   }
@@ -2193,6 +2315,7 @@ function aimTarget(f, m){
     const sc = d*(1 + da*1.5);
     if (sc < bs){ bs = sc; best = o; }
   }
+  if (!best && G.boss && G.boss.hp > 0 && Math.hypot(G.boss.pos.x - f.pos.x, G.boss.pos.z - f.pos.z) < R + BOSS_R) return G.boss;
   return best;
 }
 // Markers over each local player's locked target
@@ -2214,6 +2337,50 @@ function updateLockMarks(){
     } else mk.visible = false;
   }
   for (; k < LOCK_MARKS.length; k++) LOCK_MARKS[k].visible = false;
+}
+
+
+/* ---------- Heals that reach allies (team mode, boss raid); in free-for-all there are no allies, so they heal you ---------- */
+function healFx(o, amount){
+  const was = o.hp; o.hp = Math.min(100, o.hp + amount);
+  const got = Math.round(o.hp - was);
+  popup(new V(o.pos.x, 2.4, o.pos.z), '+' + got, 'heal');
+  emit(new V(o.pos.x, 1, o.pos.z), 12, 0x6fe08a, 2.5, 4, 28, 1.3, -1);
+  return got;
+}
+function groupHeal(f, amount, radius){
+  const c = new V(f.pos.x, .2, f.pos.z);
+  flash(new V(c.x, 1, c.z), 0xd8ffe0, .5, radius*.9, 18);
+  for (let a = 0; a < PI*2; a += PI/10) emit(new V(c.x + Math.cos(a)*radius*.8, .4, c.z + Math.sin(a)*radius*.8), 1, 0x6fe08a, .3, 2.5, 30, 1.4, -1);
+  let n = 0;
+  for (const o of G.fighters){
+    if (o !== f && !ally(f, o)) continue;
+    if (!alive(o) || o.state === 'ko' || Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z) > radius) continue;
+    healFx(o, amount); n++;
+  }
+  if (n > 1 && f.isLocal) popup(new V(f.pos.x, 3.1, f.pos.z), 'ฮีล ' + n + ' คน', 'combo th', 40);
+}
+function healOne(f, amount, range){
+  let best = null, bh = 101;
+  for (const o of G.fighters){
+    if (!ally(f, o) || !alive(o) || o.state === 'ko' || o.hp >= 100) continue;
+    if (Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z) > range) continue;
+    if (o.hp < bh){ bh = o.hp; best = o; }
+  }
+  const t = best || f;
+  if (t !== f){
+    f.facing = Math.atan2(t.pos.x - f.pos.x, t.pos.z - f.pos.z);
+    const d = Math.hypot(t.pos.x - f.pos.x, t.pos.z - f.pos.z);
+    for (let k = 0; k <= d; k += .6){ const u = k/(d || 1); emit(new V(L(f.pos.x, t.pos.x, u), 1.2, L(f.pos.z, t.pos.z, u)), 1, 0xbfffd0, .2, .5, 22, 1.2, 0); }
+  }
+  flash(new V(t.pos.x, 1, t.pos.z), 0xd8ffe0, .4, 1.8, 14);
+  healFx(t, amount);
+}
+// Bots: use a heal when they or an ally nearby is hurt
+function wantsHeal(b){
+  if (b.hp < 55) return true;
+  const r = b.cls === 'priest' ? 7 : 10;
+  return G.fighters.some(o => ally(b, o) && alive(o) && o.hp < 60 && Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) < r);
 }
 
 /* ---------- Combat ---------- */
@@ -2261,6 +2428,11 @@ function checkHits(f){
         break;
       }
     }
+  }
+  const B = G.boss;
+  if (B && B.hp > 0 && !f.hasHit && !f.hitSet.has(B) && Math.hypot(hc.x - B.pos.x, hc.z - B.pos.z) < m.rad + BOSS_R && hc.y < 7.5){
+    damageBoss(m.dmg*(f.rage > 0 ? 1.5 : 1), f); f.hitSet.add(B); if (!sweep) f.hasHit = true;
+    if (f.isLocal) G.shake = Math.max(G.shake, .08);
   }
 }
 const aliveCount = () => G.fighters.filter(f => f.stocks > 0).length;
@@ -2379,6 +2551,7 @@ function explode(pos, owner, m){
   const hit = m || BOMB_HIT, R = m ? 2.4 : 3;
   explodeFx(pos);
   hitStones(owner, pos, R + .6, hit.dmg);
+  if (owner !== G.boss) hitBossArea(owner, pos, R, hit.dmg);
   G.shake = Math.max(G.shake, hit.shake*.6);
   for (const f of G.fighters){
     if (!hittable(f) || (m && f === owner) || ally(owner, f)) continue;
@@ -2406,13 +2579,13 @@ function buildGun(type){
 }
 const BULLET_GEO = new THREE.SphereGeometry(.09, 8, 6);
 const BULLET_MAT = new THREE.MeshBasicMaterial({color:0xffe066});
-const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid'];
+const PROJ_KINDS = ['bullet', 'arrow', 'fireball', 'soul', 'bolt', 'holy', 'note', 'rainbow', 'beam', 'mega', 'falcon', 'thunder', 'potion', 'acid', 'snow'];
 const PROJ_LOOK = {bullet:[0xffe066, .09, 3], arrow:[0xd9b98a, .06, 7], fireball:[0xff7a2f, .32, 1], soul:[0x8dff6a, .22, 1],
   bolt:[0xb48dff, .16, 1.6], holy:[0xffe066, .18, 1], note:[0x7fe3ff, .15, 1], rainbow:[0xff8fd6, .2, 2], beam:[0xff6bd6, .1, 9], mega:[0x7fe3ff, .5, 4],
-  falcon:[0x8a5a2b, .22, 1.6], thunder:[0xfff27a, .14, 5], potion:[0xff8a3a, .14, 1], acid:[0x8dff6a, .2, 1]};
+  falcon:[0x8a5a2b, .22, 1.6], thunder:[0xfff27a, .14, 5], potion:[0xff8a3a, .14, 1], acid:[0x8dff6a, .2, 1], snow:[0xffffff, .34, 1]};
 const RAINBOW = [0xff5d4a, 0xffc23a, 0x3fbf5a, 0x2f8cff, 0x9b5de5];
 const TRAIL = {fireball:0xffa53a, soul:0x8dff6a, bolt:0xb48dff, holy:0xfff2a8, note:0x7fe3ff, mega:0xbff3ff, falcon:0xf2e6c8, thunder:0xfff27a, potion:0xffa53a, acid:0x8dff6a};
-const BLAST_COL = {fireball:0xffa53a, falcon:0xf2e6c8, potion:0xff7a2f, acid:0x8dff6a};
+const BLAST_COL = {snow:0xe8f4ff, fireball:0xffa53a, falcon:0xf2e6c8, potion:0xff7a2f, acid:0x8dff6a};
 // Projectiles that burst into an area when they land: the fireball, plus any move with a blast radius
 function burst(b){
   const r = b.kind === 'fireball' ? 2.4 : b.m && b.m.blast;
@@ -2442,6 +2615,7 @@ function fireProj(f, kind, a, speed, life, m){
 }
 function aoe(src, center, radius, m, opt = {}){
   hitStones(src, center, radius + .6, m.dmg || 0);
+  if (src !== G.boss) hitBossArea(src, center, radius, m.dmg || 0);
   for (const o of G.fighters){
     if (o === src || ally(src, o) || !hittable(o)) continue;
     let dx = o.pos.x - center.x, dz = o.pos.z - center.z;
@@ -2466,7 +2640,7 @@ function useSkill(f){
   startMove(f, key);
   popup(new V(f.pos.x, 2.7, f.pos.z), MOVES[key].name + '!', 'combo th', 40);
 }
-const blocked = (x, z) => !onDeck(x, z, .5) || FUNNELS.some(fn => Math.hypot(x - fn.x, z - fn.z) < fn.r + .4);
+const blocked = (x, z) => !onDeck(x, z, .5) || FUNNELS.some(fn => Math.hypot(x - fn.x, z - fn.z) < fn.r + .4) || !!inBlock(x, z, .4);
 function shadowStep(f){
   let best = null, bd = 9;
   for (const o of G.fighters){
@@ -2642,6 +2816,10 @@ function stepBullets(){
       const st = G.stones.find(s => s.hp > 0 && s.side !== b.owner.side && Math.hypot(b.pos.x - s.pos.x, b.pos.z - s.pos.z) < 1 && b.pos.y < 3);
       if (st){ if (!burst(b)) damageStone(st, b.m.dmg, b.owner); removeBullet(b, true); continue; }
     }
+    if (G.boss && b.owner !== G.boss && G.boss.hp > 0 && Math.hypot(b.pos.x - G.boss.pos.x, b.pos.z - G.boss.pos.z) < BOSS_R && b.pos.y < 7){
+      if (!burst(b)) damageBoss(b.m.dmg, b.owner); removeBullet(b, true); continue;
+    }
+    if (blockAt(b.pos.x, b.pos.y, b.pos.z)){ burst(b); removeBullet(b, true); continue; }
     if (FUNNELS.some(fn => Math.hypot(b.pos.x - fn.x, b.pos.z - fn.z) < fn.r)) removeBullet(b, true);
     else if (b.life <= 0){ burst(b); removeBullet(b, false); }
   }
@@ -2665,6 +2843,7 @@ function buildClassWeapon(cls){
     case 'engineer': add(new THREE.BoxGeometry(.07, .55, .05), silver, 0, -.3, 0); add(new THREE.BoxGeometry(.07, .12, .22), silver, 0, -.6, .05); break;
     case 'assassin': blade(.35, .07); break;
     case 'rogue': blade(.42, .08); break;
+    case 'acolyte': add(new THREE.CylinderGeometry(.035, .035, .9, 8), 0xf4f1ea, 0, -.35, 0); glow(SPH(.13), 0x6fe08a, -.86); break;
     case 'merchant': add(new THREE.CylinderGeometry(.04, .04, .7, 8), wood, 0, -.3, 0); add(new THREE.BoxGeometry(.06, .24, .3), silver, 0, -.58, .12, 1.08); break;
     case 'blacksmith': add(new THREE.CylinderGeometry(.045, .045, .75, 8), wood, 0, -.32, 0); add(new THREE.BoxGeometry(.24, .2, .4), 0x5a5f6b, 0, -.72, 0, 1.08); break;
     case 'wizard': add(new THREE.CylinderGeometry(.04, .04, 1.4, 8), 0x3a2a1a, 0, -.45, 0); glow(new THREE.OctahedronGeometry(.15), 0xff5d4a, -1.2); break;
@@ -2708,7 +2887,7 @@ function stoneSpot(side){
   const bx = STAGE.box, sgn = side ? 1 : -1;
   for (let x = Math.abs(bx[side ? 1 : 0])*.82; x > 4; x -= .5){
     const px = sgn*x;
-    if (onDeck(px, 0, 1.8) && FUNNELS.every(fn => Math.hypot(px - fn.x, fn.z) > fn.r + 1.8)) return new V(px, 0, 0);
+    if (onDeck(px, 0, 1.8) && FUNNELS.every(fn => Math.hypot(px - fn.x, fn.z) > fn.r + 1.8) && !inBlock(px, 0, 1.8)) return new V(px, 0, 0);
   }
   return new V(sgn*8, 0, 0);
 }
@@ -2780,6 +2959,213 @@ function syncStoneHud(){
     $('shp' + i).style.width = pct + '%';
     $('shn' + i).textContent = `หิน${SIDES[i].name} ${Math.ceil(st.hp)}`;
   });
+}
+
+
+/* ---------- Christmas raid boss: everyone teams up against one giant with a huge health pool ---------- */
+const BOSS_R = 2.6, BOSS_STATES = ['walk', 'slam', 'throw', 'spin', 'down'];
+const BOSS_SLAM = {dmg:14, kb:12, up:9, launch:true, hitstop:6, shake:.6};
+const BOSS_SNOW = {dmg:8, kb:6, up:3, stun:16, hitstop:4, shake:.15, blast:1.3};
+const BOSS_SPIN = {dmg:6, kb:10, up:5, launch:true, hitstop:4, shake:.2};
+function bossCfg(){
+  const c = (window.SKY_CONFIG && window.SKY_CONFIG.boss) || {};
+  const n = (v, lo, hi, d) => { const x = Number(v); return v !== undefined && Number.isFinite(x) && x >= lo && x <= hi ? x : d; };
+  return {hp:Math.round(n(c.hp, 100, 1e7, 100000)), power:n(c.power, 0, 10, 1)};
+}
+function buildBoss(){
+  const g = new THREE.Group(), snow = toon(0xf7fbff), coal = toon(0x1d1d24), wood = toon(0x6b3f1e), red = toon(0xd8342c);
+  const body = part(SPH(2.4), snow, 1.02); body.scale.y = .9; body.position.y = 2.2; g.add(body);
+  const mid = part(SPH(1.8), snow, 1.02); mid.position.y = 5.1; g.add(mid);
+  const head = new THREE.Group(); head.position.y = 7.5; g.add(head);
+  head.add(part(SPH(1.3), snow, 1.02));
+  const eyeM = new THREE.MeshBasicMaterial({color:0xff3a2a});
+  for (const s of [-1, 1]){
+    const e = new THREE.Mesh(SPH(.22), eyeM); e.position.set(s*.45, .3, 1.12); head.add(e);
+    const brow = part(new THREE.BoxGeometry(.6, .12, .12), coal); brow.position.set(s*.45, .62, 1.1); brow.rotation.z = s*.45; head.add(brow);
+  }
+  const nose = part(new THREE.ConeGeometry(.24, 1.3, 10), toon(0xff8a2a), 1.05); nose.rotation.x = PI/2; nose.position.set(0, 0, 1.75); head.add(nose);
+  for (let i = 0; i < 5; i++){ const a = (i - 2)*.32; const c = part(SPH(.12), coal); c.position.set(Math.sin(a)*.6, -.55 + Math.abs(a)*.35, 1.1); head.add(c); }
+  const brim = part(new THREE.CylinderGeometry(1.5, 1.5, .16, 20), coal, 1.04); brim.position.y = 1.05; head.add(brim);
+  const hat = part(new THREE.CylinderGeometry(.95, 1, 1.7, 20), coal, 1.03); hat.position.y = 1.95; head.add(hat);
+  const band = part(new THREE.CylinderGeometry(1.02, 1.02, .3, 20), red); band.position.y = 1.35; head.add(band);
+  const scarf = part(new THREE.TorusGeometry(1.45, .38, 8, 20), red, 1.03); scarf.rotation.x = PI/2; scarf.position.y = 6.5; g.add(scarf);
+  const tail = part(new THREE.BoxGeometry(.6, 1.8, .2), red); tail.position.set(.8, 5.6, 1.35); tail.rotation.z = .25; g.add(tail);
+  for (let i = 0; i < 3; i++){ const b = part(SPH(.2), coal); b.position.set(0, 4.3 + i*.7, 1.72 - Math.abs(i - 1)*.08); g.add(b); }
+  const arms = [];
+  for (const s of [-1, 1]){
+    const pivot = new THREE.Group(); pivot.position.set(s*1.6, 5.4, 0); g.add(pivot);
+    const stick = part(new THREE.CylinderGeometry(.12, .2, 3.4, 6), wood, 1.06); stick.position.set(s*1.5, .9, 0); stick.rotation.z = -s*1.0; pivot.add(stick);
+    const twig = part(new THREE.CylinderGeometry(.06, .1, 1, 5), wood); twig.position.set(s*2.3, 1.8, 0); twig.rotation.z = -s*.2; pivot.add(twig);
+    const mitt = part(SPH(.45), red, 1.05); mitt.position.set(s*2.9, 1.8, 0); pivot.add(mitt);
+    arms.push(pivot);
+  }
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.86, 1, 48), new THREE.MeshBasicMaterial({color:0xff3a2a, transparent:true, opacity:.55, depthWrite:false, side:THREE.DoubleSide}));
+  ring.rotation.x = -PI/2; ring.visible = false; scene.add(ring);
+  g.userData = {head, arms, ring, body};
+  scene.add(g);
+  return g;
+}
+function clearBoss(){
+  if (G.boss){ scene.remove(G.boss.mesh, G.boss.mesh.userData.ring); }
+  G.boss = null;
+}
+function makeBoss(){
+  clearBoss();
+  const c = bossCfg();
+  G.boss = {name:'ยักษ์หิมะ', pos:new V(0, 0, 0), hp:c.hp, max:c.hp, power:c.power, state:'walk', t:0, cd:240, facing:0, tgt:null, tgtT:0,
+    shake:0, angry:false, idx:-1, side:-2, hits:0, dmgDealt:0, kos:0, rage:0, isLocal:false, netX:0, netZ:0, mesh:buildBoss()};
+  syncBossHud();
+}
+function syncBossHud(){
+  const B = G.boss, bar = $('bossBar');
+  bar.hidden = !B;
+  if (!B) return;
+  $('bossHp').style.width = Math.max(0, B.hp/B.max*100) + '%';
+  $('bossNum').textContent = Math.ceil(B.hp).toLocaleString('en-US') + ' / ' + B.max.toLocaleString('en-US');
+  bar.classList.toggle('rage', B.hp < B.max*.3);
+}
+function damageBoss(dmg, src){
+  const B = G.boss;
+  if (!B || B.hp <= 0 || !dmg || G.raidWin !== null || G.net === 'guest') return;
+  dmg = Math.round(dmg*10)/10;
+  B.hp = Math.max(0, B.hp - dmg); B.shake = 6;
+  if (G.frame % 2 === 0 || dmg >= 10) popup(new V(B.pos.x + (Math.random() - .5)*2, 6 + Math.random()*2, B.pos.z), String(Math.round(dmg)), '', 36);
+  emit(new V(B.pos.x, 3 + Math.random()*3, B.pos.z), 4, 0xe8f4ff, 4, 3, 18, 1.2, 6);
+  if (src && src !== B && src.dmgDealt !== undefined){ src.dmgDealt += dmg; src.hits++; }
+  if (!B.angry && B.hp < B.max*.3){ B.angry = true; banner('ยักษ์หิมะคลั่ง!', 'red'); feed('ยักษ์หิมะคลั่ง! โจมตีเร็วขึ้น'); }
+  if (B.hp <= 0){ bossBurst(); feed(src && src.name ? `${src.name} ปิดฉากยักษ์หิมะ!` : 'ยักษ์หิมะล้มแล้ว!'); endRaid(true); }
+}
+function hitBossArea(src, c, radius, dmg){
+  const B = G.boss;
+  if (!B || B.hp <= 0 || !dmg) return;
+  if (Math.hypot(c.x - B.pos.x, c.z - B.pos.z) < radius + BOSS_R && c.y < 8) damageBoss(dmg, src);
+}
+function bossBurst(){
+  const B = G.boss; if (!B) return;
+  const c = new V(B.pos.x, 4, B.pos.z);
+  explodeFx(c); flash(c, 0xffffff, .8, 9, 30); emit(c, 60, 0xffffff, 12, 8, 50, 2.4, 6); emit(c, 30, 0xd8342c, 8, 8, 40, 1.6, 8);
+  B.mesh.visible = false; B.mesh.userData.ring.visible = false; B.state = 'down';
+  G.shake = Math.max(G.shake, 1); G.slow = 90;
+  banner('ปราบยักษ์หิมะสำเร็จ!');
+}
+function endRaid(win){
+  if (G.raidWin !== null || G.endT) return;
+  G.raidWin = win;
+  // Raid ranking: whoever dealt the most damage to the boss comes first
+  [...G.fighters].sort((a, b) => b.dmgDealt - a.dmgDealt).forEach((f, i) => { f.place = i + 1; });
+  if (!win) banner('ยักษ์หิมะชนะ…', 'red');
+  G.winner = null; G.endT = 170;
+}
+function pushFromBoss(f){
+  const B = G.boss; if (!B || B.hp <= 0 || !alive(f) || f.pos.y > 7) return;
+  const dx = f.pos.x - B.pos.x, dz = f.pos.z - B.pos.z, d = Math.hypot(dx, dz), r = BOSS_R + .4;
+  if (d < r){ const k = d < .01 ? 1 : 1/d; f.pos.x = B.pos.x + (d < .01 ? r : dx*k*r); f.pos.z = B.pos.z + (d < .01 ? 0 : dz*k*r); }
+}
+const bossTargets = () => G.fighters.filter(f => hittable(f) && f.pos.y > SEA_Y + 1);
+function bossHit(f, m, from){
+  const B = G.boss, dx = f.pos.x - from.x, dz = f.pos.z - from.z, d = Math.hypot(dx, dz) || 1;
+  applyHit(null, f, {...m, dmg:Math.round(m.dmg*B.power)}, new V(dx/d, 0, dz/d), B);
+}
+function bossThrow(B, t){
+  const from = new V(B.pos.x + Math.sin(B.facing)*1.4, 6, B.pos.z + Math.cos(B.facing)*1.4);
+  const to = new V(t.pos.x + t.vel.x*.35, t.pos.y + .9, t.pos.z + t.vel.z*.35), d = from.distanceTo(to), sp = 16;
+  const b = makeBullet(G.nextId++, 'snow');
+  b.pos.copy(from); b.vel.copy(to).sub(from).multiplyScalar(sp/(d || 1));
+  b.life = Math.ceil(d/sp*60) + 20; b.owner = B; b.m = BOSS_SNOW;
+  b.mesh.position.copy(b.pos); G.bullets.push(b);
+}
+function stepBoss(){
+  const B = G.boss, u = B.mesh.userData;
+  if (B.state === 'down') return;
+  const sim = G.net !== 'guest' && G.mode === 'play' && G.countdown <= 30 && B.hp > 0 && G.raidWin === null;
+  if (sim){
+    B.t++;
+    const speed = (B.angry ? 2.4 : 1.6)*DT, ts = bossTargets();
+    if (!B.tgt || !hittable(B.tgt) || --B.tgtT <= 0){
+      let best = null, bd = Infinity;
+      for (const f of ts){ const d = Math.hypot(f.pos.x - B.pos.x, f.pos.z - B.pos.z)*(.6 + Math.random()*.8); if (d < bd){ bd = d; best = f; } }
+      B.tgt = best; B.tgtT = 120;
+    }
+    const t = B.tgt;
+    if (B.state === 'walk'){
+      if (t){
+        const dx = t.pos.x - B.pos.x, dz = t.pos.z - B.pos.z, d = Math.hypot(dx, dz);
+        B.facing = Math.atan2(dx, dz);
+        if (d > 5){
+          // Walk straight if possible, else slide along whatever is in the way; give up on a target it can't reach
+          const go = (vx, vz) => {
+            const nx = B.pos.x + vx*speed, nz = B.pos.z + vz*speed;
+            if (!onDeck(nx, nz, BOSS_R) || FUNNELS.some(fn => Math.hypot(nx - fn.x, nz - fn.z) < fn.r + BOSS_R) || inBlock(nx, nz, BOSS_R)) return false;
+            B.pos.x = nx; B.pos.z = nz; return true;
+          };
+          const ux = dx/d, uz = dz/d;
+          B.turn = B.turn || 1;
+          const moved = go(ux, uz) || go(Math.sign(ux), 0) || go(0, Math.sign(uz)) || go(-uz*B.turn, ux*B.turn) || (B.turn = -B.turn, go(-uz*B.turn, ux*B.turn));
+          B.stuck = moved ? 0 : (B.stuck || 0) + 1;
+          if (B.stuck > 90){ B.tgtT = 0; B.stuck = 0; }
+        }
+      }
+      if (--B.cd <= 0 && ts.length){
+        const near = ts.filter(f => Math.hypot(f.pos.x - B.pos.x, f.pos.z - B.pos.z) < 7.5).length;
+        const r = Math.random();
+        B.state = B.angry && r < .3 ? 'spin' : near && r < .6 ? 'slam' : 'throw'; B.t = 0;
+      }
+    } else if (B.state === 'slam'){
+      const wind = B.angry ? 50 : 70;
+      if (B.t === wind){
+        const c = B.pos.clone();
+        dust(c, 30); flash(new V(c.x, .5, c.z), 0xe8f4ff, .5, 8, 20); emit(new V(c.x, .5, c.z), 40, 0xffffff, 10, 3, 30, 1.8, 6);
+        G.shake = Math.max(G.shake, .7);
+        // Anyone up on a platform or mid-jump is above the shockwave
+        for (const f of ts) if (Math.hypot(f.pos.x - c.x, f.pos.z - c.z) < 7.5 && f.pos.y < 1.2) bossHit(f, BOSS_SLAM, c);
+      }
+      if (B.t > wind + 30){ B.state = 'walk'; B.cd = B.angry ? 90 : 150; }
+    } else if (B.state === 'throw'){
+      const n = B.angry ? 8 : 5;
+      if (B.t % 9 === 1 && B.t < n*9 && ts.length){
+        const far = ts.filter(f => Math.hypot(f.pos.x - B.pos.x, f.pos.z - B.pos.z) < 30);
+        const v = pick(far.length ? far : ts); B.facing = Math.atan2(v.pos.x - B.pos.x, v.pos.z - B.pos.z); bossThrow(B, v);
+      }
+      if (B.t > n*9 + 25){ B.state = 'walk'; B.cd = B.angry ? 80 : 140; }
+    } else if (B.state === 'spin'){
+      if (B.t % 12 === 6) for (const f of ts) if (Math.hypot(f.pos.x - B.pos.x, f.pos.z - B.pos.z) < 5 && f.pos.y < 2.5) bossHit(f, BOSS_SPIN, B.pos);
+      if (G.frame % 2 === 0) emit(new V(B.pos.x, 1, B.pos.z), 3, 0xffffff, 8, 1, 20, 1.4, 0);
+      if (B.t > 100){ B.state = 'walk'; B.cd = 100; }
+    }
+  } else if (G.net === 'guest'){
+    B.pos.x += (B.netX - B.pos.x)*.3; B.pos.z += (B.netZ - B.pos.z)*.3;
+  }
+  // Looks: bob, arm swings, telegraph ring, spin
+  const m = B.mesh, k = G.frame*.06;
+  m.position.set(B.pos.x + (B.shake > 0 ? (Math.random() - .5)*.25 : 0), Math.abs(Math.sin(k))*.15, B.pos.z);
+  if (B.shake > 0) B.shake--;
+  const wind = B.angry ? 50 : 70;
+  if (B.state === 'spin') m.rotation.y += .45; else m.rotation.y = B.facing;
+  const [aL, aR] = u.arms;
+  if (B.state === 'slam'){
+    const lift = Math.min(1, B.t/wind);
+    aL.rotation.z = B.t < wind ? -lift*1.4 : .6; aR.rotation.z = B.t < wind ? lift*1.4 : -.6;
+    u.ring.visible = B.t < wind; u.ring.position.set(B.pos.x, .06, B.pos.z); u.ring.scale.setScalar(7.5*Math.max(.15, lift));
+    u.body.scale.y = B.t >= wind && B.t < wind + 8 ? .78 : .9;
+  } else {
+    u.ring.visible = false; u.body.scale.y = .9;
+    const sw = B.state === 'throw' ? Math.sin(B.t*.7)*1.1 : Math.sin(k)*.25;
+    aL.rotation.z = -.2 + sw*.4; aR.rotation.z = .2 - (B.state === 'throw' ? sw : sw*.4);
+  }
+  u.head.rotation.z = Math.sin(k*.7)*.06;
+}
+// Bots in a raid: get clear of the slam, heal when needed, otherwise go hit the boss
+function thinkBoss(b, D){
+  const B = G.boss, inp = b.input, press = k => { inp[k] = !b.prev[k]; };
+  const dx = B.pos.x - b.pos.x, dz = B.pos.z - b.pos.z, d = Math.hypot(dx, dz) || .001;
+  if (B.state === 'slam' && d < 9 && b.pos.y < 1.2){
+    inp.x = -dx/d; inp.z = -dz/d; steerAroundObstacles(b, inp);
+    if (b.onGround && B.t > (B.angry ? 35 : 55)) press('jump');
+    return;
+  }
+  const si = SKILL_INFO[b.cls] || SKILL_INFO.none;
+  if (si.range < 0 && b.skillCd <= 0 && wantsHeal(b) && Math.random() < .3){ press('skill'); b.ai.cd = D.react; return; }
+  return thinkStone(b, {pos:B.pos, r:BOSS_R}, D);
 }
 
 /* ---------- Simulation ---------- */
@@ -2879,7 +3265,7 @@ function stepFighter(f){
 }
 function physics(f){
   if (!alive(f) || f.freeze > 0) return;
-  const px = f.pos.x, pz = f.pos.z;
+  const px = f.pos.x, pz = f.pos.z, py = f.pos.y;
   f.vel.y = Math.max(-30, f.vel.y - GRAV*DT);
   f.pos.addScaledVector(f.vel, DT);
   if (RAILED.has(f.state) && f.pos.y > -.5 && !onDeck(f.pos.x, f.pos.z, .45)){
@@ -2897,7 +3283,18 @@ function physics(f){
     }
   }
   f.onGround = false;
-  if (onDeck(f.pos.x, f.pos.z) && f.pos.y <= 0 && f.pos.y > -.9 && f.vel.y <= 0){ f.pos.y = 0; f.vel.y = 0; f.onGround = true; }
+  for (const b of BLOCKS){
+    const ax = Math.abs(f.pos.x - b.x), az = Math.abs(f.pos.z - b.z);
+    if (ax >= b.hx + .4 || az >= b.hz + .4) continue;
+    // Landing on top
+    if (f.vel.y <= 0 && py >= b.h - .02 && f.pos.y <= b.h && ax < b.hx + .15 && az < b.hz + .15){ f.pos.y = b.h; f.vel.y = 0; f.onGround = true; continue; }
+    if (f.pos.y >= b.h - .05) continue;
+    // Side hit: push out the short way
+    const ox = b.hx + .4 - ax, oz = b.hz + .4 - az;
+    if (ox < oz){ f.pos.x = b.x + Math.sign(f.pos.x - b.x || 1)*(b.hx + .4); if (f.state === 'tumble' || f.state === 'ko') f.vel.x *= -.3; }
+    else { f.pos.z = b.z + Math.sign(f.pos.z - b.z || 1)*(b.hz + .4); if (f.state === 'tumble' || f.state === 'ko') f.vel.z *= -.3; }
+  }
+  if (!f.onGround && onDeck(f.pos.x, f.pos.z) && f.pos.y <= 0 && f.pos.y > -.9 && f.vel.y <= 0){ f.pos.y = 0; f.vel.y = 0; f.onGround = true; }
   else if (f.pos.y < -.05 && f.pos.y > STAGE.wallBottom && onDeck(f.pos.x, f.pos.z, -.35)){
     const p = STAGE.pushOut(f.pos.x, f.pos.z); f.pos.x = p.x; f.pos.z = p.z;
   }
@@ -2925,11 +3322,12 @@ function announceLoss(f, why, killer){
 }
 function respawn(f){
   let p = randomDeckPoint(1.5);
-  if (f.side >= 0) for (let k = 0; k < 20 && (p.x < 0) !== (f.side === 0); k++) p = randomDeckPoint(1.5);
+  if (G.teamMode) for (let k = 0; k < 20 && (p.x < 0) !== (f.side === 0); k++) p = randomDeckPoint(1.5);
   f.pos.copy(p); f.pos.y = 10; f.vel.set(0,0,0);
   f.hp = 100; f.invuln = 150; f.onGround = false; f.splashed = false; setState(f, 'respawn');
 }
 function checkEnd(){
+  if (G.raid){ if (!G.fighters.some(f => f.stocks > 0)) endRaid(false); return; }
   if (G.teamMode){
     const sides = new Set(G.fighters.filter(f => f.stocks > 0).map(f => f.side));
     if (sides.size <= 1) endTeamMatch(sides.size ? [...sides][0] : null);
@@ -2958,6 +3356,7 @@ function tick(){
   G.frame++;
   fxTick();
   if (G.stones.length){ stepStones(); if (G.frame % 6 === 0) syncStoneHud(); }
+  if (G.boss){ stepBoss(); if (G.frame % 6 === 0) syncBossHud(); }
   if (G.mode === 'custom'){ for (const f of G.fighters) if (f.squash > 0) f.squash--; return; }
   if (G.net === 'guest' && G.mode === 'play'){ guestTick(); return; }
   if (G.slow > 0) G.slow--;
@@ -2968,7 +3367,7 @@ function tick(){
     else if (f.ctrl === 'net') Net.applyInput(f);
     else readHuman(f);
   }
-  for (const f of G.fighters){ stepFighter(f); physics(f); if (G.teamMode) pushFromStones(f); }
+  for (const f of G.fighters){ stepFighter(f); physics(f); if (G.teamMode) pushFromStones(f); if (G.boss) pushFromBoss(f); }
   const fs = G.fighters;
   for (let i = 0; i < fs.length; i++) for (let j = i + 1; j < fs.length; j++){
     const a = fs[i], b = fs[j];
@@ -3003,6 +3402,8 @@ function tick(){
     for (const f of fs) if (hittable(f) && (f !== bm.owner || (bm.t > 20 && !bm.meteor)) && bm.pos.distanceTo(new V(f.pos.x, f.pos.y + .8, f.pos.z)) < .9) boom = true;
     if (onDeck(bm.pos.x, bm.pos.z) && bm.pos.y <= .3 && bm.pos.y > -1) boom = true;
     if (bm.pos.y < 6.5 && FUNNELS.some(fn => Math.hypot(bm.pos.x - fn.x, bm.pos.z - fn.z) < fn.r + .3)) boom = true;
+    if (blockAt(bm.pos.x, bm.pos.y - .3, bm.pos.z)) boom = true;
+    if (G.boss && G.boss.hp > 0 && bm.owner !== G.boss && Math.hypot(bm.pos.x - G.boss.pos.x, bm.pos.z - G.boss.pos.z) < BOSS_R && bm.pos.y < 7) boom = true;
     const sunk = bm.pos.y < SEA_Y;
     if (boom) explode(bm.pos, bm.owner, bm.meteor); else if (sunk) splash(bm.pos);
     if (boom || sunk){ scene.remove(bm.mesh); G.bombs.splice(G.bombs.indexOf(bm), 1); }
@@ -3260,7 +3661,7 @@ function updateHud(){
 
 /* ---------- Flow ---------- */
 function clearArena(){
-  clearStones();
+  clearStones(); clearBoss();
   for (const it of [...G.items]) removeItem(it);
   for (const b of G.bombs) scene.remove(b.mesh); G.bombs.length = 0;
   for (const b of G.bullets) scene.remove(b.mesh); G.bullets.length = 0;
@@ -3322,8 +3723,10 @@ function botSpecs(from, n){
 }
 function beginMatch(specs, stocks){
   hideAllPanels(); clearArena();
-  G.teamMode = G.cfg.mode === 'team' && specs.length >= 2;
+  G.raid = !!STAGE.boss; G.raidWin = null;
+  G.teamMode = !G.raid && G.cfg.mode === 'team' && specs.length >= 2;
   if (G.teamMode) makeStones(specs.length); else clearStones();
+  if (G.raid) makeBoss(); else clearBoss();
   G.mode = 'play'; G.paused = false; G.endT = 0; G.winner = null; G.slow = 0; G.stocks = stocks;
   G.countdown = 210; G.cdShown = new Set(); G.itemTimer = 240; G.spec = 0; G.dbgHtml = null;
   G.matchId = (G.matchId || 0) + 1; $('resXp').hidden = true;
@@ -3333,7 +3736,7 @@ function beginMatch(specs, stocks){
   $('hud').hidden = false;
   syncTouch();
   syncAutoUi();
-  syncStoneHud();
+  syncStoneHud(); syncBossHud();
   $('dbg').hidden = !G.debug;
   keys.clear();
 }
@@ -3371,6 +3774,7 @@ function showResult(rows, winnerIdx){
   const t = $('resTitle'); t.textContent = w ? w.name + ' ชนะ!' : 'เสมอ!';
   t.style.color = w ? hex(w.team) : 'var(--gold)';
   if (G.teamMode && G.winTeam !== null){ t.textContent = `ฝ่าย${SIDES[G.winTeam].name}ชนะ!`; t.style.color = hex(SIDES[G.winTeam].col); }
+  if (G.raid && G.raidWin !== null){ t.textContent = G.raidWin ? 'ปราบยักษ์หิมะสำเร็จ!' : 'ยักษ์หิมะชนะ…'; t.style.color = G.raidWin ? 'var(--gold)' : '#7fb5ff'; }
   const body = $('resBody'); body.textContent = '';
   rows.sort((a, b) => a.place - b.place || b.kos - a.kos).forEach(r => {
     const tr = document.createElement('tr'); if (r.f.isLocal) tr.className = 'me';
@@ -3390,7 +3794,8 @@ function showResult(rows, winnerIdx){
   $('result').hidden = false; $('touch').hidden = true; $('spec').hidden = true;
   $('rematch').focus({preventScroll:true});
   // Team wins travel to guests as -10 - side
-  if (G.net === 'host') Net.hostEnd(rows, G.teamMode && G.winTeam !== null ? -10 - G.winTeam : w ? w.idx : -1);
+  // Raid results travel as -20 (boss down) / -21 (boss won)
+  if (G.net === 'host') Net.hostEnd(rows, G.raid && G.raidWin !== null ? (G.raidWin ? -20 : -21) : G.teamMode && G.winTeam !== null ? -10 - G.winTeam : w ? w.idx : -1);
 }
 
 /* ---------- Online (PeerJS / WebRTC): host simulates, guests send input and render snapshots ---------- */
@@ -4004,7 +4409,8 @@ const Net = {
       b:G.bombs.slice(0, 12).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), b.kind === 'meteor' ? 1 : 0]),
       bl:G.bullets.slice(0, 24).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), Math.round(b.vel.x*10), Math.round(b.vel.z*10), PROJ_KINDS.indexOf(b.kind || 'bullet')]),
       tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)]),
-      em:G.stones.map(st => Math.ceil(st.hp))};
+      em:G.stones.map(st => Math.ceil(st.hp)),
+      bs:G.boss ? [Math.round(G.boss.pos.x*100), Math.round(G.boss.pos.z*100), Math.ceil(G.boss.hp), BOSS_STATES.indexOf(G.boss.state), G.boss.t, Math.round(G.boss.facing*100)] : null};
     this.presence({ph:this.ph, sn});
   },
   hostEnd(rows, win){
@@ -4095,7 +4501,8 @@ const Net = {
       if (p.ph === 'end' && Array.isArray(p.res) && this.resShown !== this.epoch){
         this.resShown = this.epoch;
         const rows = G.fighters.map((f, i) => { const r = Array.isArray(p.res[i]) ? p.res[i] : [i + 1, 0, 0]; return {f, place:Number(r[0]) || i + 1, kos:Number(r[1]) || 0, dmg:Number(r[2]) || 0}; });
-        if (Number.isInteger(p.win) && p.win <= -10) G.winTeam = Math.min(1, -10 - p.win);
+        if (p.win === -20 || p.win === -21) G.raidWin = p.win === -20;
+        else if (Number.isInteger(p.win) && p.win <= -10) G.winTeam = Math.min(1, -10 - p.win);
         G.endT = 1; showResult(rows, Number.isInteger(p.win) && p.win >= 0 ? p.win : undefined);
       }
     }
@@ -4176,6 +4583,14 @@ const Net = {
         t.rot = Number(a[3])/100 || 0; t.mesh.userData.head.rotation.y = t.rot;
       }
       for (const t of [...G.turrets]) if (!seen.has(t.id)) removeTurret(t, true);
+    }
+    if (Array.isArray(sn.bs) && G.boss){
+      const B = G.boss, a = sn.bs, hp = Math.max(0, Number(a[2]) || 0);
+      B.netX = (Number(a[0]) || 0)/100; B.netZ = (Number(a[1]) || 0)/100;
+      if (hp < B.hp) B.shake = 6;
+      if (hp > B.max) B.max = hp;
+      if (hp <= 0 && B.hp > 0) bossBurst();
+      B.hp = hp; B.state = BOSS_STATES[Number(a[3])] || 'walk'; B.t = Number(a[4]) || 0; B.facing = (Number(a[5]) || 0)/100;
     }
     if (Array.isArray(sn.em)) G.stones.forEach((st, i) => {
       const hp = Math.max(0, Number(sn.em[i]) || 0);
