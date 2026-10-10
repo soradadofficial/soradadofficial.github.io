@@ -165,6 +165,8 @@ button{touch-action:manipulation}
 #tbtns button[data-k="guard"]{right:4px;bottom:110px;width:76px;height:76px;background:var(--p2);color:var(--white)}
 #tbtns button[data-k="grab"]{right:96px;bottom:96px;width:66px;height:66px;font-size:14px}
 #tbtns button[data-k="skill"]{right:186px;bottom:96px;width:72px;height:72px;font-size:14px;background:var(--skill);color:var(--white)}
+#tbtns button[data-k="lock"]{right:186px;bottom:174px;width:72px;height:32px;border-radius:16px;font-size:13px;background:var(--ink);color:var(--paper)}
+#tbtns button[data-k="lock"].on2{background:var(--gold);color:var(--ink)}
 #tbtns button.cd{opacity:.5}
 #tbtns button.on{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink);filter:brightness(.9)}
 #rotHint{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 120px);transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:13px;font-weight:500;padding:4px 12px;border-radius:999px;white-space:nowrap;display:none;animation:fi 6s both}
@@ -226,6 +228,7 @@ button{touch-action:manipulation}
     <button type="button" data-k="jump">กระโดด</button>
     <button type="button" data-k="grab" id="grabBtn">หยิบ</button>
     <button type="button" data-k="skill" id="skillBtn">สกิล</button>
+    <button type="button" data-k="lock" id="lockBtn" aria-label="ล็อกเป้า กดซ้ำเพื่อสลับเป้า">ล็อก</button>
     <button type="button" data-k="atk">ต่อย</button>
   </div>
   <div id="rotHint">หมุนจอแนวนอนจะเห็นสนามกว้างกว่า</div>
@@ -283,6 +286,7 @@ button{touch-action:manipulation}
             <dt><kbd>H</kbd></dt><dd>กดค้างเพื่อกัน</dd>
             <dt><kbd>R</kbd></dt><dd>หยิบของ / ขว้างระเบิด</dd>
             <dt><kbd>E</kbd></dt><dd>สกิลอาชีพ</dd>
+            <dt><kbd>Q</kbd></dt><dd>ล็อกเป้า (กดซ้ำ = สลับเป้า)</dd>
           </dl>
         </div>
         <div class="k2"><h3>ผู้เล่น 2</h3>
@@ -293,10 +297,11 @@ button{touch-action:manipulation}
             <dt><kbd>/</kbd> หรือ <kbd>Num3</kbd></dt><dd>กัน</dd>
             <dt><kbd>M</kbd> หรือ <kbd>Num0</kbd></dt><dd>หยิบ / ขว้าง</dd>
             <dt><kbd>;</kbd> หรือ <kbd>Num4</kbd></dt><dd>สกิลอาชีพ</dd>
+            <dt><kbd>'</kbd> หรือ <kbd>Num6</kbd></dt><dd>ล็อกเป้า</dd>
           </dl>
         </div>
       </div>
-      <p class="note" style="margin-top:10px">ปรับมุมกล้องด้วย <kbd>-</kbd> <kbd>=</kbd> ล้อเมาส์ หรือปุ่ม "กล้อง" ระหว่างเล่น · ถ้าเล่นคนเดียวหรือออนไลน์ ใช้ลูกศรกับ <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> <kbd>I</kbd> แทนได้ · <kbd>X</kbd> ดู hitbox · <kbd>T</kbd> ให้บอทเล่นแทนผู้เล่น 1 (ผู้เล่น 2 ใช้ <kbd>P</kbd> หรือ <kbd>Num5</kbd>) · <kbd>Esc</kbd> เมนู · มือถือใช้จอยกับปุ่มบนจอ</p>
+      <p class="note" style="margin-top:10px">ปรับมุมกล้องด้วย <kbd>-</kbd> <kbd>=</kbd> ล้อเมาส์ หรือปุ่ม "กล้อง" ระหว่างเล่น · ถ้าเล่นคนเดียวหรือออนไลน์ ใช้ลูกศรกับ <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> <kbd>I</kbd> <kbd>O</kbd> แทนได้ · <kbd>X</kbd> ดู hitbox · <kbd>T</kbd> ให้บอทเล่นแทนผู้เล่น 1 (ผู้เล่น 2 ใช้ <kbd>P</kbd> หรือ <kbd>Num5</kbd>) · <kbd>Esc</kbd> เมนู · มือถือใช้จอยกับปุ่มบนจอ</p>
     </details>
   </div>
 </div>
@@ -1630,8 +1635,8 @@ class Fighter {
     this.name = spec.name; this.ctrl = spec.ctrl; this.peer = spec.peer || '';
     this.isLocal = spec.ctrl === 'p1' || spec.ctrl === 'p2' || !!spec.me;
     this.pos = new V(); this.vel = new V(); this.netPos = new V(); this.netVel = new V();
-    this.input = {x:0, z:0, atk:false, jump:false, guard:false, grab:false, skill:false};
-    this.prev = {atk:false, jump:false, grab:false, skill:false};
+    this.input = {x:0, z:0, atk:false, jump:false, guard:false, grab:false, skill:false, lock:false};
+    this.prev = {atk:false, jump:false, grab:false, skill:false, lock:false};
     this.ai = {cd:0, guardT:0, retreat:0, wantCombo:false, tgt:null, tgtT:0};
     this.tag = null; this.vis = null;
     this.setLook(spec.look);
@@ -1653,7 +1658,7 @@ class Fighter {
     Object.assign(this, {hp:100, hpLag:100, stocks, state:'idle', stateT:0, move:null, moveKey:'', hasHit:false,
       buffer:0, invuln:0, onGround:true, weapon:null, weaponUses:0, held:null, stun:16, squash:0, combo:0, freeze:0,
       hits:0, dmgDealt:0, kos:0, lastHitBy:-1, lastHitT:-9999, place:0, lr:0, waitT:0, lastMove:null,
-      splashed:false, netInit:false, nc:null, skillCd:0, rage:0});
+      splashed:false, netInit:false, nc:null, skillCd:0, rage:0, lock:null, lockIdx:-1});
   }
 }
 const setState = (f, s) => { f.state = s; f.stateT = 0; };
@@ -1711,9 +1716,9 @@ function createFighters(specs, stocks, tags){
 
 /* ---------- Input ---------- */
 const keys = new Set();
-const MAP1 = {up:['KeyW'], down:['KeyS'], left:['KeyA'], right:['KeyD'], atk:['KeyF'], jump:['KeyG','Space'], guard:['KeyH'], grab:['KeyR'], skill:['KeyE']};
-const MAP2 = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['Comma','Numpad1'], jump:['Period','Numpad2'], guard:['Slash','Numpad3'], grab:['KeyM','Numpad0'], skill:['Semicolon','Numpad4']};
-const MAPALT = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['KeyJ'], jump:['KeyK'], guard:['KeyL'], grab:['KeyU'], skill:['KeyI']};
+const MAP1 = {up:['KeyW'], down:['KeyS'], left:['KeyA'], right:['KeyD'], atk:['KeyF'], jump:['KeyG','Space'], guard:['KeyH'], grab:['KeyR'], skill:['KeyE'], lock:['KeyQ']};
+const MAP2 = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['Comma','Numpad1'], jump:['Period','Numpad2'], guard:['Slash','Numpad3'], grab:['KeyM','Numpad0'], skill:['Semicolon','Numpad4'], lock:['Quote','Numpad6']};
+const MAPALT = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['KeyJ'], jump:['KeyK'], guard:['KeyL'], grab:['KeyU'], skill:['KeyI'], lock:['KeyO']};
 const GAME_KEYS = new Set([...Object.values(MAP1), ...Object.values(MAP2), ...Object.values(MAPALT)].flat());
 addEventListener('keydown', e => {
   if (e.code === 'Escape' && G.mode === 'custom'){ closeCustom(); return; }
@@ -1728,25 +1733,25 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
-const touch = {x:0, z:0, atk:false, jump:false, guard:false, grab:false, atkL:false, jumpL:false, grabL:false, skill:false, skillL:false};
+const touch = {x:0, z:0, atk:false, jump:false, guard:false, grab:false, atkL:false, jumpL:false, grabL:false, skill:false, skillL:false, lock:false, lockL:false};
 function readRaw(maps, withTouch){
   const k = arr => arr.some(c => keys.has(c));
-  let x = 0, z = 0, atk = false, jump = false, guard = false, grab = false, skill = false;
+  let x = 0, z = 0, atk = false, jump = false, guard = false, grab = false, skill = false, lock = false;
   if (!G.paused || G.net){
     for (const m of maps){
       if (k(m.left)) x -= 1; if (k(m.right)) x += 1; if (k(m.up)) z -= 1; if (k(m.down)) z += 1;
-      atk ||= k(m.atk); jump ||= k(m.jump); guard ||= k(m.guard); grab ||= k(m.grab); skill ||= k(m.skill);
+      atk ||= k(m.atk); jump ||= k(m.jump); guard ||= k(m.guard); grab ||= k(m.grab); skill ||= k(m.skill); lock ||= k(m.lock);
     }
     if (withTouch){
       // Latches keep a tap that starts and ends between two frames from being lost
       x += touch.x; z += touch.z; guard ||= touch.guard;
-      atk ||= touch.atk || touch.atkL; jump ||= touch.jump || touch.jumpL; grab ||= touch.grab || touch.grabL; skill ||= touch.skill || touch.skillL;
-      touch.atkL = touch.jumpL = touch.grabL = touch.skillL = false;
+      atk ||= touch.atk || touch.atkL; jump ||= touch.jump || touch.jumpL; grab ||= touch.grab || touch.grabL; skill ||= touch.skill || touch.skillL; lock ||= touch.lock || touch.lockL;
+      touch.atkL = touch.jumpL = touch.grabL = touch.skillL = touch.lockL = false;
     }
   }
   x = Math.max(-1, Math.min(1, x)); z = Math.max(-1, Math.min(1, z));
   const m = Math.hypot(x, z); if (m > 1){ x /= m; z /= m; }
-  return {x, z, atk, jump, guard, grab, skill};
+  return {x, z, atk, jump, guard, grab, skill, lock};
 }
 function readHuman(f){
   const two = G.fighters.some(o => o.ctrl === 'p2');
@@ -1888,6 +1893,57 @@ function think(b){
   ai.cd = (D.react*(.5 + Math.random())) | 0;
 }
 
+
+/* ---------- Targeting: soft auto-aim plus a lock-on you cycle with a button ---------- */
+const lockable = (f, o, maxD) => !!o && o !== f && !ally(f, o) && alive(o) && o.state !== 'ko' && o.stocks > 0 && o.pos.y > SEA_Y + .5 &&
+  Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z) < maxD;
+// Press once: nearest enemy. Press again: next nearest (up to 6). After the last one: lock off.
+function cycleLock(f){
+  const list = G.fighters.filter(o => lockable(f, o, 18))
+    .sort((a, b) => Math.hypot(a.pos.x - f.pos.x, a.pos.z - f.pos.z) - Math.hypot(b.pos.x - f.pos.x, b.pos.z - f.pos.z)).slice(0, 6);
+  const i = list.indexOf(f.lock);
+  f.lock = !list.length ? null : i < 0 ? list[0] : list[i + 1] || null;
+  if (f.isLocal) popup(new V(f.pos.x, 2.7, f.pos.z), f.lock ? 'ล็อก ' + f.lock.name : 'เลิกล็อก', 'th', 36);
+}
+// Who an attack should turn toward: the locked target, else the closest enemy roughly in front (players only; bots aim themselves)
+function aimTarget(f, m){
+  if (f.ctrl === 'bot') return null;
+  if (lockable(f, f.lock, 20)) return f.lock;
+  const ranged = !m || m.noHit || m.gun || m.glide || !!CLASS_STOP[f.cls];
+  const R = ranged ? 12 : 3.2, inp = f.input;
+  const dir = Math.hypot(inp.x, inp.z) > .2 ? Math.atan2(inp.x, inp.z) : f.facing;
+  let best = null, bs = Infinity;
+  for (const o of G.fighters){
+    if (!lockable(f, o, R) || !hittable(o)) continue;
+    const dx = o.pos.x - f.pos.x, dz = o.pos.z - f.pos.z, d = Math.hypot(dx, dz);
+    let da = Math.atan2(dx, dz) - dir; da = Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+    if (da > 1.05 && d > 1.2) continue;
+    const sc = d*(1 + da*1.5);
+    if (sc < bs){ bs = sc; best = o; }
+  }
+  return best;
+}
+// Markers over each local player's locked target
+const LOCK_MARKS = [0xffd23a, 0x7fe3ff].map(col => {
+  const g = new THREE.Group(), mat = new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:.9, depthWrite:false, side:THREE.DoubleSide});
+  const ring = new THREE.Mesh(new THREE.RingGeometry(.85, 1.02, 4, 1), mat); ring.rotation.x = -PI/2; ring.position.y = .06; g.add(ring);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(.22, .45, 4), mat); cone.rotation.x = PI; g.add(cone);
+  g.userData = {ring, cone}; g.visible = false; scene.add(g);
+  return g;
+});
+function updateLockMarks(){
+  let k = 0;
+  for (const f of G.fighters){
+    if (!f.isLocal || k >= LOCK_MARKS.length) continue;
+    const mk = LOCK_MARKS[k++], t = G.net === 'guest' ? G.fighters[f.lockIdx] : f.lock;
+    if (t && alive(t) && t !== f && t.pos.y > SEA_Y && G.mode === 'play'){
+      mk.visible = true; mk.position.set(t.pos.x, t.pos.y, t.pos.z);
+      mk.userData.ring.rotation.z += .04; mk.userData.cone.position.y = 2.95 + Math.sin(G.frame*.15)*.12;
+    } else mk.visible = false;
+  }
+  for (; k < LOCK_MARKS.length; k++) LOCK_MARKS[k].visible = false;
+}
+
 /* ---------- Combat ---------- */
 function attackKey(f){
   if (f.weapon === 'gun') return 'shoot';
@@ -1902,6 +1958,8 @@ function startMove(f, key){
   setState(f, 'attack');
   const inp = f.input;
   if (Math.hypot(inp.x, inp.z) > .2) f.facing = Math.atan2(inp.x, inp.z);
+  const aim = aimTarget(f, m);
+  if (aim) f.facing = Math.atan2(aim.pos.x - f.pos.x, aim.pos.z - f.pos.z);
   if (m.lunge){ f.vel.x = Math.sin(f.facing)*m.lunge; f.vel.z = Math.cos(f.facing)*m.lunge; }
   if (m.air) f.vel.y = Math.max(f.vel.y, 2);
 }
@@ -2035,6 +2093,8 @@ function buildMeteor(){
 }
 function throwBomb(f){
   f.held = null;
+  const aim = aimTarget(f, null);
+  if (aim) f.facing = Math.atan2(aim.pos.x - f.pos.x, aim.pos.z - f.pos.z);
   const b = makeBomb(G.nextId++), fx = Math.sin(f.facing), fz = Math.cos(f.facing);
   b.owner = f;
   b.pos.set(f.pos.x + fx*.5, f.pos.y + 2.1, f.pos.z + fz*.5);
@@ -2454,7 +2514,10 @@ function stepFighter(f){
   const inp = f.input, prev = f.prev;
   const atkP = inp.atk && !prev.atk, jumpP = inp.jump && !prev.jump, grabP = inp.grab && !prev.grab, skillP = inp.skill && !prev.skill;
   prev.atk = inp.atk; prev.jump = inp.jump; prev.grab = inp.grab; prev.skill = inp.skill;
+  const lockP = inp.lock && !prev.lock; prev.lock = inp.lock;
+  if (f.lock && !lockable(f, f.lock, 26)) f.lock = null;
   if (f.state === 'out') return;
+  if (lockP) cycleLock(f);
   if (f.state === 'wait'){ if (--f.waitT <= 0) respawn(f); return; }
   if (atkP) f.buffer = 8;
   if (f.freeze > 0){ f.freeze--; return; }
@@ -2779,6 +2842,7 @@ const tmpV = new V();
 function render(){
   if (G.mode === 'custom' && G.fighters[0]) G.fighters[0].facing = Math.sin(performance.now()*.0008)*.6;
   for (const f of G.fighters) pose(f);
+  updateLockMarks();
   for (const it of G.items){
     const g = it.mesh, bob = it.landed ? Math.sin(G.frame*.08 + it.pos.x)*.12 : 0;
     g.position.set(it.pos.x, it.pos.y + bob, it.pos.z); g.rotation.y += .03;
@@ -2895,6 +2959,8 @@ function updateHud(){
   const me = G.fighters.find(f => f.isLocal);
   const gl = me && me.held === 'bomb' ? 'ขว้าง' : 'หยิบ';
   if (G.grabLbl !== gl){ G.grabLbl = gl; $('grabBtn').textContent = gl; }
+  const lk = me && (G.net === 'guest' ? me.lockIdx >= 0 : me.lock) ? 'สลับเป้า' : 'ล็อก';
+  if (G.lockLbl !== lk){ G.lockLbl = lk; $('lockBtn').textContent = lk; $('lockBtn').classList.toggle('on2', lk !== 'ล็อก'); }
   const sl = me && me.skillCd > 0 ? Math.ceil(me.skillCd/60) + ' วิ' : 'สกิล';
   if (G.skLbl !== sl){ G.skLbl = sl; $('skillBtn').textContent = sl; $('skillBtn').classList.toggle('cd', sl !== 'สกิล'); }
   if (G.frame % 10 === 0){
@@ -3135,7 +3201,7 @@ const Lobby = {
 
 const Net = {
   ready:false, peer:null, me:null, role:null, code:null, conns:new Map(), hostConn:null, myPres:{}, hostPres:{},
-  ph:'wait', epoch:0, slots:[], botLooks:[], inMap:new Map(), counts:{a:0, j:0, g:0, s:0, pa:false, pj:false, pg:false, ps:false}, lastIn:'',
+  ph:'wait', epoch:0, slots:[], botLooks:[], inMap:new Map(), counts:{a:0, j:0, g:0, s:0, l:0, pa:false, pj:false, pg:false, ps:false, pl:false}, lastIn:'',
   resShown:-1, cfg:null, joinTimer:0, gotHost:false,
 
   init(){
@@ -3279,20 +3345,20 @@ const Net = {
   },
   applyInput(f){
     const a = this.inMap.get(f.peer), inp = f.input;
-    if (!a){ inp.x = inp.z = 0; inp.atk = inp.jump = inp.grab = inp.guard = inp.skill = false; return; }
+    if (!a){ inp.x = inp.z = 0; inp.atk = inp.jump = inp.grab = inp.guard = inp.skill = inp.lock = false; return; }
     const num = k => Number(a[k]) || 0;
     let x = Math.max(-1, Math.min(1, num(0)/100)), z = Math.max(-1, Math.min(1, num(1)/100));
     const m = Math.hypot(x, z); if (m > 1){ x /= m; z /= m; }
     inp.x = x; inp.z = z; inp.guard = num(2) === 1;
-    if (!f.nc) f.nc = {a:num(3), j:num(4), g:num(5), s:num(6)};
-    inp.atk = num(3) !== f.nc.a; inp.jump = num(4) !== f.nc.j; inp.grab = num(5) !== f.nc.g; inp.skill = num(6) !== f.nc.s;
-    f.nc = {a:num(3), j:num(4), g:num(5), s:num(6)};
+    if (!f.nc) f.nc = {a:num(3), j:num(4), g:num(5), s:num(6), l:num(7)};
+    inp.atk = num(3) !== f.nc.a; inp.jump = num(4) !== f.nc.j; inp.grab = num(5) !== f.nc.g; inp.skill = num(6) !== f.nc.s; inp.lock = num(7) !== f.nc.l;
+    f.nc = {a:num(3), j:num(4), g:num(5), s:num(6), l:num(7)};
   },
   encF(f){
     const r = v => Math.round(v);
     const flags = (f.weapon ? 1 : 0) | (f.held ? 2 : 0) | (f.invuln > 0 ? 4 : 0) | (f.onGround ? 8 : 0) | (f.rage > 0 ? 16 : 0);
     return [r(f.pos.x*100), r(f.pos.y*100), r(f.pos.z*100), r(f.vel.x*10), r(f.vel.y*10), r(f.vel.z*10), r(f.facing*100),
-      STATES.indexOf(f.state), Math.min(f.stateT, 999), Math.ceil(Math.max(0, f.hp)), f.stocks, flags, f.move ? MOVE_KEYS.indexOf(f.moveKey) : -1, f.weaponUses, f.lr, WEAPONS.indexOf(f.weapon), Math.ceil(f.skillCd/6)];
+      STATES.indexOf(f.state), Math.min(f.stateT, 999), Math.ceil(Math.max(0, f.hp)), f.stocks, flags, f.move ? MOVE_KEYS.indexOf(f.moveKey) : -1, f.weaponUses, f.lr, WEAPONS.indexOf(f.weapon), Math.ceil(f.skillCd/6), f.lock ? f.lock.idx : -1];
   },
   hostSend(){
     if (this.role !== 'host') return;
@@ -3366,7 +3432,7 @@ const Net = {
       if (this.peer !== peer) return;
       if (this.role === 'guest'){ if (!this.hostConn || !this.hostConn.open) connect(); return; }
       Object.assign(this, {role:'guest', code, me:id, hostPres:{}, slots:[], epoch:-1, resShown:-1, lastIn:'', myPres:{}, gotHost:false, lostAt:0});
-      this.counts = {a:0, j:0, g:0, s:0, pa:false, pj:false, pg:false, ps:false};
+      this.counts = {a:0, j:0, g:0, s:0, l:0, pa:false, pj:false, pg:false, ps:false, pl:false};
       G.net = 'guest';
       connect();
     });
@@ -3436,7 +3502,7 @@ const Net = {
       else if (Math.abs(f.stateT - n(8)) > 6) f.stateT = n(8);
       f.hp = hp; f.stocks = stk; f.stun = 18;
       f.weapon = a.length > 15 ? (WEAPONS[n(15)] || null) : (fl & 1 ? 'hammer' : null); f.held = fl & 2 ? 'bomb' : null; f.invuln = fl & 4 ? 10 : 0; f.onGround = !!(fl & 8);
-      f.weaponUses = n(13); f.skillCd = n(16)*6; f.rage = fl & 16 ? 30 : 0;
+      f.weaponUses = n(13); f.skillCd = n(16)*6; f.rage = fl & 16 ? 30 : 0; f.lockIdx = a.length > 17 ? n(17) : -1;
     });
     if (Array.isArray(sn.it)){
       const seen = new Set();
@@ -3499,9 +3565,9 @@ const Net = {
   sendInput(){
     if (this.role !== 'guest' || G.me < 0) return;
     const raw = readRaw([MAP1, MAPALT], true), c = this.counts;
-    if (raw.atk && !c.pa) c.a++; if (raw.jump && !c.pj) c.j++; if (raw.grab && !c.pg) c.g++; if (raw.skill && !c.ps) c.s++;
-    c.pa = raw.atk; c.pj = raw.jump; c.pg = raw.grab; c.ps = raw.skill;
-    const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s];
+    if (raw.atk && !c.pa) c.a++; if (raw.jump && !c.pj) c.j++; if (raw.grab && !c.pg) c.g++; if (raw.skill && !c.ps) c.s++; if (raw.lock && !c.pl) c.l++;
+    c.pa = raw.atk; c.pj = raw.jump; c.pg = raw.grab; c.ps = raw.skill; c.pl = raw.lock;
+    const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s, c.l];
     const key = arr.join(',');
     if (key !== this.lastIn){ this.lastIn = key; this.presence({in:arr}); }
   },
