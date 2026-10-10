@@ -200,6 +200,16 @@ button{touch-action:manipulation}
 .cpanel{pointer-events:auto;width:min(380px,100%);max-height:100%;overflow-y:auto;background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 var(--ink);padding:16px;display:grid;gap:14px;align-content:start;box-sizing:border-box}
 #copts{display:grid;gap:14px}
 .ctabs{display:flex;gap:6px}
+.lvchip{display:flex;align-items:center;gap:10px;margin-top:10px;font-weight:700;font-size:14px;flex-wrap:wrap}
+.lvchip .lv{font-family:var(--display);background:var(--ink);color:var(--gold);border-radius:8px;padding:2px 10px}
+.acct{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.acct .note{flex:1 1 220px;min-width:0}
+.acct .btn{flex:0 0 auto;font-size:13px;padding:7px 12px}
+.btn.google{background:var(--white);color:var(--ink)}
+.xpbar{display:block;flex:1 1 120px;min-width:100px;height:10px;border:2px solid var(--ink);border-radius:6px;background:var(--track);overflow:hidden}
+.xpbar i{display:block;height:100%;width:0;background:var(--gold);transition:width .8s ease-out}
+.resxp{display:grid;gap:6px}
+.resxp .row{display:flex;justify-content:space-between;gap:10px;font-weight:700;flex-wrap:wrap}
 .ctabs .tab{flex:1;font-family:var(--display);font-size:13px;padding:8px;border:3px solid var(--ink);border-radius:10px;background:var(--paper);cursor:pointer}
 .ctabs .tab[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .sw{display:flex;flex-wrap:wrap;gap:8px}
@@ -262,6 +272,13 @@ button{touch-action:manipulation}
     <div>
       <h1 class="logo">SKY <span>BRAWL</span></h1>
       <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 124 คน (ออนไลน์ 32 คน) ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
+      <div id="lvChip" class="lvchip" hidden><span class="lv"></span><span class="lt"></span><span class="xpbar"><i></i></span></div>
+      <div id="acctBox" class="acct" hidden>
+        <span id="acctText" class="note"></span>
+        <button class="btn google" id="acctGoogle" type="button">ผูกบัญชี Google</button>
+        <button class="btn google" id="acctExisting" type="button" hidden>เข้าบัญชี Google ที่มีอยู่</button>
+        <button class="btn plain" id="acctOut" type="button" hidden>ออกจากระบบ</button>
+      </div>
       <p class="note" id="touchNote" hidden style="margin-top:8px">เล่นบนมือถือ: แตะครึ่งซ้ายของจอแล้วลากเพื่อเดิน ใช้ปุ่มด้านขวาเพื่อต่อย กระโดด กัน และหยิบของ หมุนจอแนวนอนจะเล่นง่ายขึ้น</p>
     </div>
     <div class="settings">
@@ -298,6 +315,7 @@ button{touch-action:manipulation}
       <button class="btn wide" id="playOnline" type="button">เล่นออนไลน์ (สร้าง/เข้าห้อง)</button>
       <button class="btn plain wide" id="custBtn" type="button">แต่งตัวละคร</button>
       <button class="btn line wide" id="inviteBtn" type="button">ชวนเพื่อนมาเล่น (LINE / Facebook / X / QR)</button>
+      <button class="btn plain wide" id="boardBtn" type="button">ตารางอันดับ</button>
     </div>
     <details class="keys-d">
       <summary>ปุ่มควบคุม</summary>
@@ -396,6 +414,21 @@ button{touch-action:manipulation}
   </div>
 </div>
 
+<div id="ranks" class="overlay" hidden>
+  <div class="card">
+    <h2 class="logo sm">ตารางอันดับ</h2>
+    <div class="ctabs" id="rankTabs" role="group" aria-label="เรียงตาม">
+      <button type="button" class="tab" data-k="xp">เลเวล</button>
+      <button type="button" class="tab" data-k="wins">ชนะ</button>
+      <button type="button" class="tab" data-k="kos">KO</button>
+    </div>
+    <div class="rtable"><table><thead><tr><th>อันดับ</th><th>ชื่อ</th><th class="n">เลเวล</th><th class="n" id="rankCol">XP</th></tr></thead><tbody id="rankBody"></tbody></table></div>
+    <p id="rankMe" class="note"></p>
+    <p class="note">XP: เล่นจบ 20 · KO ละ 5 · ชนะ +40 · ติด 3 อันดับแรก +20 · ยิ่งคู่แข่งเยอะยิ่งได้มาก · เล่นออนไลน์ได้ ×1.5</p>
+    <div class="btns"><button class="btn" id="ranksClose" type="button">ปิด</button></div>
+  </div>
+</div>
+
 <div id="invite" class="overlay" hidden>
   <div class="card" style="max-width:460px">
     <h2 class="logo sm">ชวนเพื่อน</h2>
@@ -434,6 +467,10 @@ button{touch-action:manipulation}
 <div id="result" class="overlay" hidden>
   <div class="card">
     <h2 class="result" id="resTitle">P1 ชนะ!</h2>
+    <div id="resXp" class="resxp" hidden>
+      <div class="row"><span id="resLv"></span><span id="resGain"></span></div>
+      <span class="xpbar"><i id="resBar"></i></span>
+    </div>
     <div class="rtable"><table><thead><tr><th>อันดับ</th><th>ชื่อ</th><th class="n">KO</th><th class="n">ดาเมจ</th></tr></thead><tbody id="resBody"></tbody></table></div>
     <div class="btns">
       <button class="btn" id="rematch" type="button">แข่งอีกรอบ</button>
@@ -3113,7 +3150,7 @@ function buildHud(){
       <div class="hp"><div class="lag"></div><div class="fill"></div></div>
       <div class="row"><span class="stocks"></span><span class="hpnum">100</span></div>
       <div class="skrow"><span class="skn"></span><div class="skbar"><i></i></div></div>`;
-    c.querySelector('.pname').textContent = f.name;
+    c.querySelector('.pname').textContent = ((f.ctrl === 'p1' || (G.net === 'guest' && f.isLocal)) && Progress.level ? 'Lv.' + Progress.level + ' ' : '') + f.name;
     cards.appendChild(c);
     f.card = {fill:c.querySelector('.fill'), lag:c.querySelector('.lag'), item:c.querySelector('.pitem'), stocks:c.querySelector('.stocks'), hpn:c.querySelector('.hpnum'), sk:c.querySelector('.skn'), skb:c.querySelector('.skbar i'), k:{}};
   }
@@ -3205,7 +3242,7 @@ async function copyText(text, btn, label){
   catch (e) { const inp = btn.previousElementSibling; if (inp && inp.select){ inp.select(); try { if (document.execCommand('copy')) done(); } catch (err) {} } }
 }
 function hideAllPanels(){
-  for (const id of ['menu','online','pause','result','custom','hud','touch','dbg','invite']) $(id).hidden = true;
+  for (const id of ['menu','online','pause','result','custom','hud','touch','dbg','invite','ranks']) $(id).hidden = true;
   $('banner').className = '';
 }
 function enterAttract(){
@@ -3240,6 +3277,7 @@ function beginMatch(specs, stocks){
   if (G.teamMode) makeStones(specs.length); else clearStones();
   G.mode = 'play'; G.paused = false; G.endT = 0; G.winner = null; G.slow = 0; G.stocks = stocks;
   G.countdown = 210; G.cdShown = new Set(); G.itemTimer = 240; G.spec = 0; G.dbgHtml = null;
+  G.matchId = (G.matchId || 0) + 1; $('resXp').hidden = true;
   createFighters(specs, stocks, true);
   renderer.setPixelRatio(Math.min(devicePixelRatio, IS_TOUCH ? (specs.length > 24 ? 1 : 1.5) : (specs.length > 64 ? 1.5 : 2))); resize();
   buildHud();
@@ -3279,6 +3317,7 @@ function rankingRows(){
 }
 function showResult(rows, winnerIdx){
   rows = rows || rankingRows();
+  if (Progress.recordedFor !== G.matchId){ Progress.recordedFor = G.matchId; Progress.record(rows); }
   const w = winnerIdx !== undefined ? G.fighters[winnerIdx] : G.winner;
   const t = $('resTitle'); t.textContent = w ? w.name + ' ชนะ!' : 'เสมอ!';
   t.style.color = w ? hex(w.team) : 'var(--gold)';
@@ -3424,7 +3463,7 @@ const Supa = {
   client:null, user:null, authFailed:false, saveT:0,
   get available(){ return !!(window.supabase && window.supabase.createClient); },
   getClient(){
-    if (!this.client && this.available) this.client = window.supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true, storageKey:'skybrawl-auth'}});
+    if (!this.client && this.available) this.client = window.supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true, storageKey:'skybrawl-auth', detectSessionInUrl:true}});
     return this.client;
   },
   // Anonymous account per browser; the lobby still works without one, chat and profiles need it
@@ -3571,6 +3610,175 @@ function renderChat(){
   }
   log.scrollTop = log.scrollHeight;
   syncChatUi();
+}
+
+/* ---------- Levels & leaderboard: the server decides XP (record_match in supabase-levels.sql) ---------- */
+const xpForLevel = L => 50*(L - 1)*(L - 1);
+const LEVEL_TITLES = [[30, 'ตำนาน'], [20, 'แชมป์'], [10, 'ยอดฝีมือ'], [5, 'นักสู้'], [1, 'มือใหม่']];
+const levelTitle = L => (LEVEL_TITLES.find(([min]) => L >= min) || LEVEL_TITLES[4])[1];
+const xpProgress = st => { const lo = xpForLevel(st.level), hi = xpForLevel(st.level + 1); return {cur:st.xp - lo, need:hi - lo, pct:Math.max(0, Math.min(100, Math.round((st.xp - lo)/(hi - lo)*100)))}; };
+const Progress = {
+  stats:null, recordedFor:-1,
+  load(){ try { const st = JSON.parse(localStorage.getItem('skybrawl.stats')); if (st && Number.isFinite(st.xp)) this.stats = st; } catch (e) {} },
+  store(){ try { localStorage.setItem('skybrawl.stats', JSON.stringify(this.stats)); } catch (e) {} },
+  get level(){ return this.stats ? this.stats.level : 0; },
+  async refresh(){
+    if (!Supa.available) return;
+    const u = await Supa.signIn(); if (!u) return;
+    const {data, error} = await Supa.client.from('player_stats').select('xp, level, matches, wins, kos').eq('id', u.id).maybeSingle();
+    if (!error){ this.stats = data || {xp:0, level:1, matches:0, wins:0, kos:0}; this.store(); renderLevelChip(); }
+  },
+  // Sends only the match facts; the server works out and caps the XP
+  async record(rows){
+    const me = G.fighters.find(f => f.ctrl === 'p1') || G.fighters.find(f => f.isLocal);
+    const mine = me && rows.find(r => r.f === me);
+    if (!mine || !Supa.available) return;
+    const players = rows.length;
+    let place = mine.place;
+    if (G.teamMode && G.winTeam != null) place = me.side === G.winTeam ? 1 : players;
+    place = Math.max(1, Math.min(players, place | 0 || players));
+    showXp({pending:true});
+    const u = await Supa.signIn();
+    if (!u){ showXp({error:'บันทึก XP ไม่ได้ (เชื่อมต่อบัญชีไม่ได้)'}); return; }
+    const prev = this.stats || {xp:0, level:1, matches:0, wins:0, kos:0};
+    const {data, error} = await Supa.client.rpc('record_match', {p_place:place, p_players:players, p_kos:Math.max(0, mine.kos | 0), p_dmg:Math.max(0, mine.dmg | 0), p_online:!!G.net});
+    if (error){ showXp({error:/too soon/.test(error.message) ? 'แมตช์จบเร็วเกินไป ไม่ได้รับ XP (นับได้ทุก 30 วินาที)' : 'บันทึก XP ไม่สำเร็จ'}); return; }
+    const r = Array.isArray(data) ? data[0] : data;
+    this.stats = {xp:r.new_xp, level:r.new_level, matches:r.total_matches, wins:r.total_wins, kos:prev.kos + (mine.kos | 0)};
+    this.store(); renderLevelChip();
+    showXp({gained:r.gained, levelUp:r.new_level > prev.level});
+  },
+};
+function renderLevelChip(){
+  const el = $('lvChip'), st = Progress.stats; if (!el) return;
+  el.hidden = !st; if (!st) return;
+  const p = xpProgress(st);
+  el.querySelector('.lv').textContent = 'Lv.' + st.level;
+  el.querySelector('.lt').textContent = levelTitle(st.level) + ' · XP ' + p.cur + '/' + p.need;
+  el.querySelector('.xpbar i').style.width = p.pct + '%';
+}
+function showXp(o){
+  $('resXp').hidden = false;
+  if (o.pending || o.error){ $('resLv').textContent = o.pending ? 'กำลังบันทึก XP…' : o.error; $('resGain').textContent = ''; $('resBar').style.width = '0%'; return; }
+  const st = Progress.stats, p = xpProgress(st);
+  $('resLv').textContent = 'Lv.' + st.level + ' ' + levelTitle(st.level) + (o.levelUp ? ' · เลเวลอัป!' : '');
+  $('resGain').textContent = '+' + o.gained + ' XP' + (G.net ? ' (ออนไลน์ ×1.5)' : '') + ' · ' + p.cur + '/' + p.need;
+  requestAnimationFrame(() => { $('resBar').style.width = p.pct + '%'; });
+  if (o.levelUp) banner('LEVEL UP!');
+}
+const Ranks = {
+  key:'xp',
+  async open(){
+    hideAllPanels(); $('ranks').hidden = false;
+    $('ranksClose').focus({preventScroll:true});
+    await this.load();
+  },
+  async load(){
+    const body = $('rankBody'), me = $('rankMe');
+    body.textContent = ''; me.textContent = 'กำลังโหลด…';
+    for (const b of document.querySelectorAll('#rankTabs .tab')) b.setAttribute('aria-pressed', String(b.dataset.k === this.key));
+    $('rankCol').textContent = {xp:'XP', wins:'ชนะ', kos:'KO'}[this.key];
+    if (!Supa.getClient()){ me.textContent = 'โหลดตารางอันดับไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'; return; }
+    await Supa.signIn();
+    const {data, error} = await Supa.client.from('player_stats').select('id, name, level, xp, wins, kos').order(this.key, {ascending:false}).order('xp', {ascending:false}).limit(50);
+    if (error){ me.textContent = 'โหลดตารางอันดับไม่ได้'; return; }
+    const uid = Supa.user && Supa.user.id;
+    data.forEach((r, i) => {
+      const tr = document.createElement('tr'); if (r.id === uid) tr.className = 'me';
+      [i + 1, cleanName(r.name, 'ผู้เล่น'), 'Lv.' + r.level, r[this.key]].forEach((v, k) => {
+        const td = document.createElement('td'); td.textContent = v;
+        if (k === 0) td.className = 'rank'; if (k > 1) td.className = 'n';
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    const at = data.findIndex(r => r.id === uid);
+    me.textContent = !data.length ? 'ยังไม่มีใครติดอันดับ เล่นจบแมตช์แรกแล้วชื่อคุณจะขึ้นที่นี่'
+      : at >= 0 ? 'คุณอยู่อันดับ ' + (at + 1)
+      : Progress.stats ? 'คุณยังไม่ติด 50 อันดับแรก · ตอนนี้ Lv.' + Progress.stats.level : 'เล่นจบแมตช์เพื่อรับ XP และขึ้นตารางอันดับ';
+  },
+};
+
+/* ---------- Google account: the anonymous account is linked, so its id (and its XP) stay the same ---------- */
+const Account = {
+  note:'', busy:false,
+  get isGoogle(){ const u = Supa.user; return !!(u && !u.is_anonymous && (u.identities || []).some(i => i.provider === 'google')); },
+  redirect(){ return gameUrl(); },
+  async boot(){
+    if (!Supa.getClient()) return;
+    // Coming back from Google with an error, e.g. that Google account already belongs to another player
+    const p = new URLSearchParams(location.hash.slice(1));
+    const err = p.get('error_code') || p.get('error');
+    if (err){
+      const d = (p.get('error_description') || '') + ' ' + err;
+      this.note = /already|exist/i.test(d) ? 'exists' : 'error:' + d.replace(/\+/g, ' ').slice(0, 120);
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+    Supa.client.auth.onAuthStateChange((ev, session) => {
+      if (session) Supa.user = session.user;
+      renderAccount();
+      // supabase-js asks not to await its own calls inside this callback
+      if (ev === 'SIGNED_IN' || ev === 'USER_UPDATED') setTimeout(() => this.restore(), 0);
+    });
+    await Supa.signIn();
+    renderAccount();
+    this.restore();
+  },
+  // On a Google account the server copy of name, look and level is the truth (that's what follows you between devices)
+  async restore(){
+    if (!this.isGoogle) return;
+    this.note = '';   // signed in fine, so any earlier Google error no longer applies
+    const {data} = await Supa.client.from('profiles').select('name, look').eq('id', Supa.user.id).maybeSingle();
+    if (data && data.name){
+      LOOKS[0] = decLook(data.look, cleanName(data.name, 'P1'));
+      try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOKS)); localStorage.setItem(NAMED_KEY, '1'); } catch (e) {}
+      named = true;
+    } else Supa.saveProfile();
+    await Progress.refresh();
+    renderAccount();
+  },
+  async linkGoogle(){
+    if (this.busy) return; this.busy = true; renderAccount('กำลังไปหน้า Google…');
+    const u = await Supa.signIn();
+    const opts = {provider:'google', options:{redirectTo:this.redirect()}};
+    const {error} = u && u.is_anonymous ? await Supa.client.auth.linkIdentity(opts) : await Supa.client.auth.signInWithOAuth(opts);
+    this.busy = false;
+    if (error) renderAccount(/manual linking/i.test(error.message) ? 'ยังผูกบัญชีไม่ได้: ต้องเปิด Manual linking ใน Supabase'
+      : /provider is not enabled|unsupported provider/i.test(error.message) ? 'ยังล็อกอินด้วย Google ไม่ได้: ต้องเปิด Google ใน Supabase ก่อน'
+      : 'เชื่อมต่อ Google ไม่สำเร็จ: ' + error.message);
+  },
+  // That Google account already has its own progress: switch to it (this device's guest progress stays behind)
+  async useExisting(){
+    this.note = '';
+    const {error} = await Supa.client.auth.signInWithOAuth({provider:'google', options:{redirectTo:this.redirect()}});
+    if (error) renderAccount('เชื่อมต่อ Google ไม่สำเร็จ: ' + error.message);
+  },
+  async signOut(){
+    await Supa.client.auth.signOut();
+    Supa.user = null; Supa.authFailed = false;
+    Progress.stats = null; try { localStorage.removeItem('skybrawl.stats'); } catch (e) {}
+    renderLevelChip();
+    await Supa.signIn();   // a fresh guest account
+    await Progress.refresh();
+    renderAccount();
+  },
+};
+function renderAccount(msg){
+  const box = $('acctBox'); if (!box) return;
+  box.hidden = !Supa.available;
+  const u = Supa.user, g = Account.isGoogle;
+  let text = msg || '';
+  if (!text){
+    if (Account.note === 'exists') text = 'บัญชี Google นี้มีข้อมูลของตัวเองอยู่แล้ว กดเข้าบัญชีนั้นได้ แต่เลเวลบนเครื่องนี้จะไม่ถูกรวมเข้าไป';
+    else if (Account.note.startsWith('error:')) text = 'ล็อกอิน Google ไม่สำเร็จ ลองใหม่อีกครั้ง';
+    else if (!u) text = Supa.authFailed ? 'เชื่อมต่อบัญชีไม่ได้ เลเวลจะไม่ถูกบันทึก' : 'กำลังเชื่อมต่อบัญชี…';
+    else if (g) text = 'บัญชี Google · ' + (u.email || 'เชื่อมต่อแล้ว') + ' · เลเวลตามไปทุกเครื่อง';
+    else text = 'บัญชีชั่วคราว: เลเวลอยู่แค่เบราว์เซอร์นี้ ผูก Google เพื่อเก็บไว้ข้ามเครื่อง';
+  }
+  $('acctText').textContent = text;
+  $('acctGoogle').hidden = !u || g || Account.note === 'exists';
+  $('acctExisting').hidden = Account.note !== 'exists';
+  $('acctOut').hidden = !g;
 }
 
 const Net = {
@@ -4061,7 +4269,7 @@ for (const o of OPTS){
 function reflectCustom(){
   const look = LOOKS[G.editSlot];
   for (const b of document.querySelectorAll('#copts button')) b.setAttribute('aria-pressed', String(look[b.dataset.key]) === b.dataset.val);
-  for (const b of document.querySelectorAll('.ctabs .tab')) b.setAttribute('aria-pressed', b.dataset.slot === String(G.editSlot));
+  for (const b of document.querySelectorAll('#custom .ctabs .tab')) b.setAttribute('aria-pressed', b.dataset.slot === String(G.editSlot));
   $('cname').value = look.name;
   const k = OUTFITS[look.outfit] ? look.outfit : 'none', si = SKILL_INFO[k] || SKILL_INFO.none, box = $('skillInfo');
   box.textContent = '';
@@ -4129,6 +4337,14 @@ $('shareLink').onclick = () => {
   navigator.share({title:'Sky Brawl', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
 };
 $('custBtn').onclick = () => openCustom();
+$('boardBtn').onclick = () => Ranks.open();
+$('ranksClose').onclick = () => { $('ranks').hidden = true; $('menu').hidden = false; };
+for (const b of document.querySelectorAll('#rankTabs .tab')) b.onclick = () => { Ranks.key = b.dataset.k; Ranks.load(); };
+Progress.load(); renderLevelChip(); Progress.refresh();
+$('acctGoogle').onclick = () => Account.linkGoogle();
+$('acctExisting').onclick = () => Account.useExisting();
+$('acctOut').onclick = () => Account.signOut();
+Account.boot();
 $('chatForm').addEventListener('submit', async e => {
   e.preventDefault();
   const inp = $('chatIn');
@@ -4201,7 +4417,7 @@ $('cdone').onclick = () => {
   if (next){ hideAllPanels(); next(); } else toMenu();
 };
 $('cback').onclick = closeCustom;
-for (const b of document.querySelectorAll('.ctabs .tab')) b.onclick = () => selectSlot(+b.dataset.slot);
+for (const b of document.querySelectorAll('#custom .ctabs .tab')) b.onclick = () => selectSlot(+b.dataset.slot);
 $('cname').addEventListener('input', e => {
   LOOKS[G.editSlot].name = cleanName(e.target.value, DEF_LOOKS[G.editSlot].name);
   saveLooks();
