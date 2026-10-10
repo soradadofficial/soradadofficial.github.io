@@ -46,6 +46,7 @@ button,select,input{font-family:inherit;color:inherit}
 .skillinfo b{color:var(--skill)}
 #hudMid{display:grid;gap:6px;justify-items:center;pointer-events:auto}
 .chipbtn{font-family:var(--display);font-size:13px;background:var(--paper);border:3px solid var(--ink);border-radius:10px;padding:5px 10px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;white-space:nowrap}
+#autoBtn.on{background:var(--gold)}
 #board{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:6px 10px 8px;width:min(220px,36vw);display:grid;gap:4px;box-sizing:border-box}
 #boardHead{font-family:var(--display);font-size:12px;display:flex;justify-content:space-between;gap:6px}
 #brows{display:grid;gap:1px;font-size:11px;max-height:48vh;overflow:hidden}
@@ -200,6 +201,7 @@ button{touch-action:manipulation}
     <button id="pauseBtn" class="chipbtn" type="button">II เมนู</button>
     <button id="camBtn" class="chipbtn" type="button" title="ปรับมุมกล้อง (ปุ่ม - และ = หรือล้อเมาส์)">กล้อง: ปกติ</button>
     <button id="touchBtn" class="chipbtn" type="button">ปุ่มจอ: ปิด</button>
+    <button id="autoBtn" class="chipbtn" type="button" title="ให้บอทเล่นแทน (ปุ่ม T)">ออโต้: ปิด</button>
     <button id="spec" class="chipbtn" type="button" hidden>ดูคนถัดไป</button>
   </div>
   <div id="board"><div id="boardHead"><span>นักสู้</span><span id="aliveCount"></span></div><div id="brows"></div></div>
@@ -277,7 +279,7 @@ button{touch-action:manipulation}
           </dl>
         </div>
       </div>
-      <p class="note" style="margin-top:10px">ปรับมุมกล้องด้วย <kbd>-</kbd> <kbd>=</kbd> ล้อเมาส์ หรือปุ่ม "กล้อง" ระหว่างเล่น · ถ้าเล่นคนเดียวหรือออนไลน์ ใช้ลูกศรกับ <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> <kbd>I</kbd> แทนได้ · <kbd>X</kbd> ดู hitbox · <kbd>Esc</kbd> เมนู · มือถือใช้จอยกับปุ่มบนจอ</p>
+      <p class="note" style="margin-top:10px">ปรับมุมกล้องด้วย <kbd>-</kbd> <kbd>=</kbd> ล้อเมาส์ หรือปุ่ม "กล้อง" ระหว่างเล่น · ถ้าเล่นคนเดียวหรือออนไลน์ ใช้ลูกศรกับ <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> <kbd>I</kbd> แทนได้ · <kbd>X</kbd> ดู hitbox · <kbd>T</kbd> ให้บอทเล่นแทนผู้เล่น 1 (ผู้เล่น 2 ใช้ <kbd>P</kbd> หรือ <kbd>Num5</kbd>) · <kbd>Esc</kbd> เมนู · มือถือใช้จอยกับปุ่มบนจอ</p>
     </details>
   </div>
 </div>
@@ -1275,7 +1277,8 @@ function feed(text){
 /* ---------- Game state ---------- */
 const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[], frame:0, itemTimer:300, slow:0, shake:0,
   countdown:0, cdShown:new Set(), paused:false, debug:false, endT:0, winner:null, stocks:2,
-  cfg:{n:8, st:2, df:'normal', stage:'titanic'}, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0};
+  cfg:{n:8, st:2, df:'normal', stage:'titanic'}, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0,
+  auto:{p1:false, p2:false}};
 
 class Fighter {
   constructor(idx, spec){
@@ -1354,6 +1357,8 @@ addEventListener('keydown', e => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   if (e.code === 'Escape' && G.mode === 'play' && $('result').hidden){ togglePause(); return; }
   if (e.code === 'KeyX' && !e.repeat) toggleDebug();
+  if (e.code === 'KeyT' && !e.repeat) toggleAuto('p1');
+  if ((e.code === 'KeyP' || e.code === 'Numpad5') && !e.repeat) toggleAuto('p2');
   if (G.mode === 'play' && (e.code === 'Minus' || e.code === 'NumpadSubtract')) camStep(1);
   if (G.mode === 'play' && (e.code === 'Equal' || e.code === 'NumpadAdd')) camStep(-1);
   if (G.mode === 'play' && GAME_KEYS.has(e.code)){ e.preventDefault(); keys.add(e.code); }
@@ -1387,6 +1392,29 @@ function readHuman(f){
 }
 
 /* ---------- Bots ---------- */
+// Auto-play: a local player's fighter is driven by the same bot brain until they switch it off
+const isAuto = f => (f.ctrl === 'p1' || f.ctrl === 'p2') && G.auto[f.ctrl] && G.net !== 'guest';
+function canAuto(){ return G.mode === 'play' && G.net !== 'guest'; }
+function toggleAuto(ctrl){
+  if (!canAuto()) return;
+  const f = G.fighters.find(o => o.ctrl === ctrl); if (!f) return;
+  G.auto[ctrl] = !G.auto[ctrl];
+  Object.assign(f.ai, {cd:0, guardT:0, retreat:0, wantCombo:false, tgt:null, tgtT:0});
+  Object.assign(f.input, {x:0, z:0, atk:false, jump:false, guard:false, grab:false, skill:false});
+  touch.atkL = touch.jumpL = touch.grabL = touch.skillL = false;
+  feed(G.auto[ctrl] ? `${f.name}: บอทเล่นแทน` : `${f.name}: กลับมาบังคับเอง`);
+  syncAutoUi();
+}
+function syncAutoUi(){
+  const btn = $('autoBtn');
+  btn.hidden = G.net === 'guest' || !G.fighters.some(f => f.ctrl === 'p1');
+  btn.textContent = 'ออโต้: ' + (G.auto.p1 ? 'เปิด' : 'ปิด');
+  btn.classList.toggle('on', G.auto.p1);
+  for (const f of G.fighters){
+    if (!f.tag || !f.isLocal) continue;
+    f.tag.name.textContent = (isAuto(f) ? '🤖 ' : '▼ ') + f.name;
+  }
+}
 function nearestFoe(b){
   let best = null, bd = Infinity;
   for (const o of G.fighters){
@@ -2004,7 +2032,7 @@ function tick(){
   if (G.countdown > 0){ G.countdown--; cdBanner(G.countdown); }
   if (G.net === 'host') Net.readInputs();
   for (const f of G.fighters){
-    if (f.ctrl === 'bot') think(f);
+    if (f.ctrl === 'bot' || isAuto(f)) think(f);
     else if (f.ctrl === 'net') Net.applyInput(f);
     else readHuman(f);
   }
@@ -2211,7 +2239,7 @@ function makeTag(f){
   if (!f.isLocal) n.style.color = hex(f.team);
   const b = document.createElement('div'); b.className = 'tb'; const i = document.createElement('i'); b.appendChild(i);
   el.append(n, b); $('tags').appendChild(el);
-  f.tag = {el, bar:i, hp:-1};
+  f.tag = {el, bar:i, hp:-1, name:n};
 }
 function updateTags(w, h){
   for (const f of G.fighters){
@@ -2335,6 +2363,7 @@ function beginMatch(specs, stocks){
   buildHud();
   $('hud').hidden = false;
   syncTouch();
+  syncAutoUi();
   $('dbg').hidden = !G.debug;
   keys.clear();
 }
@@ -3021,6 +3050,7 @@ function camStep(d){
   try { localStorage.setItem('skybrawl.cam', String(G.camZoom)); } catch (e) {}
 }
 camStep(0);
+$('autoBtn').onclick = e => { toggleAuto('p1'); e.currentTarget.blur(); };
 $('camBtn').onclick = () => camStep(G.camZoom === CAM_LEVELS.length - 1 ? -G.camZoom : 1);
 {
   let acc = 0;
