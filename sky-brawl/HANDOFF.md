@@ -145,6 +145,9 @@ python -m http.server 8765 --directory sky-brawl
 - ด่านไหนจะมีกำแพงหรือชั้นยืน: ใส่ `blocks:[{x, z, hx, hz, h}]` ใน `STAGES` (hx/hz = ครึ่งความกว้าง) สูง ≤ 1.8 กระโดดขึ้นไปยืนได้, สูงกว่านั้นเป็นกำแพง; ฟิสิกส์ (`physics`), กระสุน, ระเบิด, จุดเกิด, ไอเทม และบอทเดินเลี่ยง (`steerAroundObstacles`) รองรับให้แล้ว ต้องสร้างโมเดลในฟังก์ชัน build ของด่านให้ตรงตำแหน่งเอง
 - โหมด `boss` (`MODE_KEYS[2]`, `stageFor()` บังคับด่าน `christmas`) → `G.raid` = โหมดช่วยกันตีบอส ด่านคริสต์มาสในโหมดอื่นเล่นปกติไม่มีบอส, ทุกคน `side = 0` (ตีกันเองไม่เข้า), บอสอยู่ใน `G.boss` (`makeBoss`, `stepBoss`, `damageBoss`, `endRaid`), ท่าบอส: ทุบพื้น (ยืนบนชั้นหรือกระโดดหลบได้), ปาหิมะ (กำแพงบังได้), หมุนตัวตอนคลั่ง (<30%)
 - สถานะผิดปกติ: `f.chill` = แช่แข็ง (นักเวทน้ำแข็ง `frost`, ท่า `sk_frost` มี `freeze`), `f.shock` = ชา (นักเวทสายฟ้า `volt`, `sk_volt` → `chainLightning`, มี `shock`) ใส่ `freeze`/`shock` ในท่าไหนก็ได้ผลเหมือนกัน (`applyHit` → `freezeF`/`shockF`) ส่งให้ guest ทาง flags 32/64 ใน `encF`
+- อาชีพใหม่: นักดาบปีศาจ `demon` (ฟันแล้วปล่อย `darkWave` กระสุนทะลุ `pierce` กว้าง `b.rad`), ตำรวจอวกาศ `spacecop` (ดาบเลเซอร์ สกิลกระสุน `saber` บินกลับหาเจ้าของ `b.back`), ทหาร `soldier` (ระเบิด `throwGrenade` = bomb ชนิด `grenade`, ท่ามี `grenade:N` = ขว้างทุก N เฟรม)
+- นักเวทน้ำแข็งใช้ `iceStorm` → พื้นที่ใน `G.zones` (`stepZones` ฝั่ง host, `zoneFx` วาดทั้งสองฝั่ง, ส่งให้ guest ใน `sn.zn`)
+- สีชุดอาชีพ: `look.oc` = ลำดับใน `OUTFIT_TINTS` (0 = สีเดิม) `buildChibi` ทาสีใหม่เฉพาะชิ้นที่ชุดอาชีพสร้าง (`recolor`) ส่งเป็นช่องที่ 8 ของ `encLook`
 - ห้องออนไลน์: `config.js` → `online.maxPlayers` / `maxHumans` (`ONLINE_MAX`, `ONLINE_HUMANS`, สูงสุด 124)
 - HUD มือถือแนวนอน: `@media (max-height:520px)` ย่อทุกอย่าง ปุ่มเมนูเรียงแถวเดียว (`#hudBtns`) รายชื่อนักสู้ (`#board`) พับไว้ แตะหัวเพื่อเปิด
 - ออนไลน์: host ส่งสถานะบอสใน snapshot `sn.bs`, ผลแข่ง raid ส่งเป็น win = -20 (ชนะ) / -21 (แพ้)
