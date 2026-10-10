@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#3f6fb5">
 <meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 32 คน">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://soradadofficial.github.io/sky-brawl/">
+<meta property="og:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="นักสู้หลายอาชีพตะลุมบอนกันบนดาดฟ้าเรือไททานิก พร้อมโลโก้ Sky Brawl">
+<meta property="og:title" content="Sky Brawl เกมต่อสู้ 3D บนเว็บ">
+<meta property="og:description" content="ตะลุมบอนบนเรือไททานิก วัดไทย และสยาม 18 อาชีพ เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง ชวนเพื่อนเล่นออนไลน์ได้">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
+<meta name="twitter:title" content="Sky Brawl เกมต่อสู้ 3D บนเว็บ">
+<meta name="twitter:description" content="ตะลุมบอนบนเรือไททานิก วัดไทย และสยาม เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง">
 <title>Sky Brawl</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +25,7 @@
 /* Layout: full-bleed 3D brawl on the Titanic's deck; local HUD top-left, scoreboard top-right; menus float as cards over the live scene */
 :root{
   --ink:#14213a; --paper:#fff7e8; --p1:#ff5d4a; --p2:#2f8cff; --gold:#ffc23a; --sky:#f3b77e;
-  --track:#d9e1ee; --skill:#9b5de5; --muted:#56657f; --white:#ffffff; --good:#3fbf5a; --shade:rgba(20,33,58,.4);
+  --track:#d9e1ee; --skill:#9b5de5; --muted:#56657f; --white:#ffffff; --good:#3fbf5a; --line:#06c755; --fb:#1877f2; --x:#0f1419; --shade:rgba(20,33,58,.4);
   --display:"Dela Gothic One","Kanit",system-ui,sans-serif;
   --body:"Kanit",system-ui,sans-serif;
   color-scheme:light;
@@ -96,6 +108,14 @@ button,select,input{font-family:inherit;color:inherit}
 .btn.red{background:var(--p1);color:var(--white)}
 .btn.blue{background:var(--p2);color:var(--white)}
 .btn.plain{background:var(--paper)}
+.btn.line,.btn.fb,.btn.x{color:var(--white);text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center}
+.btn.line{background:var(--line)} .btn.fb{background:var(--fb)} .btn.x{background:var(--x)}
+.shares{display:flex;flex-wrap:wrap;gap:8px}
+.shares .btn{flex:1 1 90px;font-size:14px;padding:10px 12px}
+.sharebox{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.sharecol{flex:1 1 180px;display:grid;gap:10px;min-width:0}
+.qr{width:150px;height:150px;flex:none;background:var(--white);border:3px solid var(--ink);border-radius:12px;padding:6px;box-sizing:border-box;display:grid;place-items:center;font-size:12px;color:var(--muted);text-align:center}
+.qr img{width:100%;height:100%;display:block;image-rendering:pixelated}
 .wide{flex-basis:100%}
 .settings{display:grid;gap:10px}
 .seg{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -274,6 +294,7 @@ button{touch-action:manipulation}
       <button class="btn blue" id="play2p" type="button">2 คนเครื่องเดียว</button>
       <button class="btn wide" id="playOnline" type="button">เล่นออนไลน์ (สร้าง/เข้าห้อง)</button>
       <button class="btn plain wide" id="custBtn" type="button">แต่งตัวละคร</button>
+      <button class="btn line wide" id="inviteBtn" type="button">ชวนเพื่อนมาเล่น (LINE / Facebook / X / QR)</button>
     </div>
     <details class="keys-d">
       <summary>ปุ่มควบคุม</summary>
@@ -332,6 +353,17 @@ button{touch-action:manipulation}
         <button class="btn" id="copyLink" type="button" style="flex:0 0 auto">คัดลอกลิงก์เชิญ</button>
         <button class="btn plain" id="shareLink" type="button" style="flex:0 0 auto" hidden>แชร์</button>
       </div>
+      <div class="sharebox">
+        <div id="roomQr" class="qr" role="img" aria-label="QR code สำหรับเข้าห้องนี้"></div>
+        <div class="sharecol">
+          <p class="note">ให้เพื่อนสแกน QR ด้วยกล้องมือถือ หรือแชร์ลิงก์ห้อง กดแล้วเข้าห้องนี้ได้ทันที</p>
+          <div class="shares">
+            <a class="btn line" id="roomLine" target="_blank" rel="noopener">LINE</a>
+            <a class="btn fb" id="roomFb" target="_blank" rel="noopener">Facebook</a>
+            <a class="btn x" id="roomX" target="_blank" rel="noopener">X</a>
+          </div>
+        </div>
+      </div>
       <div id="rCfg" class="settings">
         <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="32" value="2"><output id="rNOut" for="rN">2</output></div>
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
@@ -349,6 +381,28 @@ button{touch-action:manipulation}
     <p id="onMsg" class="note" hidden></p>
     <p class="note">ตั้งจำนวนนักสู้เป็น 2 = ดวล 1v1 ถ้าคนไม่ครบ บอทจะลงแทน · ส่งลิงก์เชิญให้เพื่อน กดแล้วเข้าห้องได้ทันที ไม่ต้องสมัครอะไร · คนสร้างห้องเป็นคนคุมเกม ต้องเปิดหน้านี้ค้างไว้ตลอดการแข่ง ห้ามสลับแอปหรือปิดจอ</p>
     <div class="btns"><button class="btn plain" id="onBack" type="button">กลับเมนู</button></div>
+  </div>
+</div>
+
+<div id="invite" class="overlay" hidden>
+  <div class="card" style="max-width:460px">
+    <h2 class="logo sm">ชวนเพื่อน</h2>
+    <div class="sharebox">
+      <div id="gameQr" class="qr" role="img" aria-label="QR code สำหรับเปิดเกม"></div>
+      <div class="sharecol">
+        <p class="note">สแกนแล้วเล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง ไม่ต้องสมัคร</p>
+        <div class="shares">
+          <a class="btn line" id="gameLine" target="_blank" rel="noopener">LINE</a>
+          <a class="btn fb" id="gameFb" target="_blank" rel="noopener">Facebook</a>
+          <a class="btn x" id="gameX" target="_blank" rel="noopener">X</a>
+        </div>
+      </div>
+    </div>
+    <div class="joinrow"><input id="gameLink" class="tin" readonly aria-label="ลิงก์เกม"><button class="btn plain" id="gameCopy" type="button" style="flex:0 0 auto">คัดลอก</button></div>
+    <div class="btns">
+      <button class="btn plain" id="gameShare" type="button" hidden>แชร์ทางอื่น</button>
+      <button class="btn" id="inviteClose" type="button">ปิด</button>
+    </div>
   </div>
 </div>
 
@@ -372,6 +426,11 @@ button{touch-action:manipulation}
     <div class="btns">
       <button class="btn" id="rematch" type="button">แข่งอีกรอบ</button>
       <button class="btn plain" id="resMenu" type="button">กลับเมนู</button>
+      <div class="shares wide">
+        <a class="btn line" id="resLine" target="_blank" rel="noopener">แชร์ผลไป LINE</a>
+        <a class="btn fb" id="resFb" target="_blank" rel="noopener">Facebook</a>
+        <a class="btn x" id="resX" target="_blank" rel="noopener">X</a>
+      </div>
     </div>
   </div>
 </div>
@@ -396,6 +455,7 @@ button{touch-action:manipulation}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (() => {
 const V = THREE.Vector3, PI = Math.PI;
@@ -617,6 +677,7 @@ const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, IS_TOUCH ? 1.5 : 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
 const scene = new THREE.Scene();
 function paintSky(stops){
   const c = document.createElement('canvas'); c.width = 2; c.height = 256;
@@ -640,11 +701,77 @@ gmap.minFilter = gmap.magFilter = THREE.NearestFilter; gmap.needsUpdate = true;
 const matCache = {};
 const toon = c => matCache[c] || (matCache[c] = new THREE.MeshToonMaterial({color:c, gradientMap:gmap}));
 const OUT = new THREE.MeshBasicMaterial({color:INK, side:THREE.BackSide});
-const SPH = r => new THREE.SphereGeometry(r, 20, 14);
+const SPH = r => new THREE.SphereGeometry(r, r > .3 ? 18 : 12, r > .3 ? 12 : 8);
 function part(geo, mat, outline){
   const m = new THREE.Mesh(geo, mat); m.castShadow = true;
   if (outline){ const o = new THREE.Mesh(geo, OUT); o.scale.setScalar(outline); m.add(o); }
   return m;
+}
+
+/* ---------- Draw-call batching ----------
+   Every static mesh under a container is baked into one mesh per material kind (lit toon with
+   vertex colours, unlit, outline). Objects with userData, invisible ones and anything in skip stay
+   live so code that animates them keeps working. */
+const VC_TOON = new THREE.MeshToonMaterial({color:0xffffff, gradientMap:gmap, vertexColors:true});
+const VC_BASIC = new THREE.MeshBasicMaterial({color:0xffffff, vertexColors:true});
+const _mm = new THREE.Matrix4(), _mi = new THREE.Matrix4(), _mn = new THREE.Matrix3(), _mv = new V(), _mc = new THREE.Color();
+function mergeKind(o){
+  if (!o.isMesh || o.isInstancedMesh || Array.isArray(o.material)) return null;
+  const m = o.material;
+  if (m === OUT) return 'out';
+  if (m.map || m.transparent || m.wireframe || m.side !== THREE.FrontSide || m.vertexColors) return null;
+  if (m.isMeshToonMaterial) return 'toon';
+  if (m.isMeshBasicMaterial) return 'basic';
+  return null;
+}
+function mergeMeshes(container, skip){
+  container.updateMatrixWorld(true);
+  _mi.copy(container.matrixWorld).invert();
+  const buckets = {toon:[], out:[], basic:[]};
+  const walk = o => {
+    if (o !== container && ((skip && skip.has(o)) || Object.keys(o.userData).length || o.visible === false)) return;
+    const k = mergeKind(o); if (k) buckets[k].push(o);
+    for (const c of o.children) walk(c);
+  };
+  walk(container);
+  const taken = new Set(), made = [];
+  for (const k of ['toon', 'out', 'basic']){
+    const list = buckets[k]; if (list.length < 2) continue;
+    const geos = list.map(o => o.geometry.index ? o.geometry.toNonIndexed() : o.geometry);
+    const count = geos.reduce((a, g) => a + g.attributes.position.count, 0);
+    const pos = new Float32Array(count*3), nor = new Float32Array(count*3), col = k === 'out' ? null : new Float32Array(count*3);
+    let off = 0, cast = false, recv = false;
+    list.forEach((o, i) => {
+      const g = geos[i], p = g.attributes.position, n = g.attributes.normal;
+      _mm.multiplyMatrices(_mi, o.matrixWorld); _mn.getNormalMatrix(_mm);
+      if (col) _mc.copy(o.material.color);
+      for (let j = 0; j < p.count; j++){
+        const q = (off + j)*3;
+        _mv.fromBufferAttribute(p, j).applyMatrix4(_mm); pos[q] = _mv.x; pos[q + 1] = _mv.y; pos[q + 2] = _mv.z;
+        if (n){ _mv.fromBufferAttribute(n, j).applyMatrix3(_mn).normalize(); nor[q] = _mv.x; nor[q + 1] = _mv.y; nor[q + 2] = _mv.z; }
+        if (col){ col[q] = _mc.r; col[q + 1] = _mc.g; col[q + 2] = _mc.b; }
+      }
+      off += p.count; cast = cast || o.castShadow; recv = recv || o.receiveShadow; taken.add(o);
+    });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    if (col) geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    geo.computeBoundingSphere();
+    const mesh = new THREE.Mesh(geo, k === 'toon' ? VC_TOON : k === 'basic' ? VC_BASIC : OUT);
+    mesh.castShadow = k === 'toon' && cast; mesh.receiveShadow = recv;
+    made.push(mesh);
+  }
+  for (const o of taken) for (const c of [...o.children]) if (!taken.has(c)) container.attach(c);
+  for (const o of taken) if (o.parent) o.parent.remove(o);
+  for (const m of made) container.add(m);
+  return made;
+}
+// Everything a stage keeps in its userData is animated by its fx, so it stays out of the bake
+function stageSkip(g){
+  const skip = new Set();
+  const addAll = v => { if (!v) return; if (v.isObject3D) skip.add(v); else if (Array.isArray(v)) v.forEach(addAll); else if (typeof v === 'object') Object.values(v).forEach(addAll); };
+  addAll(g.userData);
+  return skip;
 }
 
 const TITANIC_DECOR = new THREE.Group();
@@ -748,7 +875,7 @@ function buildShip(){
   }
   return g;
 }
-const SHIP_GROUP = buildShip(); SHIP_GROUP.add(TITANIC_DECOR); scene.add(SHIP_GROUP);
+const SHIP_GROUP = buildShip(); SHIP_GROUP.add(TITANIC_DECOR); mergeMeshes(SHIP_GROUP, stageSkip(SHIP_GROUP)); scene.add(SHIP_GROUP);
 
 /* ---------- More stages ---------- */
 function tileTex(base, alt, line, n){
@@ -1139,7 +1266,7 @@ function setStage(k){
   if (st === STAGE) return;
   scene.remove(STAGE.group);
   STAGE = st; STAGE_KEY = key;
-  if (!st.group) st.group = st.build();
+  if (!st.group){ st.group = st.build(); mergeMeshes(st.group, stageSkip(st.group)); }
   scene.add(st.group);
   FUNNELS = st.obstacles; SEA_Y = st.fallY;
   sea.visible = st.water != null; sea.position.y = st.fallY;
@@ -1150,6 +1277,7 @@ function setStage(k){
   const L = st.light || {sky:0xfff1e0, ground:0x4a6fa5, hemi:.75, sun:0xffe6c8, sunI:.9};
   hemi.color.setHex(L.sky); hemi.groundColor.setHex(L.ground); hemi.intensity = L.hemi;
   sun.color.setHex(L.sun); sun.intensity = L.sunI;
+  renderer.shadowMap.needsUpdate = true;
   const [sx, sz] = st.shadow || [42, 28];
   Object.assign(sun.shadow.camera, {left:-sx, right:sx, top:sz, bottom:-sz, far:sx > 50 ? 140 : 90}); sun.shadow.camera.updateProjectionMatrix();
   for (const c of clouds) c.visible = !st.noClouds;
@@ -1526,8 +1654,6 @@ function buildChibi(look, team){
   const o = OUTFITS[look.outfit] || OUTFITS.none, color = o.body || look.body, skin = look.skin;
   const root = new THREE.Group();
   const tilt = new THREE.Group(); tilt.position.y = .75; root.add(tilt);
-  const ring = new THREE.Mesh(new THREE.RingGeometry(.62, .76, 32), new THREE.MeshBasicMaterial({color:team, transparent:true, opacity:.9, side:THREE.DoubleSide, depthWrite:false}));
-  ring.rotation.x = -PI/2; ring.position.y = .03; root.add(ring);
   const body = part(SPH(.4), toon(color), 1.07); body.scale.set(1, 1.1, .85); tilt.add(body);
   const belt = part(new THREE.TorusGeometry(.36,.05,6,20), toon(INK)); belt.rotation.x = PI/2; belt.position.y = -.14; tilt.add(belt);
   const head = new THREE.Group(); head.position.y = .78; tilt.add(head);
@@ -1560,26 +1686,76 @@ function buildChibi(look, team){
   bubble.position.y = .1; tilt.add(bubble);
   const wire = c => new THREE.Mesh(new THREE.SphereGeometry(1,12,8), new THREE.MeshBasicMaterial({color:c, wireframe:true}));
   const hurt = wire(0x3fbf5a); hurt.scale.setScalar(.55); const hit = wire(0xff2a2a);
+  // Bake each rigid piece: about 58 draw calls per fighter become about 16
+  mergeMeshes(tilt, new Set([head, armL, armR, legL, legR, bomb, bubble]));
+  mergeMeshes(head);
+  mergeMeshes(armL, new Set([oh].filter(Boolean)));
+  mergeMeshes(armR, new Set([hammer, gun, shotgun, cw].filter(Boolean)));
+  mergeMeshes(legL); mergeMeshes(legR);
+  for (const g of [hammer, gun, shotgun, cw, oh]) if (g) mergeMeshes(g);
+  const outlines = [];
+  root.traverse(m => { if (m.isMesh){ m.castShadow = false; if (m.material === OUT) outlines.push(m); } });
   scene.add(root, hurt, hit);
-  return {root, tilt, head, armL, armR, legL, legR, hammer, gun, shotgun, cw, oh, bomb, bubble, hurt, hit};
+  return {root, tilt, head, armL, armR, legL, legR, hammer, gun, shotgun, cw, oh, bomb, bubble, hurt, hit, outlines, far:false};
 }
 
 /* ---------- FX ---------- */
-const parts = [];
 const PGEO = new THREE.IcosahedronGeometry(.1, 0);
-for (let i = 0; i < 360; i++){
-  const m = new THREE.Mesh(PGEO, new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, depthWrite:false}));
-  m.visible = false; scene.add(m); parts.push({m, v:new V(), life:0, max:1, g:0, s:1, a:1});
+const _pm = new THREE.Matrix4(), _pc = new THREE.Color(), _p0 = new THREE.Matrix4().makeScale(0, 0, 0);
+function makePool(n, translucent){
+  const mesh = new THREE.InstancedMesh(PGEO, new THREE.MeshBasicMaterial(translucent ? {color:0xffffff, transparent:true, opacity:.55, depthWrite:false} : {color:0xffffff}), n);
+  mesh.frustumCulled = false;
+  for (let i = 0; i < n; i++){ mesh.setMatrixAt(i, _p0); mesh.setColorAt(i, _pc.set(0xffffff)); }
+  scene.add(mesh);
+  return {mesh, idx:0, list:Array.from({length:n}, () => ({pos:new V(), v:new V(), life:0, max:1, g:0, s:1}))};
 }
-let pIdx = 0;
+const SPARKS = makePool(320, false), SMOKE = makePool(140, true);
 function emit(pos, n, color, spd, up, life, size, grav, alpha = 1){
+  const pool = alpha < 1 ? SMOKE : SPARKS; _pc.setHex(color);
   for (let i = 0; i < n; i++){
-    const p = parts[pIdx = (pIdx + 1) % parts.length];
-    p.m.visible = true; p.m.position.copy(pos); p.m.material.color.setHex(color);
+    const k = pool.idx = (pool.idx + 1) % pool.list.length, p = pool.list[k];
+    p.pos.copy(pos);
     const a = Math.random()*PI*2, sp = spd*(.4 + Math.random());
     p.v.set(Math.cos(a)*sp, up*(.4 + Math.random()), Math.sin(a)*sp);
-    p.life = p.max = life*(.6 + Math.random()*.6); p.s = size*(.6 + Math.random()*.8); p.g = grav; p.a = alpha;
+    p.life = p.max = life*(.6 + Math.random()*.6); p.s = size*(.6 + Math.random()*.8); p.g = grav;
+    pool.mesh.setColorAt(k, _pc);
   }
+  pool.mesh.instanceColor.needsUpdate = true;
+}
+function stepPool(pool){
+  let any = false;
+  pool.list.forEach((p, i) => {
+    if (p.life <= 0) return;
+    p.life--; p.v.y -= p.g*DT; p.pos.addScaledVector(p.v, DT);
+    const sc = p.life > 0 ? p.s*(.25 + .75*p.life/p.max) : 0;
+    _pm.makeScale(sc, sc, sc).setPosition(p.pos); pool.mesh.setMatrixAt(i, _pm); any = true;
+  });
+  if (any) pool.mesh.instanceMatrix.needsUpdate = true;
+}
+// Team rings and blob shadows for every fighter: two draw calls in total
+const MAX_MARKS = 200;
+const RINGS = new THREE.InstancedMesh(new THREE.RingGeometry(.62, .76, 32).rotateX(-PI/2), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.9, side:THREE.DoubleSide, depthWrite:false}), MAX_MARKS);
+const BLOBS = new THREE.InstancedMesh(new THREE.CircleGeometry(.55, 20).rotateX(-PI/2), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:.22, depthWrite:false}), MAX_MARKS);
+RINGS.frustumCulled = BLOBS.frustumCulled = false;
+for (let i = 0; i < MAX_MARKS; i++) RINGS.setColorAt(i, _pc.set(0xffffff));   // sizes the colour buffer from count, so before count = 0
+RINGS.count = BLOBS.count = 0;
+scene.add(RINGS, BLOBS);
+const FAR_OUTLINE = 34*34;
+function updateGroundMarks(){
+  let n = 0;
+  for (const f of G.fighters){
+    if (!alive(f) || n >= MAX_MARKS) continue;
+    _pm.makeTranslation(f.pos.x, f.pos.y + .03, f.pos.z); RINGS.setMatrixAt(n, _pm); RINGS.setColorAt(n, _pc.setHex(f.team));
+    if (onDeck(f.pos.x, f.pos.z) && f.pos.y > -.5){ const sc = Math.max(.35, 1 - f.pos.y*.12); _pm.makeScale(sc, 1, sc).setPosition(f.pos.x, .02, f.pos.z); }
+    else _pm.copy(_p0);
+    BLOBS.setMatrixAt(n, _pm); n++;
+    // Outlines are the first thing to go at a distance: they double a fighter's draw calls
+    const far = camera.position.distanceToSquared(f.pos) > FAR_OUTLINE;
+    if (far !== f.vis.far){ f.vis.far = far; for (const o of f.vis.outlines) o.visible = !far; }
+  }
+  RINGS.count = BLOBS.count = n;
+  RINGS.instanceMatrix.needsUpdate = BLOBS.instanceMatrix.needsUpdate = true;
+  if (RINGS.instanceColor) RINGS.instanceColor.needsUpdate = true;
 }
 const flashes = [];
 for (let i = 0; i < 10; i++){
@@ -2671,11 +2847,7 @@ function cdBanner(cd){
   for (const [th, txt] of CD_MARKS) if (cd <= th && cd > th - 40 && !G.cdShown.has(th)){ G.cdShown.add(th); banner(txt); }
 }
 function fxTick(){
-  for (const p of parts) if (p.life > 0){
-    p.life--; p.v.y -= p.g*DT; p.m.position.addScaledVector(p.v, DT);
-    const k = p.life/p.max; p.m.scale.setScalar(p.s*(.3 + k*.7)); p.m.material.opacity = Math.min(1, k*1.5)*p.a;
-    if (p.life <= 0) p.m.visible = false;
-  }
+  stepPool(SPARKS); stepPool(SMOKE);
   for (const f of flashes) if (f.m.visible){
     f.t++; const k = f.t/f.max; f.m.scale.setScalar(L(f.s0, f.s1, 1 - (1 - k)*(1 - k))); f.m.material.opacity = (1 - k)*.85;
     if (f.t >= f.max) f.m.visible = false;
@@ -2843,6 +3015,8 @@ function render(){
   if (G.mode === 'custom' && G.fighters[0]) G.fighters[0].facing = Math.sin(performance.now()*.0008)*.6;
   for (const f of G.fighters) pose(f);
   updateLockMarks();
+  updateGroundMarks();
+  if (G.frame % 30 === 0) renderer.shadowMap.needsUpdate = true;
   for (const it of G.items){
     const g = it.mesh, bob = it.landed ? Math.sin(G.frame*.08 + it.pos.x)*.12 : 0;
     g.position.set(it.pos.x, it.pos.y + bob, it.pos.z); g.rotation.y += .03;
@@ -2995,8 +3169,30 @@ function clearArena(){
   for (const p of pops) p.el.remove(); pops.length = 0;
   $('feed').textContent = '';
 }
+// Sharing: LINE opens its share sheet on phones (and a share page on desktop); QR codes are drawn locally
+const gameUrl = () => location.origin + location.pathname;
+// Room links as ?room=code: Facebook drops #fragments when it re-reads a shared link
+const roomUrl = code => gameUrl() + '?room=' + code;
+function setShares(prefix, text, url){
+  $(prefix + 'Line').href = 'https://line.me/R/share?text=' + encodeURIComponent(text + ' ' + url);
+  $(prefix + 'Fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+  $(prefix + 'X').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
+}
+function drawQr(el, text){
+  el.textContent = '';
+  if (typeof window.qrcode !== 'function'){ el.textContent = 'โหลด QR ไม่ได้ ใช้ลิงก์แทน'; return; }
+  try {
+    const q = window.qrcode(0, 'M'); q.addData(text); q.make();
+    const img = new Image(); img.alt = ''; img.src = q.createDataURL(6, 2); el.appendChild(img);
+  } catch (e) { el.textContent = 'สร้าง QR ไม่ได้ ใช้ลิงก์แทน'; }
+}
+async function copyText(text, btn, label){
+  const done = () => { btn.textContent = 'คัดลอกแล้ว'; setTimeout(() => { btn.textContent = label; }, 1800); };
+  try { await navigator.clipboard.writeText(text); done(); }
+  catch (e) { const inp = btn.previousElementSibling; if (inp && inp.select){ inp.select(); try { if (document.execCommand('copy')) done(); } catch (err) {} } }
+}
 function hideAllPanels(){
-  for (const id of ['menu','online','pause','result','custom','hud','touch','dbg']) $(id).hidden = true;
+  for (const id of ['menu','online','pause','result','custom','hud','touch','dbg','invite']) $(id).hidden = true;
   $('banner').className = '';
 }
 function enterAttract(){
@@ -3032,6 +3228,7 @@ function beginMatch(specs, stocks){
   G.mode = 'play'; G.paused = false; G.endT = 0; G.winner = null; G.slow = 0; G.stocks = stocks;
   G.countdown = 210; G.cdShown = new Set(); G.itemTimer = 240; G.spec = 0; G.dbgHtml = null;
   createFighters(specs, stocks, true);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, IS_TOUCH ? (specs.length > 24 ? 1 : 1.5) : (specs.length > 64 ? 1.5 : 2))); resize();
   buildHud();
   $('hud').hidden = false;
   syncTouch();
@@ -3082,6 +3279,13 @@ function showResult(rows, winnerIdx){
   });
   $('rematch').textContent = G.net ? 'กลับห้อง' : 'แข่งอีกรอบ';
   $('resMenu').textContent = G.net ? 'ออกจากห้อง' : 'กลับเมนู';
+  {
+    const me = G.fighters.find(f => f.isLocal), mine = me && rows.find(r => r.f === me);
+    const txt = mine
+      ? 'ได้อันดับ ' + mine.place + ' จาก ' + rows.length + ' คน ใน Sky Brawl ด่าน' + STAGE.name + ' KO ' + mine.kos + ' ครั้ง ดาเมจ ' + mine.dmg + ' ใครแน่มาสู้กัน!'
+      : 'มาดูศึก Sky Brawl ด่าน' + STAGE.name + ' แล้วมาสู้กัน!';
+    setShares('res', txt, gameUrl());
+  }
   $('result').hidden = false; $('touch').hidden = true; $('spec').hidden = true;
   $('rematch').focus({preventScroll:true});
   // Team wins travel to guests as -10 - side
@@ -3240,13 +3444,13 @@ const Net = {
   },
   leave(msg){
     this.cleanup();
-    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    if (location.hash || location.search) history.replaceState(null, '', location.pathname);
     if (msg){
       hideAllPanels(); enterAttract();
       $('online').hidden = false; showLobbyView(); showOnMsg(msg);
     }
   },
-  inviteLink(){ return location.href.split('#')[0] + '#' + this.code; },
+  inviteLink(){ return roomUrl(this.code); },
 
   create(tries = 0){
     if (!this.ready) return;
@@ -3628,7 +3832,12 @@ function renderRoomView(){
   const host = Net.role === 'host';
   $('rCode').textContent = Net.code || '';
   $('rRole').textContent = host ? 'คุณเป็น host · ส่งลิงก์เชิญให้เพื่อน' : 'คุณเป็นผู้เล่น · รอ host กดเริ่ม';
-  if (Net.code) $('inviteLink').value = Net.inviteLink();
+  if (Net.code){
+    const link = Net.inviteLink();
+    $('inviteLink').value = link;
+    if (G.qrFor !== link){ G.qrFor = link; drawQr($('roomQr'), link); }
+    setShares('room', 'มาตีกันใน Sky Brawl! ห้อง ' + Net.code + ' กดลิงก์แล้วเข้าห้องได้เลย', link);
+  }
   $('shareLink').hidden = typeof navigator.share !== 'function';
   $('rCfg').hidden = !host; $('rCfgText').hidden = host;
   if (host){
@@ -3749,6 +3958,18 @@ $('shareLink').onclick = () => {
   navigator.share({title:'Sky Brawl', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
 };
 $('custBtn').onclick = () => openCustom();
+$('inviteBtn').onclick = () => {
+  const url = gameUrl();
+  $('gameLink').value = url;
+  if (G.qrFor !== url){ G.qrFor = url; drawQr($('gameQr'), url); }
+  setShares('game', 'มาเล่น Sky Brawl เกมต่อสู้ 3D บนเว็บกัน! เล่นบนมือถือได้ ไม่ต้องติดตั้ง', url);
+  $('gameShare').hidden = typeof navigator.share !== 'function';
+  $('menu').hidden = true; $('invite').hidden = false;
+  $('inviteClose').focus({preventScroll:true});
+};
+$('inviteClose').onclick = () => { $('invite').hidden = true; $('menu').hidden = false; };
+$('gameCopy').onclick = () => copyText($('gameLink').value, $('gameCopy'), 'คัดลอก');
+$('gameShare').onclick = () => { navigator.share({title:'Sky Brawl', text:'มาเล่น Sky Brawl กัน!', url:gameUrl()}).catch(() => {}); };
 $('onBack').onclick = () => { if (Net.role) Net.leave(); toMenu(); };
 $('mkRoom').onclick = () => Net.create();
 $('codeGo').onclick = () => Net.join($('codeIn').value.trim().toLowerCase());
@@ -3879,7 +4100,7 @@ toMenu();
 Net.init();
 // Invite links look like .../#k7mpx: open the online panel and join that room
 {
-  const code = decodeURIComponent(location.hash.slice(1)).toLowerCase();
+  const code = (decodeURIComponent(location.hash.slice(1)) || new URLSearchParams(location.search).get('room') || '').toLowerCase();
   if (CODE_RE.test(code) && Net.ready){
     ensureName(() => openCustom(() => { enterAttract(); openOnline(); $('codeIn').value = code; Net.join(code); }));
   } else if (!named) ensureName(() => { $('menu').hidden = false; });
