@@ -627,6 +627,8 @@ const SFX_R = {
   skill:   {gap:80, v:.7, dur:.5, f(k, t, o){ k.T(t, 320, 1300, .3, .35, 'sawtooth', o); k.T(t + .05, 640, 2600, .28, .18, 'triangle', o); k.N(t, .22, .35, 'bandpass', 800, 3000, o, 1.4); }},
   howl:    {gap:200, v:.9, dur:1.1, prio:1, f(k, t, o){ k.T(t, 300, 640, .3, .5, 'sawtooth', o, .05); k.T(t + .3, 640, 340, .7, .5, 'sawtooth', o, .02); k.T(t, 600, 1280, .3, .18, 'triangle', o, .05); k.N(t, .5, .25, 'bandpass', 900, 500, o, 1.5); }},
   roar:    {gap:200, v:1, dur:1, prio:1, f(k, t, o){ k.T(t, 120, 55, .8, .8, 'sawtooth', o, .03); k.T(t, 240, 80, .6, .4, 'square', o, .03); k.N(t, .7, 1, 'lowpass', 1400, 180, o); }},
+  spirit:  {gap:200, v:.8, dur:1, prio:1, f(k, t, o){ k.T(t, 520, 260, .8, .35, 'triangle', o, .08); k.T(t, 527, 263, .8, .3, 'triangle', o, .08); k.T(t + .1, 1040, 700, .6, .12, 'sine', o, .05); k.N(t, .7, .3, 'bandpass', 1500, 500, o, 2); }},
+  lance:   {gap:150, v:.7, dur:.4, f(k, t, o){ k.N(t, .3, 1.4, 'bandpass', 900, 3000, o, 1.3); k.T(t, 600, 1400, .25, .25, 'sawtooth', o); }},
   claw:    {gap:60, v:.65, dur:.25, f(k, t, o){ k.N(t, .14, 1.5, 'bandpass', 1200, 4200, o, 1.4); k.T(t, 900, 280, .1, .3, 'sawtooth', o); }},
   flame:   {gap:110, v:.7, dur:.3, f(k, t, o){ k.N(t, .26, 1, 'bandpass', 500, 1700, o, .9); k.T(t, 180, 90, .2, .3, 'sawtooth', o); }},
   click:   {ui:1, gap:30, v:.5, dur:.06, f(k, t, o){ k.T(t, 900, 700, .045, .4, 'square', o); }},
@@ -970,6 +972,17 @@ const MOVES = {
   tm3:{name:'แส้พันกระชาก', anim:'swing', startup:9, active:3, recovery:16, dmg:8, kb:8, up:6, launch:true, reach:2, rad:1.1, lunge:2, hitstop:6, shake:.2},
   sk_tamer:{name:'เรียกมังกร', anim:'roar', startup:16, active:1, recovery:12, noHit:true, dmg:2.5, kb:2, skill:true, snd:'roar', form:true, fire:f => startForm(f)},
   dg1:{name:'พ่นไฟมังกร', anim:'breath', startup:10, active:46, recovery:16, noHit:true, breath:true, tick:8, range:7.5, arc:.62, dmg:2.5, kb:2, up:0, stun:10, reach:0, rad:0, hitstop:1, shake:.05, snd:'flame'},
+  // Shaman: a spirit staff; the skill calls a ghost swordsman who fights beside the shaman and slashes dark waves
+  sm1:{name:'ฟาดไม้วิญญาณ', anim:'swing', startup:6, active:3, recovery:12, dmg:5, kb:3, up:0, stun:18, reach:1.3, rad:.9, lunge:2, next:'sm2', hitstop:5},
+  sm2:{name:'ฟาดสวนวิญญาณ', anim:'slashH2', startup:6, active:3, recovery:12, dmg:5, kb:3.5, up:0, stun:18, reach:1.3, rad:.9, lunge:2, next:'sm3', hitstop:5},
+  sm3:{name:'ระเบิดวิญญาณ', anim:'cast', startup:10, active:1, recovery:18, noHit:true, dmg:7, kb:7, up:6, launch:true, hitstop:5, shake:.2,
+    fire:(f, m) => { const c = new V(f.pos.x + Math.sin(f.facing)*1.3, f.pos.y + .3, f.pos.z + Math.cos(f.facing)*1.3); flash(new V(c.x, c.y + .7, c.z), 0x9b7bff, .4, 2, 12); emit(c, 16, 0xb9a2ff, 4, 4, 24, 1.4, -1, .6); aoe(f, c, 1.9, m); }},
+  sk_shaman:{name:'อัญเชิญผีนักดาบ', anim:'roar', startup:14, active:1, recovery:12, noHit:true, skill:true, snd:'spirit', fire:f => summonGhost(f)},
+  // Lancer: a long spear; the skill is a storm of thrusts that hits everyone in a long strip in front, the last volley launches
+  ln1:{name:'แทงหอก', anim:'thrust', startup:6, active:3, recovery:11, dmg:5, kb:3, up:0, stun:18, reach:1.9, rad:.85, lunge:2, next:'ln2', hitstop:5},
+  ln2:{name:'กวาดหอก', anim:'swing', startup:6, active:3, recovery:11, dmg:5, kb:3.5, up:0, stun:18, reach:1.6, rad:1.2, lunge:2, next:'ln3', hitstop:5},
+  ln3:{name:'แทงทะลวง', anim:'thrust', startup:10, active:3, recovery:18, noHit:true, lance:true, tick:99, len:5, wid:.9, dmg:9, kb:10, up:6, launch:true, hitstop:7, shake:.3, reach:0, rad:0},
+  sk_lancer:{name:'พายุหอก', anim:'jab', startup:8, active:40, recovery:16, noHit:true, lance:true, tick:4, len:6.5, wid:1.4, dmg:3, kb:2.5, up:0, stun:12, hitstop:2, shake:.06, reach:0, rad:0, skill:true, snd:'lance'},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -1009,17 +1022,22 @@ const SKILL_INFO = {
   volt:{cd:480, range:10, desc:'สายฟ้ากระโดดไปโดนศัตรูสูงสุด 4 คน ทุกคนที่โดนติดสถานะชา 3 วินาที: เดินช้า กระโดดไม่ได้ และกระตุกเป็นพักๆ'},
   werewolf:{cd:840, range:6, desc:''},
   tamer:{cd:960, range:7, desc:''},
+  shaman:{cd:900, range:10, desc:''},
+  lancer:{cd:480, range:6, desc:'แทงหอกรัวเป็นแนวยาว 6.5 ช่องข้างหน้า ทุกคนในแนวโดนหลายครั้ง ครั้งสุดท้ายกระเด็นไกล (หันตามจอยได้ช้าๆ ระหว่างแทง)'},
 };
 // A transformation: how long it lasts, how much bigger the body grows, the walking-speed multiplier, the form's attack, the bots' stopping distance and attack range
 const FORM_INFO = {
   werewolf:{secs:8, scale:1.3, speed:1.35, atk:'wf1', moves:['wf1', 'wf2', 'wf3'], stop:1.2, reach:2.9},
   tamer:{secs:9, scale:1.75, speed:.8, atk:'dg1', moves:['dg1'], stop:4.5, reach:6.5},
 };
+// The shaman's ghost: how long it stays, frames between its slashes, and what one slash does
+const GHOST_INFO = {secs:10, every:40};
+const GHOST_SLASH = {dmg:10, kb:9, up:6, launch:true, hitstop:6, shake:.25};
 // First hit of each class's ground combo; the chain continues through each move's next
 const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
   archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1',
-  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1', frost:'fr1', volt:'vo1', demon:'dm1', spacecop:'lz1', soldier:'so1', werewolf:'ww1', tamer:'tm1'};
-const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2, demon:4, spacecop:2.2, soldier:2, werewolf:2.2, tamer:2.9};
+  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1', frost:'fr1', volt:'vo1', demon:'dm1', spacecop:'lz1', soldier:'so1', werewolf:'ww1', tamer:'tm1', shaman:'sm1', lancer:'ln1'};
+const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:2.4, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2, demon:4, spacecop:2.2, soldier:2, werewolf:2.2, tamer:2.9, shaman:2.2, lancer:2.6};
 const CLASS_STOP = {archer:6, gunner:5, hunter:6, demon:3};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
 const RAPID_SHOT = {dmg:5, kb:3, up:0, stun:12, hitstop:2, shake:.03};
@@ -2325,6 +2343,23 @@ const OUTFITS = {
     for (const [x, y] of [[.13, .06], [.2, -.03]]){ const sp = new THREE.Mesh(SPH(.025), toon(0x3fa86a)); sp.position.set(x, y, .47); t.add(sp); }
     const coil = OP(new THREE.TorusGeometry(.12, .035, 6, 14), 0x6b3f1e); coil.position.set(-.34, -.18, .12); coil.rotation.y = PI/2; t.add(coil);
   }},
+  shaman:{name:'ชาแมน', body:0x4a3a2a, head:true, build(h, t){
+    const band = OP(new THREE.TorusGeometry(.57, .05, 6, 24), 0x8a1f2a); band.rotation.x = PI/2 - .15; band.position.y = .26; h.add(band);
+    [[0, .72, .3, 0x3f8fc8], [-.2, .66, .28, 0xffd23a], [.2, .66, .28, 0xd8342c], [-.38, .52, .2, 0x3fa86a], [.38, .52, .2, 0x9b5de5]].forEach(([x, y, z, c]) => {
+      const fe = OP(new THREE.ConeGeometry(.07, .5, 4), c); fe.position.set(x, y, z - .3); fe.rotation.z = -x*1.2; fe.rotation.x = -.25; h.add(fe);
+    });
+    for (const sd of [-1, 1]){ const st = new THREE.Mesh(new THREE.BoxGeometry(.16, .035, .02), new THREE.MeshBasicMaterial({color:0xf4f1ea})); st.position.set(sd*.3, -.08, .5); st.rotation.y = sd*.5; h.add(st); }
+    oRobe(t, 0x5a3f28); oCollar(t, 0x8a1f2a, .32, .08);
+    for (let i = 0; i < 7; i++){ const a = (i - 3)*.32, b = OP(SPH(.05), 0xf4f1ea); b.position.set(Math.sin(a)*.36, .2 - Math.abs(i - 3)*.02, Math.cos(a)*.36); t.add(b); }
+    const skull = OP(SPH(.09), 0xf4f1ea); skull.position.set(0, .12, .42); t.add(skull);
+  }},
+  lancer:{name:'แลนเซอร์', body:0x3a5a8a, head:true, noHair:true, build(h, t){
+    const helm = OP(new THREE.SphereGeometry(.64, 24, 12, 0, PI*2, 0, PI*.55), 0xc9d2de, 1.04); helm.position.y = .04; h.add(helm);
+    const crest = OP(new THREE.BoxGeometry(.08, .3, .7), 0xd8342c); crest.position.set(0, .72, -.05); h.add(crest);
+    for (const sd of [-1, 1]){ const ch = OP(new THREE.BoxGeometry(.06, .34, .3), 0xc9d2de); ch.position.set(sd*.5, -.12, .18); h.add(ch); }
+    oPads(t, 0xc9d2de); oCollar(t, 0xd8342c, .32, .08); oCape(t, 0x2a3f66);
+    const em = new THREE.Mesh(new THREE.OctahedronGeometry(.08), new THREE.MeshBasicMaterial({color:0xffd23a})); em.position.set(0, .1, .37); t.add(em);
+  }},
 };
 const OUTFIT_K = Object.keys(OUTFITS);
 // Outfit colours: 0 keeps the class's own colours, the rest repaint every coloured part of the outfit
@@ -2386,7 +2421,7 @@ const CLASS_ON = new Set(OUTFIT_K);
     const cd = num(s.cd, .5, 120, `skills.${k}.cd`);
     info.cd = Math.max(15, Math.round((cd !== undefined ? cd*60 : info.cd)*mCd));
     // Gunner's volley and the engineer's turret hit with their own shot data
-    const hit = k === 'gunner' ? RAPID_SHOT : k === 'engineer' ? TURRET_SHOT : MOVES['sk_' + k];
+    const hit = k === 'gunner' ? RAPID_SHOT : k === 'engineer' ? TURRET_SHOT : k === 'shaman' ? GHOST_SLASH : MOVES['sk_' + k];
     if (!hit) continue;
     const dmg = num(s.dmg, 0, 100, `skills.${k}.dmg`), kb = num(s.kb, 0, 40, `skills.${k}.kb`), heal = num(s.heal, 0, 100, `skills.${k}.heal`);
     if (hit.dmg !== undefined || dmg !== undefined) hit.dmg = Math.round((dmg ?? hit.dmg)*mDmg*10)/10;
@@ -2398,6 +2433,7 @@ const CLASS_ON = new Set(OUTFIT_K);
     const rad = num(s.radius, 1, 10, `skills.${k}.radius`);
     if (rad !== undefined && hit.radius !== undefined) hit.radius = rad;
   }
+  { const gl = num((S.shaman || {}).life, 2, 60, 'skills.shaman.life'); if (gl !== undefined) GHOST_INFO.secs = gl; }
   for (const k of Object.keys(FORM_INFO)){
     const fi = FORM_INFO[k], sk = MOVES['sk_' + k], secs = num((S[k] || {}).form, 1, 60, `skills.${k}.form`);
     if (secs !== undefined) fi.secs = secs;
@@ -2410,6 +2446,7 @@ const CLASS_ON = new Set(OUTFIT_K);
   if (MOVES.sk_paladin) SKILL_INFO.paladin.desc = `อมตะ 1.6 วินาที ฟื้นพลัง ${MOVES.sk_paladin.heal} และผลักคนรอบตัว`;
 })();
 refreshFormDescs();
+SKILL_INFO.shaman.desc = 'อัญเชิญผีนักดาบมาสู้ข้างตัว ' + GHOST_INFO.secs + ' วินาที: ไล่ฟันศัตรูที่ใกล้ที่สุดแรงๆ ทุกครั้งที่ฟันปล่อยคลื่นดำพุ่งทะลุแบบนักดาบปีศาจ';
 // Classes that players can pick and bots can roll; a disabled class worn by anyone shows up as "ไม่ใส่"
 const ON_K = OUTFIT_K.filter(k => CLASS_ON.has(k));
 const allowedOutfit = o => CLASS_ON.has(o) ? o : 'none';
@@ -2730,6 +2767,150 @@ function breathTick(f, m, k){
   const B = G.boss;
   if (B && B.hp > 0 && inCone(B.pos.x, B.pos.z, BOSS_R)) damageBoss(m.dmg*(f.rage > 0 ? 1.5 : 1), f);
 }
+/* ---------- Shaman's ghost swordsman and the Lancer's spear storm ----------
+   The ghost lives in G.ghosts like a turret: the host moves it, picks targets and deals the damage;
+   guests get [id, x, z, rot, sw] in the snapshot and animate it the same way (animGhosts runs on every screen). */
+function makeGhost(id){
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const mist = new THREE.MeshBasicMaterial({color:0x8f6bff, transparent:true, opacity:.55, depthWrite:false});
+  const add = (p, geo, mat, x, y, z) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); p.add(o); return o; };
+  add(body, new THREE.ConeGeometry(.5, 1.3, 12), mist, 0, .75, 0).rotation.x = PI;     // a wisp instead of legs
+  add(body, SPH(.44), mist, 0, 1.55, 0).scale.set(1.05, 1.05, .9);
+  add(body, SPH(.36), mist, 0, 2.18, 0);
+  const gold = new THREE.MeshBasicMaterial({color:0xffd23a}), red = new THREE.MeshBasicMaterial({color:0xff3a6a});
+  for (const sd of [-1, 1]){
+    add(body, new THREE.ConeGeometry(.07, .42, 6), gold, sd*.22, 2.5, .08).rotation.z = -sd*.45;    // helmet horns
+    add(body, new THREE.BoxGeometry(.11, .04, .03), red, sd*.13, 2.2, .34).rotation.z = sd*.25;     // glowing eyes
+    add(body, SPH(.16), mist, sd*.46, 1.78, 0).scale.y = .7;                                          // shoulder plates
+  }
+  const arm = new THREE.Group(); arm.position.set(-.48, 1.7, 0); body.add(arm);
+  add(arm, new THREE.CylinderGeometry(.09, .08, .5, 8), mist, 0, -.25, 0);
+  add(arm, new THREE.BoxGeometry(.3, .05, .1), gold, 0, -.52, 0);
+  add(arm, new THREE.BoxGeometry(.06, 1.5, .17), new THREE.MeshBasicMaterial({color:0xe2d6ff}), 0, -1.3, 0);
+  add(arm, new THREE.BoxGeometry(.03, 1.4, .2), new THREE.MeshBasicMaterial({color:0xb46dff, transparent:true, opacity:.6, depthWrite:false}), 0, -1.3, .02);
+  const offArm = add(body, new THREE.CylinderGeometry(.09, .08, .5, 8), mist, .48, 1.5, 0); offArm.rotation.z = .3;
+  scene.add(g);
+  return {id, mesh:g, body, arm, pos:new V(), net:null, rot:0, t:0, life:Math.round(GHOST_INFO.secs*60), sw:-1, lastSw:-99, fx:false};
+}
+function summonGhost(f){
+  for (const g of [...G.ghosts]) if (g.owner === f) removeGhost(g, true);
+  const g = makeGhost(G.nextId++); g.owner = f;
+  g.pos.set(f.pos.x - Math.sin(f.facing)*1.2, 0, f.pos.z - Math.cos(f.facing)*1.2); g.rot = f.facing;
+  g.mesh.position.copy(g.pos); g.mesh.rotation.y = g.rot;
+  G.ghosts.push(g); ghostFx(g.pos, true);
+}
+function ghostFx(p, big){
+  const c = new V(p.x, 1.3, p.z);
+  flash(c, 0x9b7bff, .5, big ? 3 : 1.8, big ? 16 : 10);
+  emit(c, big ? 26 : 14, 0xb9a2ff, big ? 5 : 3, 4, 30, 1.6, -2, .6);
+}
+function removeGhost(g, fx){
+  if (fx) ghostFx(g.pos, false);
+  scene.remove(g.mesh); G.ghosts.splice(G.ghosts.indexOf(g), 1);
+}
+// Host only: chase the closest enemy near the shaman, slash it (a hit in front plus a dark wave), drift back when idle
+function stepGhosts(){
+  for (const g of [...G.ghosts]){
+    const o = g.owner;
+    if (++g.t > g.life || !o || o.stocks <= 0 || !alive(o)){ removeGhost(g, true); continue; }
+    if (g.sw >= 0){ g.sw++; if (g.sw === 6) ghostSlash(g); if (g.sw > 16) g.sw = -1; }
+    let best = null, bd = 13;
+    for (const e of G.fighters){
+      if (e === o || ally(o, e) || !hittable(e) || Math.hypot(e.pos.x - o.pos.x, e.pos.z - o.pos.z) > 16) continue;
+      const d = Math.hypot(e.pos.x - g.pos.x, e.pos.z - g.pos.z);
+      if (d < bd){ bd = d; best = e; }
+    }
+    const B = G.boss, boss = !best && B && B.hp > 0 && Math.hypot(B.pos.x - g.pos.x, B.pos.z - g.pos.z) < 14;
+    let tx, tz, stop;
+    if (best){ tx = best.pos.x; tz = best.pos.z; stop = 1.4; }
+    else if (boss){ tx = B.pos.x; tz = B.pos.z; stop = BOSS_R + 1; }
+    else { tx = o.pos.x - Math.sin(o.facing + .8)*1.5; tz = o.pos.z - Math.cos(o.facing + .8)*1.5; stop = .2; }
+    if (Math.hypot(o.pos.x - g.pos.x, o.pos.z - g.pos.z) > 20){ g.pos.set(o.pos.x, 0, o.pos.z); ghostFx(g.pos, false); }
+    const dx = tx - g.pos.x, dz = tz - g.pos.z, d = Math.hypot(dx, dz);
+    if (d > stop && g.sw < 0){ const sp = Math.min(d - stop, .17); g.pos.x += dx/d*sp; g.pos.z += dz/d*sp; }
+    const face = best || boss ? Math.atan2(dx, dz) : d > .3 ? Math.atan2(dx, dz) : o.facing;
+    let da = face - g.rot; da = Math.atan2(Math.sin(da), Math.cos(da)); g.rot += da*.2;
+    if ((best || boss) && d < stop + 1.1 && g.sw < 0 && g.t - g.lastSw >= GHOST_INFO.every){ g.sw = 0; g.lastSw = g.t; }
+  }
+}
+function ghostSlash(g){
+  const o = g.owner, fx = Math.sin(g.rot), fz = Math.cos(g.rot), c = new V(g.pos.x + fx*1.2, .9, g.pos.z + fz*1.2);
+  for (const e of G.fighters){
+    if (e === o || ally(o, e) || !hittable(e) || Math.abs(e.pos.y) > 2.5) continue;
+    let dx = e.pos.x - g.pos.x, dz = e.pos.z - g.pos.z;
+    if (Math.hypot(e.pos.x - c.x, e.pos.z - c.z) > 2.1) continue;
+    const n = Math.hypot(dx, dz) || 1; if (n < .05){ dx = fx; dz = fz; }
+    applyHit(null, e, GHOST_SLASH, new V(dx/n, 0, dz/n), o);
+  }
+  hitStones(o, c, 2.6, GHOST_SLASH.dmg);
+  if (G.boss) hitBossArea(o, c, 2.1, GHOST_SLASH.dmg);
+  const b = fireProj(o, 'dark', g.rot, 19, 26, DARK_WAVE);
+  b.pos.set(g.pos.x + fx*.9, .95, g.pos.z + fz*.9); b.mesh.position.copy(b.pos); b.pierce = true; b.rad = 1.1;
+}
+// Every screen: float, face, swing the sword, flash on the hit frame
+function animGhosts(){
+  const T = G.frame;
+  for (const g of G.ghosts){
+    if (g.net){ g.pos.x += (g.net.x - g.pos.x)*.3; g.pos.z += (g.net.z - g.pos.z)*.3; }
+    g.mesh.position.set(g.pos.x, .25 + Math.sin(T*.08 + g.id)*.15, g.pos.z);
+    g.mesh.rotation.y = g.rot;
+    const s = g.sw;
+    if (s < 0){ g.arm.rotation.set(-.5 + Math.sin(T*.05)*.08, 0, -.2); g.body.rotation.x = 0; g.fx = false; }
+    else {
+      const up = Math.min(1, s/6), dn = Math.max(0, Math.min(1, (s - 6)/5));
+      g.arm.rotation.set(-.5 - 2.4*up + 2.9*dn, 0, -.2); g.body.rotation.x = .25*dn - .1*up;
+      if (s >= 6 && !g.fx){
+        g.fx = true;
+        const c = new V(g.pos.x + Math.sin(g.rot)*1.2, .9, g.pos.z + Math.cos(g.rot)*1.2);
+        flash(c, 0xb46dff, .5, 2.2, 10); emit(c, 16, 0xd9c8ff, 6, 2, 16, 1.3, 2);
+        Sfx.play('swingBig', c);
+      }
+    }
+  }
+}
+// Host only: the lancer's thrusts hit everyone in a strip m.len long and m.wid wide in front, every m.tick frames;
+// the last volley launches. The lancer turns slowly toward the stick (bots: toward their target).
+function lanceTick(f, m, k){
+  let ta = null;
+  if (f.ctrl === 'bot'){ const t = f.ai.tgt; if (t && alive(t)) ta = Math.atan2(t.pos.x - f.pos.x, t.pos.z - f.pos.z); }
+  else if (Math.hypot(f.input.x, f.input.z) > .25) ta = Math.atan2(f.input.x, f.input.z);
+  if (ta !== null){ let d = ta - f.facing; d = Math.atan2(Math.sin(d), Math.cos(d)); f.facing += d*.08; }
+  if (k % m.tick) return;
+  const last = k + m.tick >= m.active, hm = last && m.tick < m.active ? {...m, kb:m.kb*3.5, up:7, launch:true, hitstop:6, shake:.3} : m;
+  const fx = Math.sin(f.facing), fz = Math.cos(f.facing);
+  const inStrip = (x, z, pad) => {
+    const dx = x - f.pos.x, dz = z - f.pos.z, along = dx*fx + dz*fz, side = Math.abs(dx*fz - dz*fx);
+    return along > -.3 && along < m.len + pad && side < m.wid + pad;
+  };
+  for (const o of G.fighters){
+    if (o === f || ally(f, o) || !hittable(o) || Math.abs(o.pos.y - f.pos.y) > 2.5 || !inStrip(o.pos.x, o.pos.z, .45)) continue;
+    applyHit(f, o, hm, new V(fx, 0, fz), f);
+  }
+  if (G.teamMode) for (const st of G.stones) if (st.hp > 0 && st.side !== f.side && inStrip(st.pos.x, st.pos.z, .9)) damageStone(st, m.dmg, f);
+  const B = G.boss;
+  if (B && B.hp > 0 && inStrip(B.pos.x, B.pos.z, BOSS_R)) damageBoss(m.dmg*(f.rage > 0 ? 1.5 : 1), f);
+}
+// Every screen: streaks of light shooting along the strip
+function lanceFx(f){
+  const m = f.move, t = f.stateT;
+  if (t < m.startup || t >= m.startup + m.active) return;
+  const k = t - m.startup;
+  if (m.tick < m.active ? k % 2 : f.fxId === f.moveKey + ':' + (G.frame - t)) return;
+  f.fxId = f.moveKey + ':' + (G.frame - t);
+  const fx = Math.sin(f.facing), fz = Math.cos(f.facing), pool = SPARKS, n = m.tick < m.active ? 2 : 5;
+  for (let j = 0; j < n; j++){
+    const off = (Math.random() - .5)*2*m.wid, y = f.pos.y + .8 + (Math.random() - .5)*.6;
+    for (let i = 0; i < 6; i++){
+      const p = pool.list[pool.idx = (pool.idx + 1) % pool.list.length], a = (i + Math.random())/6*m.len*.5;
+      p.pos.set(f.pos.x + fx*(.8 + a) + fz*off, y, f.pos.z + fz*(.8 + a) - fx*off);
+      p.v.set(fx*m.len*5, 0, fz*m.len*5); p.life = p.max = 8 + Math.random()*5; p.s = 1.2 + Math.random()*.7; p.g = 0;
+      pool.mesh.setColorAt(pool.idx, _pc.setHex(i < 2 ? 0xffffff : 0x9fd8ff));
+    }
+  }
+  pool.mesh.instanceColor.needsUpdate = true;
+  if (k % 8 === 0) Sfx.play('swing', f.pos, .6);
+}
+
 function buildChibi(look, team){
   const o = OUTFITS[look.outfit] || OUTFITS.none, oc = o.build ? tintOf(look) : 0, color = o.body ? tintColor(o.body, oc) : look.body, skin = look.skin;
   const root = new THREE.Group();
@@ -2888,7 +3069,7 @@ function feed(text){
 }
 
 /* ---------- Game state ---------- */
-const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[], zones:[], frame:0, itemTimer:300, slow:0, shake:0,
+const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[], ghosts:[], zones:[], frame:0, itemTimer:300, slow:0, shake:0,
   countdown:0, cdShown:new Set(), paused:false, debug:false, endT:0, winner:null, stocks:2,
   cfg:{n:8, st:2, df:'normal', stage:'titanic', mode:'ffa'}, teamMode:false, stones:[], winTeam:null, raid:false, raidWin:null, boss:null, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0,
   auto:{p1:false, p2:false}};
@@ -3894,6 +4075,20 @@ function buildClassWeapon(cls){
       break;
     }
     case 'soldier': add(SPH(.13), 0x3f4d27, 0, -.12, .04, 1.08); add(new THREE.CylinderGeometry(.04, .04, .08, 8), 0x9aa3b5, 0, .0, .04); break;
+    case 'shaman': {
+      add(new THREE.CylinderGeometry(.04, .045, 1.35, 8), wood, 0, -.45, 0);
+      add(SPH(.13), 0xf4f1ea, 0, -1.2, 0, 1.08);
+      glow(SPH(.07), 0x9b7bff, -1.2);
+      for (const sd of [-1, 1]) add(new THREE.ConeGeometry(.04, .3, 4), sd < 0 ? 0xd8342c : 0x3f8fc8, sd*.1, -1.0, 0).rotation.z = sd*.6;
+      break;
+    }
+    case 'lancer': {
+      add(new THREE.CylinderGeometry(.035, .035, 2.2, 8), 0x6b4a32, 0, -.3, 0);
+      add(new THREE.ConeGeometry(.09, .42, 6), silver, 0, -1.6, 0, 1.08).rotation.x = PI;
+      add(new THREE.BoxGeometry(.24, .04, .04), gold, 0, -1.38, 0);
+      add(SPH(.07), 0xd8342c, 0, -1.31, 0);
+      break;
+    }
     case 'tamer': {
       add(new THREE.CylinderGeometry(.045, .045, .34, 8), wood, 0, -.12, 0, 1.08);
       const lash = add(new THREE.CylinderGeometry(.018, .028, 1.4, 6), 0x3a2a1a, 0, -.9, .18); lash.rotation.x = .3;
@@ -4304,6 +4499,7 @@ function stepFighter(f){
       else if (f.onGround) fric(.82);
       if (m.fire && t === m.startup) m.fire(f, m);
       if (m.breath && inActive) breathTick(f, m, t - m.startup);
+      if (m.lance && inActive) lanceTick(f, m, t - m.startup);
       if (m.grenade && inActive && (t - m.startup) % m.grenade === 0) throwGrenade(f, m, .5);
       if (m.rapid && inActive && (t - m.startup) % m.rapid === 0) fireProj(f, 'bullet', f.facing + (Math.random() - .5)*.08, 26, 36, RAPID_SHOT);
       if (m.multi && inActive && (t - m.startup) % m.multi === 0){ f.hasHit = false; f.hitSet.clear(); }
@@ -4491,6 +4687,7 @@ function tick(){
     if (boom || sunk){ scene.remove(bm.mesh); G.bombs.splice(G.bombs.indexOf(bm), 1); }
   }
   stepTurrets();
+  stepGhosts();
   stepZones();
   stepBullets();
   if (G.mode === 'menu'){ for (const f of fs) if (f.stocks < 99) f.stocks = 99; }
@@ -4526,6 +4723,11 @@ function animAttack(f, v, t){
     case 'roar': { const r = Math.max(w, e); armL.rotation.set(0, 0, .3 + 2.2*r); armR.rotation.set(0, 0, -.3 - 2.2*r); tilt.rotation.x = -.3*r; break; }
     case 'iai': armR.rotation.set(-1.45, 0, -.2); armL.rotation.set(-1.2, 0, -.5); tilt.rotation.y = -1.3*w + 1.6*e; tilt.position.y -= .15*w; break;
     case 'flurry': { const alt = Math.floor(t/2) % 2; armL.rotation.set(alt ? -1.6 : -.4, 0, .2); armR.rotation.set(alt ? -.4 : -1.6, 0, -.2); tilt.rotation.y = alt ? -.25 : .25; break; }
+    case 'jab': {
+      const p = Math.floor(t/2) % 2;
+      armR.rotation.set(ph === 1 ? (p ? -1.75 : -1.05) : -1.2*Math.max(w, e), 0, -.1); armL.rotation.set(-1.1, 0, .35);
+      tilt.rotation.x = .12 + (ph === 1 ? p*.08 : 0); tilt.rotation.y = ph === 1 ? (p ? -.12 : .12) : 0; break;
+    }
     case 'rake': {
       const sg = m.flip ? -1 : 1;
       armR.rotation.set(-1.4, 0, -1.7 + 2.3*e); armL.rotation.set(-1.4, 0, 1.7 - 2.3*e);
@@ -4581,6 +4783,7 @@ function pose(f){
   if (v.cw) v.cw.visible = !f.weapon;
   if (v.oh) v.oh.visible = !f.weapon;
   if (v.form) poseForm(f, v, T, s);
+  if (s === 'attack' && f.move && f.move.lance) lanceFx(f);
   v.bomb.visible = f.held === 'bomb';
   if (v.bomb.visible) v.bomb.userData.spark.scale.setScalar(.7 + Math.random()*.7);
   v.bubble.visible = s === 'guard' || s === 'guardstun';
@@ -4610,6 +4813,7 @@ function render(){
   for (const f of G.fighters) pose(f);
   updateLockMarks();
   updateGroundMarks();
+  animGhosts();
   if (G.frame % 30 === 0) renderer.shadowMap.needsUpdate = true;
   for (const it of G.items){
     const g = it.mesh, bob = it.landed ? Math.sin(G.frame*.08 + it.pos.x)*.12 : 0;
@@ -4761,6 +4965,7 @@ function clearArena(){
   for (const b of G.bombs) scene.remove(b.mesh); G.bombs.length = 0;
   for (const b of G.bullets) scene.remove(b.mesh); G.bullets.length = 0;
   for (const t of G.turrets) scene.remove(t.mesh); G.turrets.length = 0;
+  for (const g of G.ghosts) scene.remove(g.mesh); G.ghosts.length = 0;
   for (const zn of G.zones) if (zn.mesh) scene.remove(zn.mesh); G.zones.length = 0;
   for (const p of pops) p.el.remove(); pops.length = 0;
   $('feed').textContent = '';
@@ -5669,6 +5874,7 @@ const Net = {
       zn:G.zones.slice(0, 8).map(zn => [zn.id, r(zn.x), r(zn.z), Math.round(zn.r*10), ZONE_KINDS.indexOf(zn.kind), r(zn.y || 0)]),
       bl:G.bullets.slice(0, 24).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), Math.round(b.vel.x*10), Math.round(b.vel.z*10), PROJ_KINDS.indexOf(b.kind || 'bullet')]),
       tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)]),
+      gh:G.ghosts.slice(0, 16).map(g => [g.id, r(g.pos.x), r(g.pos.z), Math.round(g.rot*100), g.sw]),
       em:G.stones.map(st => Math.ceil(st.hp)),
       bs:G.boss ? [Math.round(G.boss.pos.x*100), Math.round(G.boss.pos.z*100), Math.ceil(G.boss.hp), BOSS_STATES.indexOf(G.boss.state), G.boss.t, Math.round(G.boss.facing*100)] : null};
     // Snapshots replace each other, so a guest whose channel is backed up just skips this one instead of piling up lag
@@ -5901,6 +6107,17 @@ const Net = {
         b.mesh.rotation.y = Math.atan2(b.vel.x, b.vel.z);
       }
       for (const b of [...G.bullets]) if (!seen.has(b.id)){ if (b.kind === 'fireball') explodeFx(b.pos); removeBullet(b, true); }
+    }
+    if (Array.isArray(sn.gh)){
+      const seen = new Set();
+      for (const a of sn.gh.slice(0, 16)){
+        if (!Array.isArray(a)) continue;
+        const id = Number(a[0]); seen.add(id);
+        let g = G.ghosts.find(x => x.id === id);
+        if (!g){ g = makeGhost(id); g.pos.set(a[1]/100, 0, a[2]/100); G.ghosts.push(g); ghostFx(g.pos, true); }
+        g.net = {x:(Number(a[1]) || 0)/100, z:(Number(a[2]) || 0)/100}; g.rot = Number(a[3])/100 || 0; g.sw = Number(a[4]); if (!Number.isFinite(g.sw)) g.sw = -1;
+      }
+      for (const g of [...G.ghosts]) if (!seen.has(g.id)) removeGhost(g, true);
     }
     if (Array.isArray(sn.tu)){
       const seen = new Set();

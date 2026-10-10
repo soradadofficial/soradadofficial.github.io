@@ -210,3 +210,10 @@ python -m http.server 8765 --directory sky-brawl
 - config.js: `classes.werewolf/tamer`, `skills.werewolf/tamer` มี `form` (วินาทีที่แปลงร่าง) เพิ่มจาก cd/dmg/kb โดย dmg/kb ของสกิลจะถูกคัดลอกไปที่ท่าของร่าง (`MOVES.wf*`/`dg1`, คูณด้วย `fmul`/`kbmul` ถ้ามี) ผ่าน `FORM_INFO[k].moves`
 - เสียงใหม่ `howl`, `roar`, `claw`, `flame` และ `m.snd` ในท่า = เล่นเสียงนี้แทนเสียงเริ่มท่าปกติ (`Sfx.move`)
 - แต่งตัวจากล็อบบี้/ห้อง: ปุ่ม `#lobbyCust`, `#roomCust` → `customizeFromOnline()` เปิด `#custom` (class `single` ซ่อนแท็บ P1/P2) กด "บันทึก" กลับไปล็อบบี้/ห้อง แล้วเรียก `Net.lookChanged()` (host = `refreshSlots`, guest = ส่ง presence `nm`+`lk`); รายชื่อนักสู้ในห้องแสดงป้ายอาชีพ
+
+## ชาแมน + แลนเซอร์ (2026-10-12)
+- `shaman`: ท่า `sm1-3` (ไม้เท้าวิญญาณ, `sm3` ระเบิดวิญญาณ `aoe`) สกิล `sk_shaman` → `summonGhost(f)` ผีนักดาบอยู่ใน `G.ghosts` (แบบเดียวกับ `G.turrets`) host เดินด้วย `stepGhosts()` ไล่ศัตรูใกล้สุดในรัศมี 16 จากชาแมน (หรือบอส) ฟันทุก `GHOST_INFO.every` เฟรมด้วย `ghostSlash()` = `GHOST_SLASH` วงหน้า + คลื่นดำ `dark` ทะลุแบบนักดาบปีศาจ; หายเมื่อครบ `GHOST_INFO.secs` หรือชาแมนตาย/เรียกตัวใหม่
+- ออนไลน์: snapshot `gh:[id,x,z,rot,sw]` (`sw` = เฟรมตั้งแต่เริ่มฟัน, -1 = ไม่ฟัน) ท่าฟัน/แฟลชวาดใน `animGhosts()` (เรียกจาก `render()` ทุกเครื่อง)
+- config: `skills.shaman` dmg/kb = ฟันของผี (`GHOST_SLASH`), `life` = วินาทีที่ผีอยู่
+- `lancer`: หอก (`buildClassWeapon`) ท่า `ln1-2` ปกติ, `ln3` แทงทะลวงเป็นแนวยาว 5; สกิล `sk_lancer` (anim `jab`) ใช้ `lance:true` → `lanceTick()` (host) ตีทุกคนในแถบยาว `len` กว้าง `wid` ทุก `tick` เฟรม ครั้งสุดท้ายกระเด็น (kb×3.5); เอฟเฟกต์ `lanceFx()` ใน `pose`
+- เสียงใหม่ `spirit`, `lance`
