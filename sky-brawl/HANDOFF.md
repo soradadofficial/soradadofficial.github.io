@@ -24,6 +24,7 @@
 |---|---|---|
 | `index.html` | ตัวเกมทั้งหมด (HTML + CSS + JS) | ✅ |
 | `og.png` | รูปปกตอนแชร์ลิงก์ 1200×630 | ✅ |
+| `config.js` | ตั้งค่าที่ปรับบ่อย: คูลดาวน์/ดาเมจ/แรงกระเด็น/ฮีลของสกิล, เปิด-ปิดอาชีพ, ตัวคูณรวม | ✅ (ไม่มีไฟล์นี้เกมก็ใช้ค่าเดิม) |
 | `supabase-setup.sql` | ตาราง profiles + แชตล็อบบี้ (รันแล้ว) | ❌ รันใน Supabase เท่านั้น |
 | `supabase-levels.sql` | ตาราง player_stats + ฟังก์ชัน record_match (รันแล้ว) | ❌ |
 | `HANDOFF.md` | ไฟล์นี้ | ไม่จำเป็น |
@@ -139,6 +140,14 @@ python -m http.server 8765 --directory sky-brawl
 - `Net.adv()` ต้องเช็ก `!this.peer` — ตอนออกจากห้อง การปิดการเชื่อมต่อเคยทำให้ห้องเด้งกลับเข้ารายการ
 - Facebook ตัด `#fragment` ทิ้ง → ลิงก์ห้องต้องเป็น `?room=`
 - หลัง OAuth ถ้าไปโผล่ `localhost:3000` = Site URL ใน Supabase ผิด
+
+### ปรับค่าเกมด้วย `config.js` (ไม่ต้องแก้ index.html)
+- แก้ตัวเลขใน `config.js` แล้วอัปขึ้น GitHub ไว้ข้าง `index.html` → รีเฟรชเกมก็ได้ค่าใหม่
+- `global` ตัวคูณรวม (skillCooldown / skillDamage / skillKnockback), `classes` เปิด-ปิดอาชีพ (`false` = ปิด), `skills.<อาชีพ>` = `cd` (วินาที), `dmg`, `kb`, `heal`
+- ค่าที่ไม่ใส่ = ใช้ค่าในเกม, ค่าผิด = ข้ามพร้อมเตือนใน Console ขึ้นต้น `[config.js]`, ไฟล์พังหรือหาย = เกมใช้ค่าเดิมทั้งหมด
+- ในโค้ด: `applyConfig()` อยู่ต่อจาก `OUTFIT_K`; อาชีพที่เปิดอยู่คือ `ON_K` / `CLASS_ON` (บอทสุ่ม, หน้าแต่งตัว, `setLook` ใช้ชุดนี้)
+- สกิลมือปืนกับวิศวกรใช้ข้อมูลกระสุน `RAPID_SHOT` / `TURRET_SHOT` แทน `MOVES.sk_*`
+- เพิ่มอาชีพใหม่แล้วอยากให้ปรับใน config ได้: ใส่บรรทัดใน `classes` และ `skills` ของ `config.js` ด้วย
 
 ---
 
