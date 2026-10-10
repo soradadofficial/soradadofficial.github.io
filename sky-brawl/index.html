@@ -149,6 +149,9 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;border:2px solid var(
 .rrow,.srow{display:flex;align-items:center;gap:10px;border:2px solid var(--ink);border-radius:12px;padding:6px 8px 6px 12px;min-width:0}
 .rrow .rn,.srow .sn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
 .rrow .rm{font-size:13px;color:var(--muted);white-space:nowrap}
+.chatlog{max-height:150px;min-height:60px;overflow-y:auto;border:2px solid var(--ink);border-radius:10px;padding:6px 10px;background:var(--white);font-size:13px;line-height:1.45;display:grid;gap:2px;align-content:start}
+.chatlog b{color:var(--p2);margin-right:6px}
+.chatlog .me b{color:var(--p1)}
 .rrow button{font-family:var(--display);font-size:13px;padding:5px 12px;border:2px solid var(--ink);border-radius:8px;background:var(--gold);cursor:pointer}
 .srow{padding:4px 10px}
 .srow .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--ink);flex:none}
@@ -343,6 +346,15 @@ button{touch-action:manipulation}
     <div id="lobbyView" class="settings">
       <div class="joinrow"><label for="myName">ชื่อของคุณ</label><input id="myName" class="tin" maxlength="12" autocomplete="off"></div>
       <div class="opt"><h4>ห้องที่เปิดอยู่ · <span id="lobbyInfo" style="font-weight:500"></span></h4><div id="roomList" class="rlist"></div></div>
+      <div class="opt" id="chatBox" hidden>
+        <h4>แชตล็อบบี้</h4>
+        <div id="chatLog" class="chatlog" aria-live="polite"></div>
+        <form id="chatForm" class="joinrow" style="margin-top:6px">
+          <input id="chatIn" class="tin" maxlength="120" autocomplete="off" placeholder="พิมพ์ข้อความ…" aria-label="ข้อความแชต">
+          <button class="btn plain" type="submit" style="flex:0 0 auto">ส่ง</button>
+        </form>
+        <p id="chatNote" class="note" hidden></p>
+      </div>
       <div class="btns"><button class="btn red" id="mkRoom" type="button">สร้างห้องใหม่</button></div>
       <div class="joinrow"><label for="codeIn">หรือใส่รหัสห้อง</label><input id="codeIn" class="tin" maxlength="8" autocomplete="off" placeholder="เช่น k7mpx"><button class="btn plain" id="codeGo" type="button" style="flex:0 0 auto">เข้าห้อง</button></div>
     </div>
@@ -456,6 +468,7 @@ button{touch-action:manipulation}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 (() => {
 const V = THREE.Vector3, PI = Math.PI;
@@ -1519,7 +1532,7 @@ try {
   const s = JSON.parse(localStorage.getItem(LOOK_KEY));
   if (Array.isArray(s) && s.length === 2) LOOKS = s.map((l, i) => ({...DEF_LOOKS[i], ...l}));
 } catch (e) {}
-const saveLooks = () => { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOKS)); } catch (e) {} };
+const saveLooks = () => { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOKS)); } catch (e) {} if (window.__supaSave) window.__supaSave(); };
 const pick = a => a[Math.random()*a.length | 0];
 // Bot names read like players' handles rather than "บอท 7"; each fits the 12-character name limit
 const BOT_NAMES = ['ต้มยำกุ้ง', 'หมูกระทะ', 'ส้มตำไทย', 'ชาเย็น', 'ไข่เจียว', 'ข้าวมันไก่', 'หมูปิ้ง', 'ลูกชิ้นทอด', 'ขนมครก', 'ชาไข่มุก',
@@ -3316,10 +3329,10 @@ function mergePres(target, patch){
 const LOBBY_ID = 'skybrawl-lobby-v2';
 function sanitizeRoom(r){
   if (!r || typeof r !== 'object' || !CODE_RE.test(String(r.code))) return null;
-  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(16, Number(r.n) || 0)),
-    mx:Math.max(2, Math.min(16, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
+  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(32, Number(r.n) || 0)),
+    mx:Math.max(2, Math.min(32, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
 }
-const Lobby = {
+const PeerLobby = {
   active:false, peer:null, holder:null, conn:null, clients:new Map(), rooms:[], online:0, mine:null,
   retry:0, bcast:0, status:'', connected:false,
   start(){
@@ -3402,6 +3415,163 @@ const Lobby = {
   advertise(room){ this.mine = room; this.sendMine(); },
   sendMine(){ if (this.conn && this.conn.open) try { this.conn.send({t:'room', room:this.mine}); } catch (e) {} },
 };
+
+/* ---------- Supabase: accounts, profiles, lobby (rooms via Realtime presence) and lobby chat ---------- */
+// The anon key is public by design; table access is limited by row level security (supabase-setup.sql).
+const SUPA_URL = 'https://dngqblfvgjdoevctsnfy.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuZ3FibGZ2Z2pkb2V2Y3RzbmZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MTkwMzksImV4cCI6MjEwNzE5NTAzOX0.9TvwETWQMDz6EYdjgtlVsXSuc_o2C8_Zt0YmG1wgB_w';
+const Supa = {
+  client:null, user:null, authFailed:false, saveT:0,
+  get available(){ return !!(window.supabase && window.supabase.createClient); },
+  getClient(){
+    if (!this.client && this.available) this.client = window.supabase.createClient(SUPA_URL, SUPA_KEY, {auth:{persistSession:true, storageKey:'skybrawl-auth'}});
+    return this.client;
+  },
+  // Anonymous account per browser; the lobby still works without one, chat and profiles need it
+  async signIn(){
+    if (this.user || this.authFailed || !this.getClient()) return this.user;
+    try {
+      const {data:{session}} = await this.client.auth.getSession();
+      if (session) this.user = session.user;
+      else {
+        const r = await this.client.auth.signInAnonymously();
+        if (r.error) throw r.error;
+        this.user = r.data.user;
+      }
+      this.saveProfile();
+    } catch (e) { this.authFailed = true; this.user = null; }
+    return this.user;
+  },
+  async saveProfile(){
+    if (!this.user) return;
+    try { await this.client.from('profiles').upsert({id:this.user.id, name:LOOKS[0].name, look:encLook(LOOKS[0]), updated_at:new Date().toISOString()}); } catch (e) {}
+  },
+  saveSoon(){ clearTimeout(this.saveT); this.saveT = setTimeout(() => this.saveProfile(), 1500); },
+};
+window.__supaSave = () => Supa.saveSoon();
+const SupaLobby = {
+  active:false, ch:null, rooms:[], online:0, status:'', connected:false, mine:null, everOk:false, msgs:[], lastSend:0, chatOk:false, failT:0,
+  info(text){ this.status = text; if (!$('online').hidden) renderLobby(); },
+  start(onFail){
+    if (this.active) return;
+    const client = Supa.getClient();
+    if (!client){ onFail(); return; }
+    this.active = true; this.info('กำลังเชื่อมต่อล็อบบี้…');
+    const key = Math.random().toString(36).slice(2, 10);   // one presence entry per open tab
+    const ch = client.channel('skybrawl-lobby', {config:{presence:{key}, broadcast:{self:true}}});
+    this.ch = ch;
+    ch.on('presence', {event:'sync'}, () => this.sync());
+    ch.on('broadcast', {event:'chat'}, ({payload}) => this.gotChat(payload));
+    ch.subscribe(st => {
+      if (this.ch !== ch) return;
+      if (st === 'SUBSCRIBED'){
+        clearTimeout(this.failT);
+        this.connected = true; this.everOk = true; this.info('');
+        this.track();
+      } else if (st === 'CHANNEL_ERROR' || st === 'TIMED_OUT' || st === 'CLOSED'){
+        this.connected = false;
+        if (!this.everOk){ this.stop(); onFail(); }
+        else this.info('ล็อบบี้หลุด กำลังต่อใหม่…');
+      }
+    });
+    // A lobby that never answers hands over to the peer-to-peer one
+    this.failT = setTimeout(() => { if (this.ch === ch && !this.everOk){ this.stop(); onFail(); } }, 9000);
+    Supa.signIn().then(u => { this.chatOk = !!u; syncChatUi(); if (u) this.loadChat(); });
+  },
+  stop(){
+    clearTimeout(this.failT);
+    const ch = this.ch; this.ch = null;   // cleared first so the CLOSED callback sees a retired channel
+    if (ch && Supa.client) try { Supa.client.removeChannel(ch); } catch (e) {}
+    this.active = false; this.connected = false; this.rooms = []; this.online = 0;
+  },
+  track(){
+    if (!this.ch || !this.connected) return;
+    this.ch.track({nm:LOOKS[0].name, room:this.mine || null}).catch(() => {});
+  },
+  sync(){
+    const state = this.ch ? this.ch.presenceState() : {};
+    const rooms = []; let n = 0;
+    for (const k of Object.keys(state)){
+      const metas = state[k]; if (!metas || !metas.length) continue;
+      n++;
+      const r = sanitizeRoom(metas[metas.length - 1].room);
+      if (r) rooms.push(r);
+    }
+    this.online = n; this.rooms = rooms.slice(0, 60);
+    if (!$('online').hidden) renderLobby();
+  },
+  advertise(room){ this.mine = room; this.track(); },
+  heal(){ if (this.active && !this.connected && this.ch) this.track(); },
+  async loadChat(){
+    try {
+      const {data, error} = await Supa.client.from('lobby_messages').select('name, body, user_id').order('created_at', {ascending:false}).limit(30);
+      if (error) throw error;
+      this.msgs = data.reverse().map(r => ({nm:r.name, body:r.body, me:Supa.user && r.user_id === Supa.user.id}));
+      renderChat();
+    } catch (e) { this.chatOk = false; syncChatUi('แชตยังไม่พร้อม (ต้องรันสคริปต์ตั้งค่าใน Supabase ก่อน)'); }
+  },
+  gotChat(p){
+    if (!p || typeof p.body !== 'string') return;
+    this.msgs.push({nm:cleanName(p.nm, 'ผู้เล่น'), body:p.body.slice(0, 120), me:!!(Supa.user && p.uid === Supa.user.id)});
+    if (this.msgs.length > 60) this.msgs.shift();
+    renderChat();
+  },
+  async sendChat(text){
+    const body = String(text || '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 120);
+    if (!body || !this.chatOk || !this.ch) return false;
+    if (Date.now() - this.lastSend < 1200){ syncChatUi('ส่งถี่เกินไป รออีกนิดนะ'); return false; }
+    this.lastSend = Date.now();
+    const {error} = await Supa.client.from('lobby_messages').insert({name:LOOKS[0].name, body});
+    if (error){ syncChatUi('ส่งข้อความไม่สำเร็จ ลองใหม่อีกครั้ง'); return false; }
+    this.ch.send({type:'broadcast', event:'chat', payload:{nm:LOOKS[0].name, body, uid:Supa.user.id}});
+    syncChatUi();
+    return true;
+  },
+};
+// Whichever lobby is in charge: Supabase first, the peer-to-peer lobby if Supabase can't be reached
+const Lobby = {
+  use:null, supaDown:false,
+  get rooms(){ return this.use ? this.use.rooms : []; },
+  get online(){ return this.use ? this.use.online : 0; },
+  get status(){ return this.use ? this.use.status : ''; },
+  get connected(){ return !!(this.use && this.use.connected); },
+  get kind(){ return this.use === SupaLobby ? 'supa' : this.use ? 'peer' : ''; },
+  start(){
+    if (this.use){ this.use.start(() => {}); return; }
+    const fallback = () => {
+      this.supaDown = true; this.use = PeerLobby; PeerLobby.start(); syncChatUi();
+      if (PeerLobby.mine === undefined) PeerLobby.mine = null;
+      if (!$('online').hidden) renderLobby();
+    };
+    if (!this.supaDown && Supa.available){ this.use = SupaLobby; SupaLobby.start(fallback); }
+    else fallback();
+    syncChatUi();
+  },
+  stop(){ if (this.use) this.use.stop(); this.use = null; syncChatUi(); },
+  advertise(room){ SupaLobby.mine = room; PeerLobby.mine = room; if (this.use) this.use.advertise(room); },
+  heal(){ if (this.use && this.use.heal) this.use.heal(); },
+};
+function syncChatUi(note){
+  const box = $('chatBox'); if (!box) return;
+  box.hidden = Lobby.kind !== 'supa';
+  $('chatForm').hidden = !SupaLobby.chatOk;
+  const n = $('chatNote');
+  const msg = note || (Lobby.kind === 'supa' && !SupaLobby.chatOk && Supa.authFailed ? 'แชตยังไม่เปิด (ต้องเปิด anonymous sign-in ใน Supabase)' : '');
+  n.textContent = msg; n.hidden = !msg;
+}
+function renderChat(){
+  const log = $('chatLog'); if (!log) return;
+  log.textContent = '';
+  if (!SupaLobby.msgs.length){ const p = document.createElement('div'); p.className = 'note'; p.textContent = 'ยังไม่มีข้อความ ทักทายกันได้เลย'; log.appendChild(p); }
+  for (const m of SupaLobby.msgs){
+    const row = document.createElement('div'); if (m.me) row.className = 'me';
+    const b = document.createElement('b'); b.textContent = m.nm;
+    row.append(b, document.createTextNode(m.body));
+    log.appendChild(row);
+  }
+  log.scrollTop = log.scrollHeight;
+  syncChatUi();
+}
 
 const Net = {
   ready:false, peer:null, me:null, role:null, code:null, conns:new Map(), hostConn:null, myPres:{}, hostPres:{},
@@ -3520,7 +3690,8 @@ const Net = {
     this.slots = slots;
   },
   adv(){
-    if (this.role !== 'host') return;
+    // !peer: cleanup has started; closing the guests' connections must not re-list the room
+    if (this.role !== 'host' || !this.peer) return;
     Lobby.advertise({code:this.code, nm:LOOKS[0].name, n:this.slots.filter(x => x[0]).length, mx:this.slots.length, ph:this.ph});
   },
   publishRoom(){
@@ -3958,6 +4129,11 @@ $('shareLink').onclick = () => {
   navigator.share({title:'Sky Brawl', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
 };
 $('custBtn').onclick = () => openCustom();
+$('chatForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const inp = $('chatIn');
+  if (await SupaLobby.sendChat(inp.value)) inp.value = '';
+});
 $('inviteBtn').onclick = () => {
   const url = gameUrl();
   $('gameLink').value = url;
