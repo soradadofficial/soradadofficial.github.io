@@ -3808,6 +3808,20 @@ const ICE_SERVERS = [
   // account: free but best-effort, swap for your own metered.ca TURN credentials if it gets busy.
   {urls:['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turns:openrelay.metered.ca:443?transport=tcp'], username:'openrelayproject', credential:'openrelayproject'},
 ];
+// config.js → network.iceServers (your own list) or network.turnApi (a Metered credentials URL) for a TURN relay you control
+let TURN_OWN = false;
+(function(){
+  const N = (window.SKY_CONFIG && window.SKY_CONFIG.network) || {};
+  if (Array.isArray(N.iceServers) && N.iceServers.length){ ICE_SERVERS.splice(0, ICE_SERVERS.length, ...N.iceServers); TURN_OWN = true; }
+  if (typeof N.turnApi === 'string' && /^https:\/\//.test(N.turnApi)){
+    fetch(N.turnApi).then(r => r.json()).then(list => {
+      if (!Array.isArray(list) || !list.length) throw new Error('empty');
+      ICE_SERVERS.splice(0, ICE_SERVERS.length, {urls:'stun:stun.l.google.com:19302'}, ...list); TURN_OWN = true;
+      console.info('[config.js] TURN relay ready (' + list.length + ' servers)');
+      if (!$('online').hidden) renderLobby();
+    }).catch(e => console.warn('[config.js] network.turnApi failed', e));
+  }
+})();
 const ID_PREFIX = 'skybrawl-v1-';
 const CODE_RE = /^[a-z0-9]{3,8}$/;
 // Signalling hiccups (the phone backgrounded the page for the share sheet or to open LINE) must not end a room
@@ -4044,7 +4058,7 @@ const Lobby = {
   get status(){ return this.connected ? '' : (SupaLobby.status || PeerLobby.status); },
   get kind(){ return SupaLobby.connected ? 'supa' : PeerLobby.connected ? 'peer' : ''; },
   // Short health line so players can compare: "หลัก ✓ · สำรอง ✓"
-  get badge(){ return 'หลัก ' + (SupaLobby.connected ? '✓' : Supa.available ? '…' : '✗') + ' · สำรอง ' + (PeerLobby.connected ? '✓' : typeof window.Peer === 'function' ? '…' : '✗'); },
+  get badge(){ return 'หลัก ' + (SupaLobby.connected ? '✓' : Supa.available ? '…' : '✗') + ' · สำรอง ' + (PeerLobby.connected ? '✓' : typeof window.Peer === 'function' ? '…' : '✗') + ' · รีเลย์ ' + (TURN_OWN ? '✓' : '✗'); },
   start(){
     this.on = true;
     if (Supa.available && !SupaLobby.active) SupaLobby.start(() => this.retrySupa());
@@ -4486,21 +4500,42 @@ const Net = {
         this.gotHost = true;
         this.applyHost(this.hostPres);
       });
-      conn.on('close', () => { if (this.hostConn === conn) lost(); });
-      conn.on('error', () => {});
+      conn.on('close', () => { if (this.hostConn === conn) lost(this.gotHost ? 'drop' : 'ice'); });
+      conn.on('error', () => { if (this.hostConn === conn && !conn.open) lost('ice'); });
+      // Phones on mobile data can take well over 8 s to finish connecting; only give up on a real failure or after 25 s
       clearTimeout(this.joinTimer);
-      this.joinTimer = setTimeout(() => { if (this.hostConn === conn && !conn.open) lost(); }, 8000);
+      const t0 = Date.now();
+      const watch = () => {
+        if (this.hostConn !== conn || conn.open) return;
+        const pc = conn.peerConnection, ice = pc && pc.iceConnectionState;
+        if (ice === 'failed' || ice === 'closed') return lost('ice');
+        if (Date.now() - t0 > 25000) return lost(pc && pc.remoteDescription ? 'ice' : 'nohost');
+        this.joinTimer = setTimeout(watch, 1000);
+      };
+      this.joinTimer = setTimeout(watch, 1000);
     };
     // Before the first contact: keep knocking for a minute (the host may be in LINE sending the link).
     // After it: the host's page may have been in the background; try to reconnect for 30 seconds.
-    const lost = () => {
+    // why: 'nohost' = the signalling server doesn't know the room (host page closed/backgrounded),
+    //      'ice' = found the host but the two networks can't open a direct link (needs a TURN relay), 'drop' = lost mid-game
+    const NETMSG = {
+      nohost:`ยังไม่พบห้อง ${code} บนเซิร์ฟเวอร์ host ต้องเปิดหน้าเกมค้างไว้ (ถ้าสลับไปแอปอื่นอยู่ จะเข้าได้เมื่อ host กลับมา)`,
+      ice:`เจอห้อง ${code} แล้ว แต่เน็ตของสองเครื่องต่อถึงกันตรงๆ ไม่ได้ (มักเป็นเน็ตมือถือ) กำลังลองใหม่…`,
+    };
+    const lost = (why = 'nohost') => {
       if (this.peer !== peer) return;
       const now = Date.now();
+      this.lastWhy = why;
       if (this.gotHost){
         if (!this.lostAt){ this.lostAt = now; if (G.mode === 'play') feed('หลุดจาก host กำลังต่อกลับ…'); }
         if (now - this.lostAt > 30000){ this.leave('หลุดจากห้อง host อาจปิดหน้าเกมไปแล้ว'); return; }
-      } else if (now - started > 60000){ this.leave(`ต่อเข้าห้อง ${code} ไม่ติด host อาจปิดแท็บไปแล้ว หรือเน็ตต่อกันตรงไม่ได้`); return; }
-      else showOnMsg(`กำลังรอห้อง ${code}… ถ้า host สลับไปแชร์ลิงก์อยู่ จะเข้าได้เมื่อ host กลับมาที่หน้าเกม`);
+      } else if (now - started > 60000){
+        this.leave(why === 'ice'
+          ? `ต่อเข้าห้อง ${code} ไม่ได้: เน็ตของคุณกับ host ต่อกันตรงๆ ไม่ได้ ลองให้คนใดคนหนึ่งเปลี่ยนไปใช้ Wi-Fi หรือให้เจ้าของเกมตั้ง TURN relay ใน config.js`
+          : `ไม่พบห้อง ${code} host อาจปิดหน้าเกมไปแล้ว หรือรหัสห้องผิด`);
+        return;
+      }
+      else showOnMsg(NETMSG[why] || NETMSG.nohost);
       clearTimeout(this.joinTimer); this.joinTimer = setTimeout(connect, 2500);
     };
     peer.on('open', id => {
@@ -4513,7 +4548,7 @@ const Net = {
     });
     peer.on('error', err => {
       if (this.peer !== peer) return;
-      if (err.type === 'peer-unavailable'){ lost(); return; }
+      if (err.type === 'peer-unavailable'){ lost('nohost'); return; }
       if (this.role === 'guest' && SOFT_ERRORS.has(err.type)){ this.healSoon(); return; }
       this.leave(`เชื่อมต่อไม่สำเร็จ (${err.type})`);
     });
