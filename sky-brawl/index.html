@@ -47,6 +47,12 @@ button,select,input{font-family:inherit;color:inherit}
 #hudMid{display:grid;gap:6px;justify-items:center;pointer-events:auto}
 .chipbtn{font-family:var(--display);font-size:13px;background:var(--paper);border:3px solid var(--ink);border-radius:10px;padding:5px 10px;box-shadow:3px 3px 0 var(--ink);cursor:pointer;white-space:nowrap}
 #autoBtn.on{background:var(--gold)}
+#stoneBar{display:flex;gap:8px;background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:5px 8px}
+#stoneBar .sb{display:grid;gap:2px;width:min(120px,26vw);font-family:var(--display);font-size:11px;white-space:nowrap}
+#stoneBar .shp{height:9px;border:2px solid var(--ink);border-radius:6px;background:var(--track);overflow:hidden}
+#stoneBar .shp i{display:block;height:100%;width:100%}
+#stoneBar[hidden]{display:none}
+#feed.low{top:calc(env(safe-area-inset-top,0px) + 126px)}
 #board{background:var(--paper);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);padding:6px 10px 8px;width:min(220px,36vw);display:grid;gap:4px;box-sizing:border-box}
 #boardHead{font-family:var(--display);font-size:12px;display:flex;justify-content:space-between;gap:6px}
 #brows{display:grid;gap:1px;font-size:11px;max-height:48vh;overflow:hidden}
@@ -198,6 +204,10 @@ button{touch-action:manipulation}
 <div id="hud" hidden>
   <div id="cards"></div>
   <div id="hudMid">
+    <div id="stoneBar" hidden>
+      <div class="sb"><span id="shn0">หินแดง</span><div class="shp"><i id="shp0" style="background:#ff5d4a"></i></div></div>
+      <div class="sb"><span id="shn1">หินน้ำเงิน</span><div class="shp"><i id="shp1" style="background:#2f8cff"></i></div></div>
+    </div>
     <button id="pauseBtn" class="chipbtn" type="button">II เมนู</button>
     <button id="camBtn" class="chipbtn" type="button" title="ปรับมุมกล้อง (ปุ่ม - และ = หรือล้อเมาส์)">กล้อง: ปกติ</button>
     <button id="touchBtn" class="chipbtn" type="button">ปุ่มจอ: ปิด</button>
@@ -241,6 +251,11 @@ button{touch-action:manipulation}
         <input type="radio" name="diff" id="d-easy" value="easy"><label for="d-easy">ง่าย</label>
         <input type="radio" name="diff" id="d-normal" value="normal" checked><label for="d-normal">ปกติ</label>
         <input type="radio" name="diff" id="d-hard" value="hard"><label for="d-hard">ยาก</label>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="โหมด">
+        <span class="lbl">โหมด</span>
+        <input type="radio" name="mode" id="md-ffa" value="ffa" checked><label for="md-ffa">ตะลุมบอน</label>
+        <input type="radio" name="mode" id="md-team" value="team"><label for="md-team">ทีมตีหิน</label>
       </div>
       <div class="seg" role="radiogroup" aria-label="ด่าน">
         <span class="lbl">ด่าน</span>
@@ -314,6 +329,7 @@ button{touch-action:manipulation}
         <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="32" value="2"><output id="rNOut" for="rN">2</output></div>
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
+        <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option></select></div>
         <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
@@ -926,6 +942,7 @@ const STAGES = {
     }},
 };
 const STAGE_KEYS = Object.keys(STAGES);
+const MODE_KEYS = ['ffa', 'team'];
 let STAGE = STAGES.titanic, STAGE_KEY = 'titanic';
 function setStage(k){
   const key = STAGES[k] ? k : 'titanic', st = STAGES[key];
@@ -1179,6 +1196,21 @@ try {
 } catch (e) {}
 const saveLooks = () => { try { localStorage.setItem(LOOK_KEY, JSON.stringify(LOOKS)); } catch (e) {} };
 const pick = a => a[Math.random()*a.length | 0];
+// Bot names read like players' handles rather than "บอท 7"; each fits the 12-character name limit
+const BOT_NAMES = ['ต้มยำกุ้ง', 'หมูกระทะ', 'ส้มตำไทย', 'ชาเย็น', 'ไข่เจียว', 'ข้าวมันไก่', 'หมูปิ้ง', 'ลูกชิ้นทอด', 'ขนมครก', 'ชาไข่มุก',
+  'กล้วยทอด', 'โกโก้เย็น', 'มะม่วงสุก', 'แตงโมปั่น', 'ปลาทู', 'ไก่ทอดหาดใหญ่', 'เจ้าเหมียว', 'หมาป่าเดียวดาย', 'มือใหม่หัดต่อย', 'นักเลงคีย์บอร์ด',
+  'พี่บอย', 'น้องแนน', 'เฮียกุ้ย', 'ป้าแดง', 'ลุงชิต', 'เจ๊หมวย', 'ตี๋น้อย', 'ก้องภพ', 'มิ้นท์', 'ฟ้าใส', 'ทองดี', 'บุญมี', 'สายฟ้า',
+  'ไต้ฝุ่น', 'ดาวเหนือ', 'ส้มโอ', 'มะนาว', 'เด็กวัด', 'จอมยุทธ์', 'ขุนแผน', 'นายฮ้อย', 'เสือดำ', 'ช้างน้อย', 'ปลาวาฬ', 'นกฮูก',
+  'xXSlayerXx', 'NoobMaster', 'ProGamerTH', 'LagKing', 'AFK_Andy', 'SleepyCat', 'PunchBoy', 'TomYumKing', 'SomTamQueen', 'BKKDrifter',
+  'ShadowNinja', 'RiceBall', 'KaiJeow', 'LuckyStar', 'IronFist', 'SkyDiver', 'BubbleTea', 'CoffeeAddict', 'GGEZ', 'OneHitWonder',
+  'ComboBreaker', 'RageQuit', 'Kitty99', 'Panda_TH', 'Tiger88', 'NightOwl', 'Mango', 'Durian', 'JustBob', 'Captain_K', 'DJ_Noodle',
+  'Pixel', 'Zap', 'Nong_Boom', 'Moonlight', 'Blizzard', 'Fireball', 'TukTuk', 'Songkran', 'Kanom', 'NamPla', 'Chili', 'Wasabi'];
+const withNum = (base, k) => k ? base.slice(0, 10) + (k + 1) : base;
+function botNames(n){
+  const pool = [...BOT_NAMES].sort(() => Math.random() - .5);
+  return Array.from({length:n}, (_, i) => withNum(pool[i % pool.length], Math.floor(i/pool.length)));
+}
+const seededBotName = seed => BOT_NAMES[(Number(seed) >>> 0) % BOT_NAMES.length];
 const randomLook = name => ({name, body:pick(BODY_COLORS), skin:pick(SKIN_COLORS), hairColor:pick(HAIR_COLORS), hair:pick(HAIR_K), hat:pick(HAT_K), eyes:pick(EYE_K), outfit:pick(OUTFIT_K)});
 function seededLook(seed, name){
   let a = (seed >>> 0) || 1;
@@ -1188,7 +1220,8 @@ function seededLook(seed, name){
 }
 function slotName(sl, i){
   if (sl[0] || sl.length !== 2) return cleanName(sl[1], 'ผู้เล่น');
-  return 'บอท ' + (Net.slots.slice(0, i).filter(x => !x[0] && x.length === 2).length + 1);
+  const base = seededBotName(sl[1]);
+  return withNum(base, Net.slots.slice(0, i).filter(x => !x[0] && x.length === 2 && seededBotName(x[1]) === base).length);
 }
 const encLook = l => [l.body, l.skin, l.hairColor, HAIR_K.indexOf(l.hair), HAT_K.indexOf(l.hat), EYE_K.indexOf(l.eyes), OUTFIT_K.indexOf(l.outfit || 'none')];
 function decLook(a, name){
@@ -1395,12 +1428,13 @@ function feed(text){
 /* ---------- Game state ---------- */
 const G = {mode:'menu', fighters:[], items:[], bombs:[], bullets:[], turrets:[], frame:0, itemTimer:300, slow:0, shake:0,
   countdown:0, cdShown:new Set(), paused:false, debug:false, endT:0, winner:null, stocks:2,
-  cfg:{n:8, st:2, df:'normal', stage:'titanic'}, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0,
+  cfg:{n:8, st:2, df:'normal', stage:'titanic', mode:'ffa'}, teamMode:false, stones:[], winTeam:null, kind:'solo', net:null, me:0, spec:0, nextId:1, editSlot:0,
   auto:{p1:false, p2:false}};
 
 class Fighter {
   constructor(idx, spec){
-    this.idx = idx; this.team = TEAM[idx % TEAM.length];
+    this.idx = idx; this.side = G.teamMode ? idx % 2 : -1;
+    this.team = this.side >= 0 ? SIDES[this.side].col : TEAM[idx % TEAM.length];
     this.name = spec.name; this.ctrl = spec.ctrl; this.peer = spec.peer || '';
     this.isLocal = spec.ctrl === 'p1' || spec.ctrl === 'p2' || !!spec.me;
     this.pos = new V(); this.vel = new V(); this.netPos = new V(); this.netVel = new V();
@@ -1431,6 +1465,9 @@ class Fighter {
   }
 }
 const setState = (f, s) => { f.state = s; f.stateT = 0; };
+// Team mode: two sides, each with a stone at its base; teammates can't hurt each other
+const SIDES = [{name:'แดง', col:0xff5d4a}, {name:'น้ำเงิน', col:0x2f8cff}];
+const ally = (a, b) => !!a && !!b && a !== b && a.side >= 0 && a.side === b.side;
 const alive = f => f.state !== 'out' && f.state !== 'wait';
 const hittable = f => alive(f) && !['ko','down','respawn'].includes(f.state) && f.invuln <= 0;
 
@@ -1448,6 +1485,18 @@ function spawnPoint(i, n){
   }
   return {p:new V(x, 0, z), facing:Math.atan2(-x, -z)};
 }
+// Team mode: each side lines up in its own half of the deck, in front of its stone
+function teamSpawn(i, n){
+  const side = i % 2, k = i >> 1, m = Math.ceil((n - side)/2) || 1;
+  const sp = spawnPoint(k, m), [x0, x1] = STAGE.spawn, w = (x1 - x0)*.42;
+  const t = m === 1 ? .5 : (sp.p.x - x0)/(x1 - x0);
+  let x = side ? x1 - t*w : x0 + t*w, z = sp.p.z;
+  for (const fn of FUNNELS){
+    const dx = x - fn.x, dz = z - fn.z, d = Math.hypot(dx, dz), need = fn.r + .8;
+    if (d < need){ if (d < .01) z += need; else { x = fn.x + dx/d*need; z = fn.z + dz/d*need; } }
+  }
+  return {p:new V(x, 0, z), facing:side ? -PI/2 : PI/2};
+}
 function randomDeckPoint(margin){
   const bx = STAGE.box;
   for (let k = 0; k < 60; k++){
@@ -1462,7 +1511,7 @@ function createFighters(specs, stocks, tags){
   // Big crowds: skip per-fighter shadow casting, it doubles the draw calls and phones can't keep up
   const crowd = specs.length > 40;
   G.fighters.forEach((f, i) => {
-    const sp = spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
+    const sp = f.side >= 0 ? teamSpawn(i, specs.length) : spawnPoint(i, specs.length); f.reset(sp.p, sp.facing, stocks);
     if (crowd) f.vis.root.traverse(o => { o.castShadow = false; });
     if (tags) makeTag(f);
   });
@@ -1540,7 +1589,7 @@ function syncAutoUi(){
 function nearestFoe(b){
   let best = null, bd = Infinity;
   for (const o of G.fighters){
-    if (o === b || !alive(o) || o.state === 'ko' || o.state === 'respawn') continue;
+    if (o === b || ally(b, o) || !alive(o) || o.state === 'ko' || o.state === 'respawn') continue;
     const d = Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) * (.7 + Math.random()*.6);
     if (d < bd){ bd = d; best = o; }
   }
@@ -1558,6 +1607,30 @@ function nearestItem(b, maxD){
   }
   return best && {it:best, d:bd};
 }
+function steerAroundObstacles(b, inp){
+  for (const fn of FUNNELS){
+    const ox = b.pos.x - fn.x, oz = b.pos.z - fn.z, od = Math.hypot(ox, oz);
+    if (od < 2.6 && od > .01){
+      const toward = -(inp.x*ox + inp.z*oz)/od;
+      if (toward > .2){ const tx = -oz/od, tz = ox/od, s = (tx*inp.x + tz*inp.z) >= 0 ? 1 : -1; inp.x += tx*s*toward; inp.z += tz*s*toward; }
+    }
+  }
+  const im = Math.hypot(inp.x, inp.z); if (im > 1){ inp.x /= im; inp.z /= im; }
+}
+function thinkStone(b, st, D){
+  const inp = b.input, ai = b.ai, press = k => { inp[k] = !b.prev[k]; };
+  const dx = st.pos.x - b.pos.x, dz = st.pos.z - b.pos.z, dist = Math.max(.001, Math.hypot(dx, dz) - 1);
+  const ranged = !!CLASS_STOP[b.cls] || b.weapon === 'gun' || b.weapon === 'shotgun';
+  const reach = ranged ? 6 : (b.weapon ? 1.6 : Math.min(1.5, CLASS_REACH[b.cls] || 1.3));
+  inp.x = inp.z = 0;
+  if (dist > reach*.8){ inp.x = dx/(dist + 1); inp.z = dz/(dist + 1); }
+  steerAroundObstacles(b, inp);
+  if (ai.cd > 0){ ai.cd--; return; }
+  const si = SKILL_INFO[b.cls] || SKILL_INFO.none;
+  if (b.skillCd <= 0 && si.range > 0 && dist < Math.min(si.range, 6) && Math.random() < .3*D.aggr){ inp.x = dx/(dist + 1)*.3; inp.z = dz/(dist + 1)*.3; press('skill'); ai.cd = D.react; return; }
+  if (dist < reach && Math.random() < D.aggr + .2){ inp.x = dx/(dist + 1)*.3; inp.z = dz/(dist + 1)*.3; press('atk'); ai.wantCombo = Math.random() < D.combo; ai.cd = 4; return; }
+  ai.cd = (D.react*.5) | 0;
+}
 function think(b){
   const D = DIFF[G.mode === 'menu' ? 'normal' : G.cfg.df], inp = b.input, ai = b.ai;
   const press = k => { inp[k] = !b.prev[k]; };
@@ -1568,6 +1641,16 @@ function think(b){
   if (ai.guardT > 0){ ai.guardT--; inp.guard = ai.guardT > 0; inp.x = inp.z = 0; return; }
   inp.guard = false;
   if (!ai.tgt || !alive(ai.tgt) || ai.tgt.state === 'ko' || --ai.tgtT <= 0){ ai.tgt = nearestFoe(b); ai.tgtT = 90 + Math.random()*120 | 0; }
+  if (G.teamMode && b.side >= 0){
+    // Defenders peel onto anyone threatening their own stone; raiders head for the enemy stone
+    const own = G.stones[b.side], es = G.stones[1 - b.side], raid = ((b.idx >> 1) % 10) < 3;
+    if (!raid && own && G.frame % 20 === b.idx % 20){
+      const intr = G.fighters.find(o => o.side !== b.side && alive(o) && o.state !== 'ko' && Math.hypot(o.pos.x - own.pos.x, o.pos.z - own.pos.z) < 7);
+      if (intr){ ai.tgt = intr; ai.tgtT = 60; }
+    }
+    const t0 = ai.tgt, near = t0 && alive(t0) && Math.hypot(t0.pos.x - b.pos.x, t0.pos.z - b.pos.z) < 3.5;
+    if (es && es.hp > 0 && ai.retreat <= 0 && ((raid && !near) || !t0)) return thinkStone(b, es, D);
+  }
   const t = ai.tgt, tOk = !!t && alive(t) && t.state !== 'ko';
   const dx = tOk ? t.pos.x - b.pos.x : 0, dz = tOk ? t.pos.z - b.pos.z : 0, dist = Math.hypot(dx, dz) || .001;
   const edge = !onDeck(b.pos.x, b.pos.z, 1.3);
@@ -1638,7 +1721,7 @@ function checkHits(f){
   if (f.hasHit) return;
   const hc = hitCenter(f), m = f.move, sweep = !!m.sweep;
   for (const o of G.fighters){
-    if (o === f || !hittable(o) || (sweep && f.hitSet.has(o))) continue;
+    if (o === f || ally(f, o) || !hittable(o) || (sweep && f.hitSet.has(o))) continue;
     if (hc.distanceTo(new V(o.pos.x, o.pos.y + .8, o.pos.z)) < m.rad + .55){
       let dx = o.pos.x - f.pos.x, dz = o.pos.z - f.pos.z, d = Math.hypot(dx, dz);
       if (d < .01){ dx = Math.sin(f.facing); dz = Math.cos(f.facing); d = 1; }
@@ -1647,9 +1730,20 @@ function checkHits(f){
       if (sweep) f.hitSet.add(o); else { f.hasHit = true; break; }
     }
   }
+  if (G.teamMode && !f.hasHit){
+    for (const st of G.stones){
+      if (st.hp <= 0 || st.side === f.side || f.hitSet.has(st)) continue;
+      if (Math.hypot(hc.x - st.pos.x, hc.z - st.pos.z) < m.rad + .95 && hc.y < 3.2){
+        damageStone(st, m.dmg, f); f.hitSet.add(st); if (!sweep) f.hasHit = true;
+        if (f.isLocal) G.shake = Math.max(G.shake, .1);
+        break;
+      }
+    }
+  }
 }
 const aliveCount = () => G.fighters.filter(f => f.stocks > 0).length;
 function applyHit(att, tgt, m, dir, credit){
+  if (ally(credit, tgt)) return;
   if (credit && credit !== tgt && credit.rage > 0) m = {...m, dmg:Math.round(m.dmg*1.5)};
   const local = (att && att.isLocal) || tgt.isLocal || G.fighters.length <= 2;
   const front = -(Math.sin(tgt.facing)*dir.x + Math.cos(tgt.facing)*dir.z);
@@ -1759,9 +1853,10 @@ function explode(pos, owner, m){
   // m = a meteor's move: smaller blast that spares the caster
   const hit = m || BOMB_HIT, R = m ? 2.4 : 3;
   explodeFx(pos);
+  hitStones(owner, pos, R + .6, hit.dmg);
   G.shake = Math.max(G.shake, hit.shake*.6);
   for (const f of G.fighters){
-    if (!hittable(f) || (m && f === owner)) continue;
+    if (!hittable(f) || (m && f === owner) || ally(owner, f)) continue;
     let dx = f.pos.x - pos.x, dz = f.pos.z - pos.z;
     const d3 = Math.hypot(dx, f.pos.y + .8 - pos.y, dz);
     if (d3 > R) continue;
@@ -1821,8 +1916,9 @@ function fireProj(f, kind, a, speed, life, m){
   G.bullets.push(b); return b;
 }
 function aoe(src, center, radius, m, opt = {}){
+  hitStones(src, center, radius + .6, m.dmg || 0);
   for (const o of G.fighters){
-    if (o === src || !hittable(o)) continue;
+    if (o === src || ally(src, o) || !hittable(o)) continue;
     let dx = o.pos.x - center.x, dz = o.pos.z - center.z;
     const d = Math.hypot(dx, dz);
     if (d > radius || Math.abs(o.pos.y - center.y) > 2.5) continue;
@@ -1849,7 +1945,7 @@ const blocked = (x, z) => !onDeck(x, z, .5) || FUNNELS.some(fn => Math.hypot(x -
 function shadowStep(f){
   let best = null, bd = 9;
   for (const o of G.fighters){
-    if (o === f || !hittable(o)) continue;
+    if (o === f || ally(f, o) || !hittable(o)) continue;
     const d = Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z);
     if (d < bd){ bd = d; best = o; }
   }
@@ -1883,7 +1979,7 @@ function ninjaDash(f, m){
 function nearestTarget(f, maxD){
   let best = null, bd = maxD;
   for (const o of G.fighters){
-    if (o === f || !hittable(o)) continue;
+    if (o === f || ally(f, o) || !hittable(o)) continue;
     const d = Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z);
     if (d < bd){ bd = d; best = o; }
   }
@@ -1954,7 +2050,7 @@ function stepTurrets(){
     if (t.t > t.life || !t.owner || t.owner.stocks <= 0){ removeTurret(t, true); continue; }
     let best = null, bd = 11;
     for (const o of G.fighters){
-      if (o === t.owner || !hittable(o)) continue;
+      if (o === t.owner || ally(t.owner, o) || !hittable(o)) continue;
       const d = Math.hypot(o.pos.x - t.pos.x, o.pos.z - t.pos.z);
       if (d < bd){ bd = d; best = o; }
     }
@@ -2005,7 +2101,7 @@ function stepBullets(){
     if (trailColor(b.kind) && G.frame % 2 === 0) emit(b.pos, 1, trailColor(b.kind), .6, .5, 14, 1.4, 0);
     let hit = null;
     for (const f of G.fighters){
-      if (f === b.owner || !hittable(f) || (b.hitSet && b.hitSet.has(f))) continue;
+      if (f === b.owner || ally(b.owner, f) || !hittable(f) || (b.hitSet && b.hitSet.has(f))) continue;
       if (Math.hypot(f.pos.x - b.pos.x, f.pos.z - b.pos.z) < .6 && Math.abs(f.pos.y + .8 - b.pos.y) < 1){ hit = f; break; }
     }
     if (hit){
@@ -2016,6 +2112,10 @@ function stepBullets(){
       }
       if (b.pierce){ (b.hitSet = b.hitSet || new Set()).add(hit); continue; }
       removeBullet(b, true); continue;
+    }
+    if (G.teamMode && b.owner){
+      const st = G.stones.find(s => s.hp > 0 && s.side !== b.owner.side && Math.hypot(b.pos.x - s.pos.x, b.pos.z - s.pos.z) < 1 && b.pos.y < 3);
+      if (st){ if (!burst(b)) damageStone(st, b.m.dmg, b.owner); removeBullet(b, true); continue; }
     }
     if (FUNNELS.some(fn => Math.hypot(b.pos.x - fn.x, b.pos.z - fn.z) < fn.r)) removeBullet(b, true);
     else if (b.life <= 0){ burst(b); removeBullet(b, false); }
@@ -2066,6 +2166,95 @@ function buildOffhand(cls){
   else if (cls === 'gunner'){ const p = buildGun('gun'); p.scale.setScalar(.85); g.add(p); }
   else return null;
   return g;
+}
+
+
+/* ---------- Team stones (Emperium-style): break the other side's stone to win ---------- */
+function buildStone(col){
+  const g = new THREE.Group();
+  const base = part(new THREE.CylinderGeometry(.75, .95, .5, 8), toon(0x9aa3b5), 1.05); base.position.y = .25; g.add(base);
+  const rim = part(new THREE.CylinderGeometry(.8, .8, .1, 8), toon(col)); rim.position.y = .52; g.add(rim);
+  const gem = part(new THREE.OctahedronGeometry(.62), toon(col), 1.06); gem.scale.y = 1.45; gem.position.y = 1.75; g.add(gem);
+  const glow = new THREE.Mesh(SPH(.95), new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:.18, depthWrite:false})); glow.position.y = 1.75; g.add(glow);
+  g.userData.gem = gem; g.userData.glow = glow; scene.add(g);
+  return g;
+}
+function stoneSpot(side){
+  const bx = STAGE.box, sgn = side ? 1 : -1;
+  for (let x = Math.abs(bx[side ? 1 : 0])*.82; x > 4; x -= .5){
+    const px = sgn*x;
+    if (onDeck(px, 0, 1.8) && FUNNELS.every(fn => Math.hypot(px - fn.x, fn.z) > fn.r + 1.8)) return new V(px, 0, 0);
+  }
+  return new V(sgn*8, 0, 0);
+}
+function clearStones(){ for (const st of G.stones) scene.remove(st.mesh); G.stones = []; G.winTeam = null; }
+function makeStones(n){
+  clearStones();
+  const max = 500 + 35*n;
+  G.stones = [0, 1].map(side => {
+    const st = {side, pos:stoneSpot(side), hp:max, max, shake:0, mesh:buildStone(SIDES[side].col)};
+    st.mesh.position.copy(st.pos);
+    return st;
+  });
+}
+// Damage every enemy stone within reach of an attack centred at c
+function hitStones(src, c, reach, dmg){
+  if (!G.teamMode || !dmg || G.winTeam !== null) return false;
+  let any = false;
+  for (const st of G.stones){
+    if (st.hp <= 0 || (src && src.side === st.side)) continue;
+    if (Math.hypot(c.x - st.pos.x, c.z - st.pos.z) > reach || c.y > 3.5) continue;
+    damageStone(st, dmg, src); any = true;
+  }
+  return any;
+}
+function damageStone(st, dmg, src){
+  st.hp = Math.max(0, st.hp - dmg); st.shake = 8;
+  const top = new V(st.pos.x, 2.6, st.pos.z);
+  popup(top, String(Math.round(dmg)));
+  emit(top, 6, SIDES[st.side].col, 4, 3, 18, 1.2, 6);
+  if (src){ src.dmgDealt += dmg; src.hits++; }
+  if (st.hp <= 0) breakStone(st, src);
+}
+function breakStone(st, src){
+  const win = 1 - st.side, c = new V(st.pos.x, 1.6, st.pos.z);
+  explodeFx(c); flash(c, SIDES[st.side].col, .6, 4.5, 24); emit(c, 40, SIDES[st.side].col, 10, 7, 40, 2, 10);
+  st.mesh.visible = false; G.shake = Math.max(G.shake, .8); G.slow = 80;
+  banner(`หินฝ่าย${SIDES[st.side].name}แตก!`, st.side ? '' : 'red');
+  feed(src ? `${src.name} ตีหินฝ่าย${SIDES[st.side].name}แตก!` : `หินฝ่าย${SIDES[st.side].name}แตก!`);
+  endTeamMatch(win);
+}
+function endTeamMatch(win){
+  if (G.winTeam !== null || G.endT) return;
+  G.winTeam = win;
+  for (const f of G.fighters) f.place = win === null ? 1 : f.side === win ? 1 : 2;
+  G.winner = null; G.endT = 140;
+}
+function stepStones(){
+  for (const st of G.stones){
+    const g = st.mesh.userData.gem, gl = st.mesh.userData.glow;
+    g.rotation.y += .02; g.position.y = 1.75 + Math.sin(G.frame*.05 + st.side)*.12; gl.position.y = g.position.y;
+    gl.material.opacity = .14 + (1 - st.hp/st.max)*.25 + (st.shake > 0 ? .2 : 0);
+    st.mesh.position.x = st.pos.x + (st.shake > 0 ? (Math.random() - .5)*.12 : 0);
+    if (st.shake > 0) st.shake--;
+  }
+}
+// Fighters can't walk through a stone
+function pushFromStones(f){
+  for (const st of G.stones){
+    if (st.hp <= 0) continue;
+    const dx = f.pos.x - st.pos.x, dz = f.pos.z - st.pos.z, d = Math.hypot(dx, dz);
+    if (d < 1.2 && d > .001 && f.pos.y < 2.4){ f.pos.x = st.pos.x + dx/d*1.2; f.pos.z = st.pos.z + dz/d*1.2; }
+  }
+}
+function syncStoneHud(){
+  const bar = $('stoneBar'); bar.hidden = !G.teamMode; $('feed').classList.toggle('low', G.teamMode);
+  if (!G.teamMode) return;
+  G.stones.forEach((st, i) => {
+    const pct = Math.max(0, st.hp/st.max*100);
+    $('shp' + i).style.width = pct + '%';
+    $('shn' + i).textContent = `หิน${SIDES[i].name} ${Math.ceil(st.hp)}`;
+  });
 }
 
 /* ---------- Simulation ---------- */
@@ -2205,10 +2394,17 @@ function announceLoss(f, why, killer){
   else if (killer && killer.isLocal) banner('K.O.!');
 }
 function respawn(f){
-  f.pos.copy(randomDeckPoint(1.5)); f.pos.y = 10; f.vel.set(0,0,0);
+  let p = randomDeckPoint(1.5);
+  if (f.side >= 0) for (let k = 0; k < 20 && (p.x < 0) !== (f.side === 0); k++) p = randomDeckPoint(1.5);
+  f.pos.copy(p); f.pos.y = 10; f.vel.set(0,0,0);
   f.hp = 100; f.invuln = 150; f.onGround = false; f.splashed = false; setState(f, 'respawn');
 }
 function checkEnd(){
+  if (G.teamMode){
+    const sides = new Set(G.fighters.filter(f => f.stocks > 0).map(f => f.side));
+    if (sides.size <= 1) endTeamMatch(sides.size ? [...sides][0] : null);
+    return;
+  }
   const left = G.fighters.filter(f => f.stocks > 0);
   if (left.length <= 1 && !G.endT){
     G.winner = left[0] || null; if (G.winner) G.winner.place = 1;
@@ -2235,6 +2431,7 @@ function fxTick(){
 function tick(){
   G.frame++;
   fxTick();
+  if (G.stones.length){ stepStones(); if (G.frame % 6 === 0) syncStoneHud(); }
   if (G.mode === 'custom'){ for (const f of G.fighters) if (f.squash > 0) f.squash--; return; }
   if (G.net === 'guest' && G.mode === 'play'){ guestTick(); return; }
   if (G.slow > 0) G.slow--;
@@ -2245,7 +2442,7 @@ function tick(){
     else if (f.ctrl === 'net') Net.applyInput(f);
     else readHuman(f);
   }
-  for (const f of G.fighters){ stepFighter(f); physics(f); }
+  for (const f of G.fighters){ stepFighter(f); physics(f); if (G.teamMode) pushFromStones(f); }
   const fs = G.fighters;
   for (let i = 0; i < fs.length; i++) for (let j = i + 1; j < fs.length; j++){
     const a = fs[i], b = fs[j];
@@ -2532,6 +2729,7 @@ function updateHud(){
 
 /* ---------- Flow ---------- */
 function clearArena(){
+  clearStones();
   for (const it of [...G.items]) removeItem(it);
   for (const b of G.bombs) scene.remove(b.mesh); G.bombs.length = 0;
   for (const b of G.bullets) scene.remove(b.mesh); G.bullets.length = 0;
@@ -2546,7 +2744,8 @@ function hideAllPanels(){
 function enterAttract(){
   G.mode = 'menu'; G.paused = false; G.endT = 0; G.countdown = 0; G.slow = 0;
   clearArena();
-  createFighters(Array.from({length:8}, (_, i) => ({name:'บอท', ctrl:'bot', look:randomLook('บอท')})), 99, false);
+  G.teamMode = false; clearStones();
+  createFighters(botNames(8).map(name => ({name, ctrl:'bot', look:randomLook(name)})), 99, false);
 }
 function toMenu(){
   if (Net.peer || G.net) Net.leave();
@@ -2560,14 +2759,18 @@ function readMenuCfg(){
   G.cfg.st = +(document.querySelector('input[name=st]:checked') || {}).value || 2;
   G.cfg.df = (document.querySelector('input[name=diff]:checked') || {}).value || 'normal';
   G.cfg.stage = (document.querySelector('input[name=stage]:checked') || {}).value || 'titanic';
+  G.cfg.mode = (document.querySelector('input[name=mode]:checked') || {}).value === 'team' ? 'team' : 'ffa';
 }
 function botSpecs(from, n){
   const out = [];
-  for (let i = from; i < n; i++) out.push({name:'บอท ' + (i - from + 1), ctrl:'bot', look:randomLook('บอท')});
+  const names = botNames(Math.max(0, n - from));
+  for (let i = from; i < n; i++) out.push({name:names[i - from], ctrl:'bot', look:randomLook(names[i - from])});
   return out;
 }
 function beginMatch(specs, stocks){
   hideAllPanels(); clearArena();
+  G.teamMode = G.cfg.mode === 'team' && specs.length >= 2;
+  if (G.teamMode) makeStones(specs.length); else clearStones();
   G.mode = 'play'; G.paused = false; G.endT = 0; G.winner = null; G.slow = 0; G.stocks = stocks;
   G.countdown = 210; G.cdShown = new Set(); G.itemTimer = 240; G.spec = 0; G.dbgHtml = null;
   createFighters(specs, stocks, true);
@@ -2575,6 +2778,7 @@ function beginMatch(specs, stocks){
   $('hud').hidden = false;
   syncTouch();
   syncAutoUi();
+  syncStoneHud();
   $('dbg').hidden = !G.debug;
   keys.clear();
 }
@@ -2610,6 +2814,7 @@ function showResult(rows, winnerIdx){
   const w = winnerIdx !== undefined ? G.fighters[winnerIdx] : G.winner;
   const t = $('resTitle'); t.textContent = w ? w.name + ' ชนะ!' : 'เสมอ!';
   t.style.color = w ? hex(w.team) : 'var(--gold)';
+  if (G.teamMode && G.winTeam !== null){ t.textContent = `ฝ่าย${SIDES[G.winTeam].name}ชนะ!`; t.style.color = hex(SIDES[G.winTeam].col); }
   const body = $('resBody'); body.textContent = '';
   rows.sort((a, b) => a.place - b.place || b.kos - a.kos).forEach(r => {
     const tr = document.createElement('tr'); if (r.f.isLocal) tr.className = 'me';
@@ -2621,7 +2826,8 @@ function showResult(rows, winnerIdx){
   $('resMenu').textContent = G.net ? 'ออกจากห้อง' : 'กลับเมนู';
   $('result').hidden = false; $('touch').hidden = true; $('spec').hidden = true;
   $('rematch').focus({preventScroll:true});
-  if (G.net === 'host') Net.hostEnd(rows, w ? w.idx : -1);
+  // Team wins travel to guests as -10 - side
+  if (G.net === 'host') Net.hostEnd(rows, G.teamMode && G.winTeam !== null ? -10 - G.winTeam : w ? w.idx : -1);
 }
 
 /* ---------- Online (PeerJS / WebRTC): host simulates, guests send input and render snapshots ---------- */
@@ -2845,7 +3051,7 @@ const Net = {
   },
   publishRoom(){
     if (this.role !== 'host') return;
-    this.presence({r:'h', nm:LOOKS[0].name, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage)], ph:this.ph, ep:this.epoch, slots:this.slots});
+    this.presence({r:'h', nm:LOOKS[0].name, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], ph:this.ph, ep:this.epoch, slots:this.slots});
     this.adv();
   },
   start(){
@@ -2858,7 +3064,7 @@ const Net = {
       const bn = slotName(sl, i);
       return {name:bn, ctrl:'bot', look:seededLook(Number(nm) || i, bn)};
     });
-    this.presence({ph:'play', ep:this.epoch, slots:this.slots, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage)], res:null, win:null, sn:null});
+    this.presence({ph:'play', ep:this.epoch, slots:this.slots, cfg:[G.cfg.n, G.cfg.st, DIFF_KEYS.indexOf(G.cfg.df), STAGE_KEYS.indexOf(G.cfg.stage), MODE_KEYS.indexOf(G.cfg.mode)], res:null, win:null, sn:null});
     this.adv();
     setStage(G.cfg.stage);
     beginMatch(specs, G.cfg.st);
@@ -2891,7 +3097,8 @@ const Net = {
       it:G.items.slice(0, 10).map(it => [it.id, ITEM_TYPES.indexOf(it.type), r(it.pos.x), r(it.pos.y), r(it.pos.z), it.landed ? 1 : 0, it.t > 60*17 ? 1 : 0]),
       b:G.bombs.slice(0, 12).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), b.kind === 'meteor' ? 1 : 0]),
       bl:G.bullets.slice(0, 24).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), Math.round(b.vel.x*10), Math.round(b.vel.z*10), PROJ_KINDS.indexOf(b.kind || 'bullet')]),
-      tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)])};
+      tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)]),
+      em:G.stones.map(st => Math.ceil(st.hp))};
     this.presence({ph:this.ph, sn});
   },
   hostEnd(rows, win){
@@ -2956,6 +3163,7 @@ const Net = {
       if (p.ph === 'end' && Array.isArray(p.res) && this.resShown !== this.epoch){
         this.resShown = this.epoch;
         const rows = G.fighters.map((f, i) => { const r = Array.isArray(p.res[i]) ? p.res[i] : [i + 1, 0, 0]; return {f, place:Number(r[0]) || i + 1, kos:Number(r[1]) || 0, dmg:Number(r[2]) || 0}; });
+        if (Number.isInteger(p.win) && p.win <= -10) G.winTeam = Math.min(1, -10 - p.win);
         G.endT = 1; showResult(rows, Number.isInteger(p.win) && p.win >= 0 ? p.win : undefined);
       }
     }
@@ -2968,6 +3176,7 @@ const Net = {
       return {name:nm, ctrl:'remote', peer, me, look:me ? LOOKS[0] : isBot ? seededLook(Number(s[1]) || 1, nm) : decLook(s[2], nm)};
     });
     setStage(STAGE_KEYS[Array.isArray(p.cfg) ? Number(p.cfg[3]) : 0] || 'titanic');
+    G.cfg.mode = Array.isArray(p.cfg) && Number(p.cfg[4]) === 1 ? 'team' : 'ffa';
     beginMatch(specs, st);
     G.me = G.fighters.findIndex(f => f.isLocal);
     for (const f of G.fighters) f.netInit = false;
@@ -3036,6 +3245,12 @@ const Net = {
       }
       for (const t of [...G.turrets]) if (!seen.has(t.id)) removeTurret(t, true);
     }
+    if (Array.isArray(sn.em)) G.stones.forEach((st, i) => {
+      const hp = Math.max(0, Number(sn.em[i]) || 0);
+      if (hp < st.hp){ st.shake = 8; emit(new V(st.pos.x, 2.6, st.pos.z), 6, SIDES[st.side].col, 4, 3, 18, 1.2, 6); }
+      if (hp <= 0 && st.hp > 0){ const c = new V(st.pos.x, 1.6, st.pos.z); explodeFx(c); emit(c, 40, SIDES[st.side].col, 10, 7, 40, 2, 10); st.mesh.visible = false; banner(`หินฝ่าย${SIDES[st.side].name}แตก!`); }
+      st.hp = hp;
+    });
     if (Array.isArray(sn.b)){
       const seen = new Set();
       for (const a of sn.b.slice(0, 12)){
@@ -3119,10 +3334,10 @@ function renderRoomView(){
   $('shareLink').hidden = typeof navigator.share !== 'function';
   $('rCfg').hidden = !host; $('rCfgText').hidden = host;
   if (host){
-    $('rN').value = G.cfg.n; $('rNOut').textContent = G.cfg.n; $('rSt').value = G.cfg.st; $('rDf').value = G.cfg.df; $('rStage').value = G.cfg.stage;
+    $('rN').value = G.cfg.n; $('rNOut').textContent = G.cfg.n; $('rSt').value = G.cfg.st; $('rDf').value = G.cfg.df; $('rStage').value = G.cfg.stage; $('rMode').value = G.cfg.mode;
   } else {
     const c = Net.cfg || [];
-    $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'} · ด่าน${(STAGES[STAGE_KEYS[Number(c[3])]] || STAGES.titanic).name}`;
+    $('rCfgText').textContent = `กติกา: นักสู้ ${Number(c[0]) || 2} ตัว · ${Number(c[1]) || 2} ชีวิต · บอทระดับ${['ง่าย','ปกติ','ยาก'][Number(c[2])] || 'ปกติ'} · ด่าน${(STAGES[STAGE_KEYS[Number(c[3])]] || STAGES.titanic).name}${Number(c[4]) === 1 ? ' · ทีมตีหิน' : ''}`;
   }
   const list = $('slotList'); list.textContent = '';
   const slots = Net.slots || [];
@@ -3244,11 +3459,14 @@ $('myName').addEventListener('input', e => { LOOKS[0].name = cleanName(e.target.
 $('rN').addEventListener('input', e => { G.cfg.n = +e.target.value; $('rNOut').textContent = G.cfg.n; Net.computeSlots(); Net.publishRoom(); renderRoomView(); });
 $('rSt').addEventListener('change', e => { G.cfg.st = +e.target.value; Net.publishRoom(); });
 $('rDf').addEventListener('change', e => { G.cfg.df = e.target.value; Net.publishRoom(); });
+$('rMode').addEventListener('change', e => { G.cfg.mode = e.target.value === 'team' ? 'team' : 'ffa'; Net.publishRoom(); });
 $('rStage').addEventListener('change', e => { G.cfg.stage = e.target.value; setStage(G.cfg.stage); if (G.mode === 'menu') enterAttract(); Net.publishRoom(); });
 for (const r of document.querySelectorAll('input[name=stage]')) r.addEventListener('change', e => {
   G.cfg.stage = e.target.value; setStage(G.cfg.stage); if (G.mode === 'menu') enterAttract();
   try { localStorage.setItem('skybrawl.stage', G.cfg.stage); } catch (err) {}
 });
+try { if (localStorage.getItem('skybrawl.mode') === 'team'){ G.cfg.mode = 'team'; $('md-team').checked = true; } } catch (err) {}
+for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListener('change', e => { try { localStorage.setItem('skybrawl.mode', e.target.value); } catch (err) {} });
 try { const sp = localStorage.getItem('skybrawl.stage'); if (STAGES[sp]){ G.cfg.stage = sp; setStage(sp); $('sg-' + sp).checked = true; } } catch (err) {}
 $('rStart').onclick = () => { if (Net.role === 'host') Net.start(); };
 $('rLeave').onclick = () => { Net.leave(); hideAllPanels(); $('online').hidden = false; showLobbyView(); };
