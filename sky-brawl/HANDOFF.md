@@ -1,13 +1,7 @@
 # Sky Brawl — เอกสารส่งต่องาน
 
-> **เวอร์ชัน 1.4.0** (ดู [DEVLOG.md](DEVLOG.md)) · อัปเดตล่าสุด: 11 ต.ค. 2026 · ไฟล์หลัก `index.html` ยาวประมาณ 4,500 บรรทัด
+> อัปเดตล่าสุด: 11 ต.ค. 2026 · ไฟล์หลัก `index.html` ยาวประมาณ 4,500 บรรทัด
 > ใช้ไฟล์นี้เป็นจุดเริ่มต้นเมื่อทำงานต่อจากบัญชีอื่น หรือส่งให้ AI ตัวใหม่อ่านก่อนลงมือ
-
----
-
-## 0. เวอร์ชัน
-
-เวอร์ชันปัจจุบัน **1.4.0** — กติกาเลขเวอร์ชันและบันทึกทุกรอบอยู่ที่ [`DEVLOG.md`](DEVLOG.md) (ทุกครั้งที่ merge ให้อัปเดตที่นั่น)
 
 ---
 
@@ -33,7 +27,6 @@
 | `config.js` | ตั้งค่าที่ปรับบ่อย: คูลดาวน์/ดาเมจ/แรงกระเด็น/ฮีลของสกิล, เปิด-ปิดอาชีพ, ตัวคูณรวม | ✅ (ไม่มีไฟล์นี้เกมก็ใช้ค่าเดิม) |
 | `supabase-setup.sql` | ตาราง profiles + แชตล็อบบี้ (รันแล้ว) | ❌ รันใน Supabase เท่านั้น |
 | `supabase-levels.sql` | ตาราง player_stats + ฟังก์ชัน record_match (รันแล้ว) | ❌ |
-| `DEVLOG.md` | เลขเวอร์ชัน + บันทึกการอัปเดตทุกรอบ | ✅ |
 | `HANDOFF.md` | ไฟล์นี้ | ไม่จำเป็น |
 
 ---
@@ -207,3 +200,13 @@ python -m http.server 8765 --directory sky-brawl
 > โปรดอ่าน `sky-brawl/HANDOFF.md` ก่อน แล้วดึงไฟล์ล่าสุดจาก GitHub มาเทียบกับไฟล์บนเครื่องก่อนแก้อะไร
 > แก้แบบหาข้อความเดิมแล้วแทนที่ ตรวจ `node --check` หลังแก้ และทดสอบที่ http://localhost:8765 ก่อนให้ผมอัปขึ้น GitHub
 > งานต่อไปที่อยากทำคือ: ______
+
+## แปลงร่าง (มนุษย์หมาป่า / เทมเมอร์) + แต่งตัวจากล็อบบี้ (2026-10-12)
+- คลาสใหม่ `werewolf`, `tamer` (ต่อท้าย `OUTFITS` เพื่อไม่ให้เลข index ของ look ที่เซฟไว้เลื่อน) ท่าปกติ `ww1-3` / `tm1-3` (แส้ของเทมเมอร์อยู่ใน `buildClassWeapon`)
+- `FORM_INFO[cls]` = {secs, scale, speed, atk, moves, stop, reach}; สกิล `sk_werewolf`/`sk_tamer` (มี `form:true`, `fire:startForm`) ตั้ง `f.formT` (เฟรม) ระหว่างแปลงร่าง `attackKey()` คืนท่าของร่างนั้น (`wf1-3` ตะปบวงกว้าง `sweep` rad 2.8–3.4 / `dg1` พ่นไฟ `breath:true`)
+- `dg1` ไม่ใช้ `checkHits` แต่ `breathTick()` (host เท่านั้น) ตีทุกคนในรูปกรวย (`range`, `arc`, ทุก `tick` เฟรม) + หินทีม + บอส; เอฟเฟกต์ไฟ/ฟ้าวาดจาก `formMoveFx()` ในฟังก์ชัน `pose` ทุกเครื่อง
+- โมเดลร่างเป็นชิ้นส่วนสวมทับตัวเดิม (`attachForm`: หัว/ลำตัว/แขน/ขา/ปีก/หาง) ซ่อนไว้จน `formT>0`, ตัวใหญ่ขึ้นด้วย `root.scale` (`poseForm`), เนื่องจากอยู่ใต้ `tilt` ต้อง attach หลัง `mergeMeshes` ทุกอันใน `buildChibi`
+- ออนไลน์: บิต 128 ใน flags ของ `Net.encF` = กำลังแปลงร่าง guest ตั้ง `formT=30` และยิง `formFx`/`endForm` ตอนบิตเปลี่ยน
+- config.js: `classes.werewolf/tamer`, `skills.werewolf/tamer` มี `form` (วินาทีที่แปลงร่าง) เพิ่มจาก cd/dmg/kb โดย dmg/kb ของสกิลจะถูกคัดลอกไปที่ท่าของร่าง (`MOVES.wf*`/`dg1`, คูณด้วย `fmul`/`kbmul` ถ้ามี) ผ่าน `FORM_INFO[k].moves`
+- เสียงใหม่ `howl`, `roar`, `claw`, `flame` และ `m.snd` ในท่า = เล่นเสียงนี้แทนเสียงเริ่มท่าปกติ (`Sfx.move`)
+- แต่งตัวจากล็อบบี้/ห้อง: ปุ่ม `#lobbyCust`, `#roomCust` → `customizeFromOnline()` เปิด `#custom` (class `single` ซ่อนแท็บ P1/P2) กด "บันทึก" กลับไปล็อบบี้/ห้อง แล้วเรียก `Net.lookChanged()` (host = `refreshSlots`, guest = ส่ง presence `nm`+`lk`); รายชื่อนักสู้ในห้องแสดงป้ายอาชีพ
