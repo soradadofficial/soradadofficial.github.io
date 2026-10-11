@@ -209,6 +209,11 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;border:2px solid var(
 #c{touch-action:none}
 html,body{overscroll-behavior:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 button{touch-action:manipulation}
+/* No double-tap zoom anywhere (scrolling still works); the game surfaces take no browser gestures at all */
+body *{touch-action:manipulation}
+#touch,#touch *,#hud{touch-action:none;-webkit-user-select:none;user-select:none}
+/* iOS zooms the page when an input under 16px gets focus */
+@media (pointer:coarse){input,select,textarea{font-size:16px}}
 #touch{position:fixed;inset:0;pointer-events:none}
 #joyZone{position:absolute;left:0;bottom:0;width:50%;height:62%;pointer-events:auto;touch-action:none}
 #joy{position:absolute;left:95px;top:0;width:130px;height:130px;margin:-65px 0 0 -65px;border-radius:50%;border:3px solid var(--ink);background:rgba(255,247,232,.4);pointer-events:none;opacity:.75;transition:opacity .15s}
@@ -6848,6 +6853,16 @@ function syncTouch(){
     syncTouch();
   };
   $('touchNote').hidden = !IS_TOUCH;
+  // iOS Safari: one finger on the stick plus one on a button reads as a pinch, quick taps as a double-tap zoom
+  const stop = e => e.preventDefault();
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, stop, {passive:false});
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 || (e.scale !== undefined && e.scale !== 1)) e.preventDefault(); }, {passive:false});
+  for (const el of [zone, ...document.querySelectorAll('#tbtns button')]) el.addEventListener('touchstart', stop, {passive:false});
+  let lastEnd = 0;
+  document.addEventListener('touchend', e => {
+    if (e.timeStamp - lastEnd < 350 && e.target.closest && !e.target.closest('input,select,textarea,a,label,button')) e.preventDefault();
+    lastEnd = e.timeStamp;
+  }, {passive:false});
 }
 
 function resize(){
