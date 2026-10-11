@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#5a8f3a">
-<meta name="description" content="BloxFighter เกมต่อสู้ 3 มิติโลกบล็อกบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 64 คน">
+<meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติโลกบล็อกบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 64 คน">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://soradadofficial.github.io/sky-brawl/">
 <meta property="og:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="นักสู้หลายอาชีพตะลุมบอนกันบนดาดฟ้าเรือไททานิก ในโลกบล็อก พร้อมโลโก้ BloxFighter">
-<meta property="og:title" content="BloxFighter เกมต่อสู้โลกบล็อก 3D บนเว็บ">
+<meta property="og:image:alt" content="นักสู้หลายอาชีพตะลุมบอนกันบนดาดฟ้าเรือไททานิก ในโลกบล็อก พร้อมโลโก้ Sky Brawl">
+<meta property="og:title" content="Sky Brawl เกมต่อสู้โลกบล็อก 3D บนเว็บ">
 <meta property="og:description" content="ตะลุมบอนในโลกบล็อก บนเรือไททานิก วัดไทย สยาม และอีกหลายด่าน กว่า 30 อาชีพ เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง ชวนเพื่อนเล่นออนไลน์ได้">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
-<meta name="twitter:title" content="BloxFighter เกมต่อสู้โลกบล็อก 3D บนเว็บ">
+<meta name="twitter:title" content="Sky Brawl เกมต่อสู้โลกบล็อก 3D บนเว็บ">
 <meta name="twitter:description" content="ตะลุมบอนบนเรือไททานิก วัดไทย และสยาม เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง">
-<title>BloxFighter</title>
+<title>Sky Brawl</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Kanit:wght@400;500;700&family=Silkscreen:wght@400;700&display=swap">
@@ -306,6 +306,18 @@ body *{touch-action:manipulation}
 .ctabs .tab{flex:1;font-family:var(--display);font-size:13px;padding:8px;border:3px solid var(--ink);border-radius:10px;background:var(--paper);cursor:pointer}
 .ctabs .tab[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 #custom.single .ctabs{display:none}
+.cfilter{margin-bottom:8px;gap:5px;min-width:0}
+#copts,#copts .opt,.cpanel>*{min-width:0}
+.cfilter button{font-size:12.5px;padding:3px 9px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:7px}
+.ccard{display:grid;justify-items:center;align-content:start;gap:1px;padding:0 0 4px;border:2px solid var(--ink);border-radius:10px;background:var(--white);cursor:pointer;overflow:hidden;font:inherit;color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.ccard .cimg{width:100%;aspect-ratio:1;background:#fff4dc center/cover no-repeat;border-bottom:2px solid var(--ink)}
+.ccard .cn{font-size:11.5px;font-weight:700;line-height:1.15;padding:3px 3px 0;text-align:center}
+.ccard .cs{font-size:10px;color:#d39a00;letter-spacing:1px;line-height:1}
+.ccard[aria-pressed="true"]{background:var(--gold);box-shadow:0 0 0 3px var(--ink)}
+.ccard[hidden]{display:none}
+.crole{margin-top:4px;font-size:12px;font-weight:700;opacity:.8}
+@media (max-width:480px){.chips.cfilter{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.cfilter::-webkit-scrollbar{display:none}.cfilter button{flex:none}.cgrid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:5px}.ccard .cn{font-size:10.5px}}
 .sw{display:flex;flex-wrap:wrap;gap:8px}
 .sw button{width:32px;height:32px;border-radius:50%;border:2px solid var(--ink);cursor:pointer;padding:0}
 .sw button[aria-pressed="true"]{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--ink)}
@@ -339,7 +351,7 @@ body *{touch-action:manipulation}
 }
 @media (prefers-reduced-motion:reduce){ #banner.show{animation:fade 1s both} @keyframes fade{0%,100%{opacity:0}15%,80%{opacity:1}} .fi{animation:none} }
 
-/* ---------- BloxFighter: blocky UI ---------- */
+/* ---------- Sky Brawl: blocky UI ---------- */
 :root{--sky:#7fb7e8;--pixel:"Silkscreen","Dela Gothic One","Kanit",system-ui,sans-serif}
 *,*::before,*::after{border-radius:0!important}
 .logo.blox{font-family:var(--pixel);font-weight:700;font-size:clamp(28px,7.6vw,50px);line-height:1;margin-bottom:12px;letter-spacing:.02em;color:#c9c9c9;-webkit-text-stroke:0;
@@ -396,8 +408,8 @@ body *{touch-action:manipulation}
 <div id="menu" class="overlay">
   <div class="card">
     <div>
-      <h1 class="logo blox" aria-label="BloxFighter">BLOX<span>FIGHTER</span></h1>
-      <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 124 คน (ออนไลน์ 64 คน) ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
+      <h1 class="logo blox" aria-label="Sky Brawl">SKY<span>BRAWL</span></h1>
+      <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 128 คน ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
       <div id="lvChip" class="lvchip" hidden><span class="lv"></span><span class="lt"></span><span class="xpbar"><i></i></span></div>
       <div id="acctBox" class="acct" hidden>
         <span id="acctText" class="note"></span>
@@ -411,7 +423,7 @@ body *{touch-action:manipulation}
     <button class="btn plain tutb" id="tutBtn" type="button">📘 สอนเล่น 1 นาที</button>
     <details class="setd" id="setD"><summary>ตั้งค่าเกม <small id="setSum"></small></summary>
     <div class="settings">
-      <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="124" value="8"><output id="nfOut" for="nf">8</output></div>
+      <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="128" value="8"><output id="nfOut" for="nf">8</output></div>
       <div class="seg" role="radiogroup" aria-label="จำนวนชีวิต">
         <span class="lbl">ชีวิตต่อคน</span>
         <input type="radio" name="st" id="st1" value="1"><label for="st1">1</label>
@@ -444,6 +456,7 @@ body *{touch-action:manipulation}
           <input type="radio" name="stage" id="sg-ice" value="ice"><label class="pickcard" for="sg-ice"><span class="nm">ทะเลสาบน้ำแข็ง</span></label>
           <input type="radio" name="stage" id="sg-hospital" value="hospital"><label class="pickcard" for="sg-hospital"><span class="nm">โรงพยาบาล</span></label>
           <input type="radio" name="stage" id="sg-japan" value="japan"><label class="pickcard" for="sg-japan"><span class="nm">เมืองญี่ปุ่นโบราณ</span></label>
+          <input type="radio" name="stage" id="sg-skyisle" value="skyisle"><label class="pickcard" for="sg-skyisle"><span class="nm">เกาะลอยฟ้า (128 คน)</span></label>
         </div>
       </div>
     </div>
@@ -540,7 +553,7 @@ body *{touch-action:manipulation}
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
         <div class="seg" style="display:none"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option><option value="boss">ตีบอส (ด่านคริสต์มาส)</option></select></div>
-        <div class="seg" style="display:none"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option><option value="ice">ทะเลสาบน้ำแข็ง</option><option value="hospital">โรงพยาบาล</option><option value="japan">เมืองญี่ปุ่นโบราณ</option></select></div>
+        <div class="seg" style="display:none"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option><option value="ice">ทะเลสาบน้ำแข็ง</option><option value="hospital">โรงพยาบาล</option><option value="japan">เมืองญี่ปุ่นโบราณ</option><option value="skyisle">เกาะลอยฟ้า</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
       <div id="rPick" class="settings">
@@ -659,7 +672,7 @@ body *{touch-action:manipulation}
 <!-- Settings you can tweak without touching this file: skill cooldowns/power, classes on/off -->
 <script src="config.js"></script>
 <script>
-/* ---------- Voxel look (BloxFighter) ----------
+/* ---------- Voxel look (Sky Brawl) ----------
    Runs before any model is built: round geometry becomes blocky, so every character, prop and stage
    piece comes out made of cubes without touching the model code. The original round classes stay
    available as THREE.RoundSphere / THREE.RoundCylinder for things that must stay round (hitbox view,
@@ -803,6 +816,7 @@ const SFX_R = {
   skill:   {gap:80, v:.7, dur:.5, f(k, t, o){ k.T(t, 320, 1300, .3, .35, 'sawtooth', o); k.T(t + .05, 640, 2600, .28, .18, 'triangle', o); k.N(t, .22, .35, 'bandpass', 800, 3000, o, 1.4); }},
   howl:    {gap:200, v:.9, dur:1.1, prio:1, f(k, t, o){ k.T(t, 300, 640, .3, .5, 'sawtooth', o, .05); k.T(t + .3, 640, 340, .7, .5, 'sawtooth', o, .02); k.T(t, 600, 1280, .3, .18, 'triangle', o, .05); k.N(t, .5, .25, 'bandpass', 900, 500, o, 1.5); }},
   roar:    {gap:200, v:1, dur:1, prio:1, f(k, t, o){ k.T(t, 120, 55, .8, .8, 'sawtooth', o, .03); k.T(t, 240, 80, .6, .4, 'square', o, .03); k.N(t, .7, 1, 'lowpass', 1400, 180, o); }},
+  skull:   {gap:200, v:.9, dur:1, prio:1, f(k, t, o){ k.T(t, 95, 42, .7, .8, 'sawtooth', o, .04); k.N(t, .6, .7, 'lowpass', 900, 120, o); [0, .07, .13, .2, .26].forEach(d => k.T(t + .15 + d, 1100 - d*1400, 700, .04, .22, 'square', o)); }},
   spirit:  {gap:200, v:.8, dur:1, prio:1, f(k, t, o){ k.T(t, 520, 260, .8, .35, 'triangle', o, .08); k.T(t, 527, 263, .8, .3, 'triangle', o, .08); k.T(t + .1, 1040, 700, .6, .12, 'sine', o, .05); k.N(t, .7, .3, 'bandpass', 1500, 500, o, 2); }},
   lance:   {gap:150, v:.7, dur:.4, f(k, t, o){ k.N(t, .3, 1.4, 'bandpass', 900, 3000, o, 1.3); k.T(t, 600, 1400, .25, .25, 'sawtooth', o); }},
   skyslash:{gap:120, v:.9, dur:.5, prio:1, f(k, t, o){ k.N(t, .4, 1.6, 'bandpass', 4200, 700, o, 2); k.T(t, 1900, 420, .35, .35, 'sawtooth', o); k.T(t + .02, 3800, 900, .2, .15, 'sine', o); }},
@@ -1170,6 +1184,15 @@ const MOVES = {
   ln2:{name:'กวาดหอก', anim:'swing', startup:6, active:3, recovery:11, dmg:5, kb:3.5, up:0, stun:18, reach:1.6, rad:1.2, lunge:2, next:'ln3', hitstop:5},
   ln3:{name:'แทงทะลวง', anim:'thrust', startup:10, active:3, recovery:18, noHit:true, lance:true, tick:99, len:5, wid:.9, dmg:9, kb:10, up:6, launch:true, hitstop:7, shake:.3, reach:0, rad:0},
   sk_lancer:{name:'พายุหอก', anim:'jab', startup:8, active:40, recovery:16, noHit:true, lance:true, tick:4, len:6.5, wid:1.4, dmg:3, kb:2.5, up:0, stun:12, hitstop:2, shake:.06, reach:0, rad:0, skill:true, snd:'lance'},
+  // Reaper: a scythe; the skill raises a giant skeleton that smashes the ground and stuns (มึน) everyone in the circle
+  rp1:{name:'ฟันเคียว', anim:'swing', startup:6, active:3, recovery:12, dmg:5, kb:3, up:0, stun:18, reach:1.6, rad:1.05, lunge:2, next:'rp2', hitstop:5},
+  rp2:{name:'เคียวหมุน', anim:'spin', startup:7, active:6, recovery:14, sweep:true, dmg:6, kb:6, up:3, stun:20, reach:0, rad:2, hitstop:5, shake:.15, next:'rp3'},
+  rp3:{name:'เคียวเกี่ยววิญญาณ', anim:'slam', startup:11, active:3, recovery:18, dmg:9, kb:9, up:7, launch:true, reach:1.8, rad:1.2, lunge:1.5, hitstop:8, shake:.3},
+  sk_reaper:{name:'อัญเชิญโครงกระดูกยักษ์', anim:'cast', startup:14, active:1, recovery:14, noHit:true, dmg:12, radius:3.5, stunT:100, life:10, hitstop:6, shake:.5, reach:0, rad:0, skill:true, snd:'skull',
+    fire:(f, m) => summonSkeleton(f, m)},
+  // Ranged poke for casters and gunners: used by itself when nobody is within arm's reach but an enemy is in range
+  rpk:{name:'ยิงเวท', anim:'cast', startup:7, active:1, recovery:13, noHit:true, dmg:4, kb:3, up:0, stun:14, hitstop:2, shake:.04, reach:0, rad:0, next:'rpk', fire:f => pokeShot(f)},
+  rps:{name:'ยิงระยะไกล', anim:'shoot', startup:5, active:1, recovery:12, noHit:true, dmg:4, kb:3, up:0, stun:14, hitstop:2, shake:.04, reach:0, rad:0, next:'rps', fire:f => pokeShot(f)},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -1210,6 +1233,7 @@ const SKILL_INFO = {
   werewolf:{cd:840, range:6, desc:''},
   tamer:{cd:960, range:7, desc:''},
   shaman:{cd:900, range:10, desc:''},
+  reaper:{cd:840, range:9, desc:''},
   lancer:{cd:480, range:6, desc:'แทงหอกรัวเป็นแนวยาว 6.5 ช่องข้างหน้า ทุกคนในแนวโดนหลายครั้ง ครั้งสุดท้ายกระเด็นไกล (หันตามจอยได้ช้าๆ ระหว่างแทง)'},
 };
 // A transformation: how long it lasts, how much bigger the body grows, the walking-speed multiplier, the form's attack, the bots' stopping distance and attack range
@@ -1223,8 +1247,8 @@ const GHOST_SLASH = {dmg:10, kb:9, up:6, launch:true, hitstop:6, shake:.25};
 // First hit of each class's ground combo; the chain continues through each move's next
 const CLASS_COMBO = {none:'jab1', knight:'kn1', warrior:'wa1', berserker:'bz1', paladin:'pa1', mage:'ma1', priest:'pr1', necro:'ne1', druid:'dr1',
   archer:'ar1', assassin:'as1', ninja:'ni1', samurai:'sa1', monk:'mo1', bard:'bd1', gunner:'gn1', engineer:'en1', pony:'pn1', gundam:'gd1',
-  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1', frost:'fr1', volt:'vo1', demon:'dm1', spacecop:'lz1', soldier:'so1', werewolf:'ww1', tamer:'tm1', shaman:'sm1', lancer:'ln1'};
-const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:3, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2, demon:4, spacecop:2.2, soldier:2, werewolf:2.2, tamer:2.9, shaman:2.2, lancer:2.6};
+  merchant:'mc1', blacksmith:'bs1', hunter:'hn1', wizard:'wz1', crusader:'cr1', alchemist:'ac1', rogue:'rg1', taekwon:'tk1', acolyte:'ay1', frost:'fr1', volt:'vo1', demon:'dm1', spacecop:'lz1', soldier:'so1', werewolf:'ww1', tamer:'tm1', shaman:'sm1', lancer:'ln1', reaper:'rp1'};
+const CLASS_REACH = {hunter:9, wizard:2.2, crusader:2.3, alchemist:2, blacksmith:2.2, archer:9, gunner:8, knight:2.2, warrior:2.3, berserker:2.2, samurai:3, necro:2.4, gundam:2.3, mage:2.2, priest:2.2, druid:2.2, frost:2.2, volt:2.2, demon:4, spacecop:2.2, soldier:2, werewolf:2.2, tamer:2.9, shaman:2.2, lancer:2.6, reaper:2.4};
 const CLASS_STOP = {archer:6, gunner:5, hunter:6, demon:3};
 const skillKey = cls => 'sk_' + (MOVES['sk_' + cls] ? cls : 'none');
 const RAPID_SHOT = {dmg:5, kb:3, up:0, stun:12, hitstop:2, shake:.03};
@@ -1286,7 +1310,7 @@ gmap.minFilter = gmap.magFilter = THREE.NearestFilter; gmap.needsUpdate = true;
 const matCache = {};
 const toon = c => matCache[c] || (matCache[c] = new THREE.MeshToonMaterial({color:c, gradientMap:gmap}));
 const OUT = new THREE.MeshBasicMaterial({color:INK, side:THREE.BackSide});
-OUT.visible = false; // BloxFighter: blocks have no ink outline
+OUT.visible = false; // Sky Brawl: blocks have no ink outline
 const SPH = r => new THREE.SphereGeometry(r, r > .3 ? 18 : 12, r > .3 ? 12 : 8);
 function part(geo, mat, outline){
   const m = new THREE.Mesh(geo, mat); m.castShadow = true;
@@ -2268,6 +2292,107 @@ function buildJapan(){
   return g;
 }
 
+/* ---------- Sky island: a big floating island for up to 128 fighters and guild wars. Nobody falls off (STAGE.walls keeps
+   everyone on the grass); fights are won by knock-outs. Terraced hills give ranged classes high ground, ruined walls
+   block shots, and tall grass hides whoever stands in it from everyone further than a few steps away. ---------- */
+const SI_W = 62, SI_D = 40;
+// Round obstacles: the giant tree in the middle and small woods
+const SI_OBS = [[0, 0, 2.6, 'big'],
+  [-20, -30, .9], [-23, -27, .9], [-18, -25, .9], [20, 30, .9], [23, 27, .9], [18, 25, .9],
+  [-46, 30, .9], [-50, 27, .9], [46, -30, .9], [50, -27, .9], [-8, 16, .9], [8, -16, .9]].map(([x, z, r, kind]) => ({x, z, r, kind}));
+// Terraced hills (3 steps, each about one jump high) and ruined walls that stop shots
+const SI_HILLS = [[-32, -22], [32, 22], [-32, 22], [32, -22], [0, -31], [0, 31]];
+const SI_BLOCKS = [];
+for (const [x, z] of SI_HILLS){
+  SI_BLOCKS.push({x, z, hx:6, hz:4.5, h:.9, kind:'hill'}, {x, z, hx:4, hz:3, h:1.8, kind:'hill'}, {x, z, hx:2.2, hz:1.8, h:2.7, kind:'hill'});
+}
+for (const [x, z, hx, hz] of [[-14, -11, 3.5, .5], [-17, -8, .5, 3.5], [14, 11, 3.5, .5], [17, 8, .5, 3.5], [-14, 11, 3.5, .5], [14, -11, 3.5, .5],
+  [-44, -6, .5, 4], [44, 6, .5, 4], [-44, 12, 3, .5], [44, -12, 3, .5]]) SI_BLOCKS.push({x, z, hx, hz, h:3.4, kind:'ruin'});
+// Tall grass: standing inside hides you from anyone more than SI_HIDE squares away
+const SI_BUSH = [[-24, 4, 4, 3], [24, -4, 4, 3], [-12, -20, 4, 2.5], [12, 20, 4, 2.5], [-52, -14, 3, 5], [52, 14, 3, 5], [-36, 2, 3, 3], [36, -2, 3, 3]]
+  .map(([x, z, hx, hz]) => ({x, z, hx, hz}));
+const SI_HIDE = 4;
+const inBush = f => !!STAGE.bushes && f.pos.y < 1 && STAGE.bushes.some(b => Math.abs(f.pos.x - b.x) < b.hx && Math.abs(f.pos.z - b.z) < b.hz);
+function siTex(){
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const t = c.getContext('2d');
+  t.fillStyle = '#6fb04a'; t.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 1400; i++){ t.fillStyle = ['rgba(60,120,40,.35)', 'rgba(150,210,90,.3)', 'rgba(90,150,50,.3)'][i % 3]; const s = 2 + Math.random()*5; t.fillRect(Math.random()*512, Math.random()*512, s, s); }
+  for (let i = 0; i < 40; i++){ t.fillStyle = ['#fff6a8', '#ffffff', '#ffb3c8'][i % 3]; t.fillRect(Math.random()*512, Math.random()*512, 4, 4); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.anisotropy = 4;
+  return tex;
+}
+function siTree(s, leaf){
+  const g = new THREE.Group();
+  const trunk = part(new THREE.BoxGeometry(.7*s, 3*s, .7*s), toon(0x6b4a32), 1.03); trunk.position.y = 1.5*s; g.add(trunk);
+  for (const [x, y, z, w] of [[0, 3.6, 0, 3], [.9, 3, .4, 1.8], [-.8, 3.1, -.5, 1.9], [0, 4.6, -.2, 1.8]]){
+    const b = part(new THREE.BoxGeometry(w*s, w*s*.8, w*s), toon(leaf), 1.03); b.position.set(x*s, y*s, z*s); g.add(b);
+  }
+  return g;
+}
+function buildSkyIsland(){
+  const g = new THREE.Group(), W = SI_W, D = SI_D;
+  const tex = siTex(); tex.repeat.set(W/10, D/10);
+  const top = new THREE.MeshToonMaterial({map:tex, gradientMap:gmap}), dirt = toon(0x8a6040), rock = toon(0x7d7a86);
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(W*2, 3, D*2), [dirt, dirt, top, dirt, dirt, dirt]); slab.position.y = -1.5; slab.receiveShadow = true; g.add(slab);
+  // The rocky underside, tapering down into the clouds
+  for (let i = 0; i < 4; i++){
+    const k = 1 - i*.22, m = part(new THREE.BoxGeometry(W*2*k, 5, D*2*k), i % 2 ? rock : dirt); m.position.y = -5.5 - i*5; g.add(m);
+  }
+  for (let i = 0; i < 14; i++){
+    const a = i/14*PI*2, r = new THREE.Mesh(new THREE.BoxGeometry(6, 9 + (i % 3)*4, 6), rock);
+    r.position.set(Math.cos(a)*W*.8, -14 - (i % 3)*3, Math.sin(a)*D*.8); g.add(r);
+  }
+  // A low stone rim marks the edge (the real stop is STAGE.walls)
+  for (const [x, z, w, d] of [[0, D - .4, W*2, .8], [0, -D + .4, W*2, .8], [W - .4, 0, .8, D*2], [-W + .4, 0, .8, D*2]]){
+    const r = part(new THREE.BoxGeometry(w, 1.1, d), toon(0xb8b2a6), 1.02); r.position.set(x, .55, z); g.add(r);
+  }
+  for (let x = -W + 3; x < W; x += 6) for (const z of [D - .4, -D + .4]){ const p = part(new THREE.BoxGeometry(.9, 1.7, .9), toon(0xa39d90)); p.position.set(x, .85, z); g.add(p); }
+  for (let z = -D + 3; z < D; z += 6) for (const x of [W - .4, -W + .4]){ const p = part(new THREE.BoxGeometry(.9, 1.7, .9), toon(0xa39d90)); p.position.set(x, .85, z); g.add(p); }
+  // Dirt paths from the middle to both bases
+  for (const [x, z, w, d] of [[0, 0, W*1.6, 3.2], [0, 0, 3.2, D*1.5]]){ const p = new THREE.Mesh(new THREE.BoxGeometry(w, .03, d), toon(0xc9a46a)); p.position.set(x, .02, z); g.add(p); }
+  // Obstacles: the great tree and small woods
+  for (const o of SI_OBS){ const t = o.kind === 'big' ? siTree(2.6, 0x3f9a3a) : siTree(1, [0x4fae46, 0x3f9a3a, 0x67c04f][Math.abs(o.x*7 + o.z) % 3 | 0]); t.position.set(o.x, 0, o.z); g.add(t); }
+  // Hills: grassy terraces with a dirt face
+  const grass = toon(0x5fa548), face = toon(0x9a7048);
+  for (const b of SI_BLOCKS){
+    if (b.kind === 'hill'){
+      const m = part(new THREE.BoxGeometry(b.hx*2, b.h, b.hz*2), face, 1.02); m.position.set(b.x, b.h/2, b.z); g.add(m);
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(b.hx*2 + .05, .18, b.hz*2 + .05), grass); cap.position.set(b.x, b.h - .06, b.z); g.add(cap);
+    } else {
+      const m = part(new THREE.BoxGeometry(b.hx*2, b.h, b.hz*2), toon(0xa8a294), 1.02); m.position.set(b.x, b.h/2, b.z); g.add(m);
+      const along = b.hx > b.hz, half = along ? b.hx : b.hz;
+      for (let k = -half + .5; k < half; k += 1.4){ const c = part(new THREE.BoxGeometry(along ? .8 : b.hx*2 + .1, .6, along ? b.hz*2 + .1 : .8), toon(0x8f897c)); c.position.set(b.x + (along ? k : 0), b.h + .3, b.z + (along ? 0 : k)); g.add(c); }
+      const moss = new THREE.Mesh(new THREE.BoxGeometry(b.hx*2 + .06, .5, b.hz*2 + .06), toon(0x5f8f3a)); moss.position.set(b.x, .25, b.z); g.add(moss);
+    }
+  }
+  // Tall grass tufts
+  for (const b of SI_BUSH){
+    for (let x = -b.hx + .5; x < b.hx; x += 1) for (let z = -b.hz + .5; z < b.hz; z += 1){
+      const h = 1.3 + ((x*13 + z*7) % 3 + 3) % 3*.2;
+      const tuft = new THREE.Mesh(new THREE.BoxGeometry(.85, h, .85), toon([0x4c9a3a, 0x5aaa42, 0x3f8a34][((x + z)*3 % 3 + 3) % 3 | 0]));
+      tuft.position.set(b.x + x, h/2, b.z + z); g.add(tuft);
+    }
+  }
+  // Floating islets, waterfalls off the edge, clouds below
+  for (let i = 0; i < 8; i++){
+    const a = i/8*PI*2 + .3, isl = new THREE.Group();
+    const top2 = new THREE.Mesh(new THREE.BoxGeometry(8, 1.2, 6), toon(0x5fa548)); isl.add(top2);
+    const under = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 4.5), rock); under.position.y = -2.5; isl.add(under);
+    if (i % 2 === 0){ const t = siTree(.9, 0x4fae46); t.position.y = .6; isl.add(t); }
+    isl.position.set(Math.cos(a)*(W + 30 + (i % 3)*10), 4 + (i % 4)*5, Math.sin(a)*(D + 26 + (i % 2)*12)); g.add(isl);
+  }
+  const falls = [];
+  for (const [x, z, ry] of [[-W, -12, 0], [W, 14, PI], [20, -D, PI/2]]){
+    const f = new THREE.Mesh(new THREE.BoxGeometry(.4, 30, 4), new THREE.MeshBasicMaterial({color:0xbfe8ff, transparent:true, opacity:.65, depthWrite:false}));
+    f.position.set(x + (ry === 0 ? -.4 : ry === PI ? .4 : 0), -15, z + (ry === PI/2 ? -.4 : 0)); f.rotation.y = ry; g.add(f); falls.push(f);
+  }
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshBasicMaterial({color:0xf4f8ff, transparent:true, opacity:.85, depthWrite:false}));
+  sea.rotation.x = -PI/2; sea.position.y = -36; g.add(sea);
+  g.userData = {falls};
+  return g;
+}
+
 const rectInside = (W, D) => (x, z, m) => Math.abs(x) < W - m && Math.abs(z) < D - m;
 const rectPush = (W, D) => (x, z) => (W - Math.abs(x) < D - Math.abs(z)) ? {x:Math.sign(x || 1)*(W + .35), z} : {x, z:Math.sign(z || 1)*(D + .35)};
 const STAGES = {
@@ -2342,6 +2467,12 @@ const STAGES = {
       u.lanterns.forEach((l, i) => l.material.color.setHex(Math.sin(fr*.12 + i*1.7) > .85 ? 0xffa060 : 0xff5a3a));
       if (fr % 4 === 0) emit(new V((Math.random() - .5)*JP_W*2.2, 9, (Math.random() - .5)*JP_D*2.2), 1, Math.random() < .5 ? 0xffc0d8 : 0xffe0ec, .8, -.4, 160, 1, .25, .95);
     }},
+  // walls: nobody can leave the island (no ring-outs); bushes: tall grass hides whoever stands in it
+  skyisle:{name:'เกาะลอยฟ้า', fallText:'ตกเกาะ', water:null, fallY:-40, wallBottom:-3, camX:60, orbit:112, walls:[SI_W - .9, SI_D - .9], bushes:SI_BUSH,
+    preview:new V(-6, 0, 6), spawn:[-55, 55, -33, 33], box:[-60, 60, -38, 38], obstacles:SI_OBS, blocks:SI_BLOCKS, fog:0xcfe6ff, fogNear:120, fogFar:420, shadow:[70, 46],
+    light:{sky:0xeaf6ff, ground:0x6f9a5a, hemi:.85, sun:0xfff2d8, sunI:.85},
+    sky:['#2f6fd0', '#6fb0f0', '#bfe2fa', '#f4fbff'], build:buildSkyIsland, inside:rectInside(SI_W, SI_D), pushOut:rectPush(SI_W, SI_D),
+    fx:fr => { STAGE.group.userData.falls.forEach((f, i) => { f.material.opacity = .55 + Math.sin(fr*.2 + i)*.1; }); }},
 };
 const STAGE_KEYS = Object.keys(STAGES);
 const MODE_KEYS = ['ffa', 'team', 'boss'];
@@ -2735,6 +2866,15 @@ const OUTFITS = {
     oPads(t, 0xc9d2de); oCollar(t, 0xd8342c, .32, .08); oCape(t, 0x2a3f66);
     const em = new THREE.Mesh(new THREE.OctahedronGeometry(.08), new THREE.MeshBasicMaterial({color:0xffd23a})); em.position.set(0, .1, .37); t.add(em);
   }},
+  reaper:{name:'ยมทูต', body:0x1d1424, head:true, noHair:true, build(h, t){
+    oHood(h, 0x1d1424);
+    const mask = OP(new THREE.BoxGeometry(.62, .5, .08), 0xf4f1ea); mask.position.set(0, .02, .54); h.add(mask);
+    for (const sd of [-1, 1]){ const e = new THREE.Mesh(new THREE.BoxGeometry(.14, .12, .03), new THREE.MeshBasicMaterial({color:0xb46dff})); e.position.set(sd*.14, .07, .59); h.add(e); }
+    for (let i = -2; i <= 2; i++){ const tooth = OP(new THREE.BoxGeometry(.05, .08, .03), 0x2a2030); tooth.position.set(i*.08, -.15, .59); h.add(tooth); }
+    oRobe(t, 0x1d1424); oCollar(t, 0x5a2a7a, .32, .08);
+    const sash = OP(new THREE.BoxGeometry(.1, .75, .03), 0x6b2fa8); sash.position.set(.1, -.05, .35); sash.rotation.z = -.5; t.add(sash);
+    const skull = OP(SPH(.08), 0xf4f1ea); skull.position.set(-.16, .12, .37); t.add(skull);
+  }},
 };
 const OUTFIT_K = Object.keys(OUTFITS);
 // Outfit colours: 0 keeps the class's own colours, the rest repaint every coloured part of the outfit
@@ -2805,10 +2945,13 @@ const CLASS_ON = new Set(OUTFIT_K);
     const fz = num(s.freeze, 0, 10, `skills.${k}.freeze`), sh = num(s.shock, 0, 20, `skills.${k}.shock`);
     if (fz !== undefined && hit.freeze !== undefined) hit.freeze = Math.round(fz*60);
     if (sh !== undefined && hit.shock !== undefined) hit.shock = Math.round(sh*60);
+    const stn = num(s.stun, 0, 10, `skills.${k}.stun`);
+    if (stn !== undefined && hit.stunT !== undefined) hit.stunT = Math.round(stn*60);
     const rad = num(s.radius, 1, 10, `skills.${k}.radius`);
     if (rad !== undefined && hit.radius !== undefined) hit.radius = rad;
   }
   { const gl = num((S.shaman || {}).life, 2, 60, 'skills.shaman.life'); if (gl !== undefined) GHOST_INFO.secs = gl; }
+  { const rl = num((S.reaper || {}).life, 1, 60, 'skills.reaper.life'); if (rl !== undefined) MOVES.sk_reaper.life = rl; }
   // Fighters: max HP, walking speed, jump, rice ball
   const F = C.fighter || {};
   MAX_HP = num(F.hp, 10, 1000, 'fighter.hp') ?? MAX_HP;
@@ -2846,6 +2989,7 @@ const CLASS_ON = new Set(OUTFIT_K);
   if (MOVES.sk_paladin) SKILL_INFO.paladin.desc = `อมตะ 1.6 วินาที ฟื้นพลัง ${MOVES.sk_paladin.heal} และผลักคนรอบตัว`;
 })();
 refreshFormDescs();
+SKILL_INFO.reaper.desc = 'อัญเชิญโครงกระดูกยักษ์ขึ้นจากพื้นตรงศัตรูที่ใกล้ที่สุด ทุบลงพื้น ทุกคนในวง (รัศมี ' + MOVES.sk_reaper.radius + ' ช่อง) โดนดาเมจและมึน ขยับไม่ได้ ' + Math.round(MOVES.sk_reaper.stunT/6)/10 + ' วินาที แล้วอยู่ช่วยสู้ต่อ ' + MOVES.sk_reaper.life + ' วินาที เดินไล่ทุบศัตรูใกล้ๆ ให้กระเด็น';
 SKILL_INFO.shaman.desc = 'อัญเชิญผีนักดาบมาสู้ข้างตัว ' + GHOST_INFO.secs + ' วินาที: ไล่ฟันศัตรูที่ใกล้ที่สุดแรงๆ ทุกครั้งที่ฟันปล่อยคลื่นดำพุ่งทะลุแบบนักดาบปีศาจ';
 // Classes that players can pick and bots can roll; a disabled class worn by anyone shows up as "ไม่ใส่"
 const ON_K = OUTFIT_K.filter(k => CLASS_ON.has(k));
@@ -3410,7 +3554,7 @@ const FAR_OUTLINE = 34*34;
 function updateGroundMarks(){
   let n = 0;
   for (const f of G.fighters){
-    if (!alive(f) || n >= MAX_MARKS) continue;
+    if (!alive(f) || n >= MAX_MARKS || f.hidden) continue;
     _pm.makeTranslation(f.pos.x, f.pos.y + .03, f.pos.z); RINGS.setMatrixAt(n, _pm); RINGS.setColorAt(n, _pc.setHex(f.team));
     if (onDeck(f.pos.x, f.pos.z) && f.pos.y > -.5){ const sc = Math.max(.35, 1 - f.pos.y*.12); _pm.makeScale(sc, 1, sc).setPosition(f.pos.x, .02, f.pos.z); }
     else _pm.copy(_p0);
@@ -3647,6 +3791,7 @@ function nearestFoe(b){
   let best = null, bd = Infinity;
   for (const o of G.fighters){
     if (o === b || ally(b, o) || !alive(o) || o.state === 'ko' || o.state === 'respawn') continue;
+    if (STAGE.bushes && inBush(o) && Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) > SI_HIDE) continue;   // can't see into tall grass
     const d = Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) * (.7 + Math.random()*.6);
     if (d < bd){ bd = d; best = o; }
   }
@@ -3727,7 +3872,10 @@ function think(b){
   else if (!tOk){ goal = item ? item.it.pos : {x:0, z:0}; stop = item ? 0 : 2; }
   else if (b.held === 'bomb'){ if (dist < 4) goal = {x:b.pos.x - dx, z:b.pos.z - dz}; }
   else if (item && item.d < dist*.8){ goal = item.it.pos; }
-  else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : b.weapon ? 1.1 : b.formT > 0 ? FORM_INFO[b.cls].stop : (CLASS_STOP[b.cls] || 1.1); }
+  else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : b.weapon ? 1.1 : b.formT > 0 ? FORM_INFO[b.cls].stop : (CLASS_STOP[b.cls] || (POKE_KIND[b.cls] ? 6.5 : 1.1));
+    // Ranged classes back off when someone gets too close (most of the time; sometimes they stand and fight)
+    if (G.frame % 45 === b.idx % 45) ai.kite = Math.random() < .65;
+    if (stop >= 5 && !b.weapon && dist < 2.6 && ai.kite){ goal = {x:b.pos.x - dx/dist*4, z:b.pos.z - dz/dist*4}; stop = 0; } }
   inp.x = inp.z = 0;
   if (goal){
     const mx = goal.x - b.pos.x, mz = goal.z - b.pos.z, md = Math.hypot(mx, mz);
@@ -3747,7 +3895,7 @@ function think(b){
   const near = nearestItem(b, 1.3);
   if (near && near.it.type !== 'heal'){ press('grab'); ai.cd = 4; return; }
   const isGun = b.weapon === 'gun' || b.weapon === 'shotgun';
-  if (tOk && dist < (isGun ? (b.weapon === 'gun' ? 11 : 5.5) : b.weapon ? 2.3 : b.formT > 0 ? FORM_INFO[b.cls].reach : (CLASS_REACH[b.cls] || 1.9)) && Math.random() < D.aggr*(isGun ? .5 : 1)){
+  if (tOk && dist < (isGun ? (b.weapon === 'gun' ? 11 : 5.5) : b.weapon ? 2.3 : b.formT > 0 ? FORM_INFO[b.cls].reach : POKE_KIND[b.cls] ? 11 : (CLASS_REACH[b.cls] || 1.9)) && Math.random() < D.aggr*(isGun ? .5 : 1)){
     inp.x = dx/dist*.3; inp.z = dz/dist*.3; press('atk'); ai.wantCombo = Math.random() < D.combo; ai.cd = 4; return;
   }
   if (tOk && t.pos.y > 1 && dist < 2.5 && Math.random() < .3) press('jump');
@@ -3852,10 +4000,23 @@ function wantsHeal(b){
 }
 
 /* ---------- Combat ---------- */
+// Classes that fight from range: their normal attack becomes a shot when nobody is within arm's reach
+const POKE_KIND = {mage:'bolt', wizard:'thunder', frost:'ice', volt:'spark', necro:'soul', druid:'acid', bard:'note', priest:'holy', acolyte:'holy', crusader:'holy',
+  gundam:'beam', alchemist:'potion', spacecop:'saber', soldier:'bullet'};
+const POKE_SHOOT = new Set(['gundam', 'soldier', 'spacecop']);
+const POKE_NEAR = 2.8, POKE_FAR = 13;
+function pokeTarget(f){
+  if (nearestTarget(f, POKE_NEAR)) return null;
+  if (f.lock && hittable(f.lock) && Math.hypot(f.lock.pos.x - f.pos.x, f.lock.pos.z - f.pos.z) < POKE_FAR) return f.lock;
+  const B = G.boss;
+  return nearestTarget(f, POKE_FAR) || (B && B.hp > 0 && Math.hypot(B.pos.x - f.pos.x, B.pos.z - f.pos.z) < POKE_FAR + BOSS_R ? B : null);
+}
+function pokeShot(f){ fireProj(f, POKE_KIND[f.cls] || 'bolt', aimAngle(f, POKE_FAR), 24, 34, f.move); }
 function attackKey(f){
   if (f.weapon === 'gun') return 'shoot';
   if (f.weapon === 'shotgun') return 'blast';
   if (f.formT > 0 && FORM_INFO[f.cls]) return FORM_INFO[f.cls].atk;
+  if (POKE_KIND[f.cls] && f.onGround && pokeTarget(f)) return POKE_SHOOT.has(f.cls) ? 'rps' : 'rpk';
   if (!f.onGround) return 'air';
   return f.weapon === 'hammer' ? 'ham1' : (CLASS_COMBO[f.cls] || 'jab1');
 }
@@ -3951,7 +4112,7 @@ function throwGrenade(f, m, spread){
   b.mesh.position.copy(b.pos); G.bombs.push(b);
 }
 // Area effects that live for a while (the ice storm); the host runs them, guests only draw them
-const ZONE_KINDS = ['ice'];
+const ZONE_KINDS = ['ice', 'skull'];
 const STORM_TICK = {dmg:2, kb:1.5, up:0, stun:14, hitstop:2, shake:.04};
 function iceStorm(f, m){
   const t = f.lock && hittable(f.lock) ? f.lock : nearestTarget(f, 13);
@@ -3962,6 +4123,11 @@ function iceStorm(f, m){
 function stepZones(){
   for (const zn of [...G.zones]){
     zn.t++;
+    if (zn.kind === 'skull'){
+      stepSkeleton(zn);
+      if (zn.sink >= 26) dropZone(zn);
+      continue;
+    }
     const c = new V(zn.x, zn.y, zn.z);
     if (zn.t < zn.life && zn.t % 18 === 0) aoe(zn.owner, c, zn.r, STORM_TICK);
     if (zn.t >= zn.life){ aoe(zn.owner, c, zn.r, zn.m); dropZone(zn); }
@@ -3971,6 +4137,7 @@ const ZONE_GEO = new THREE.CircleGeometry(1, 40);
 function dropZone(zn){ if (zn.mesh) scene.remove(zn.mesh); G.zones.splice(G.zones.indexOf(zn), 1); }
 function zoneFx(){
   for (const zn of G.zones){
+    if (zn.kind === 'skull'){ skullFx(zn); continue; }
     if (!zn.mesh){
       zn.mesh = new THREE.Mesh(ZONE_GEO, new THREE.MeshBasicMaterial({color:0xbfefff, transparent:true, opacity:.28, depthWrite:false, side:THREE.DoubleSide}));
       zn.mesh.rotation.x = -PI/2; scene.add(zn.mesh);
@@ -3980,6 +4147,111 @@ function zoneFx(){
       const a = Math.random()*PI*2, rr = Math.sqrt(Math.random())*zn.r;
       emit(new V(zn.x + Math.cos(a)*rr, (zn.y || 0) + .2 + Math.random()*3, zn.z + Math.sin(a)*rr), 1, k % 2 ? 0xffffff : 0xbfefff, 3, -1, 22, 1.3, 0);
     }
+  }
+}
+// Reaper's skeleton: rises for ~0.5 s, both fists come down at SKULL_HIT (damage + stun on the host), then it sinks back
+const SKULL_HIT = 34;
+function summonSkeleton(f, m){
+  const t = f.lock && hittable(f.lock) && Math.hypot(f.lock.pos.x - f.pos.x, f.lock.pos.z - f.pos.z) < 12 ? f.lock : nearestTarget(f, 11);
+  let x = t ? t.pos.x : f.pos.x + Math.sin(f.facing)*4.5, z = t ? t.pos.z : f.pos.z + Math.cos(f.facing)*4.5;
+  if (!onDeck(x, z, 0)){ x = f.pos.x + Math.sin(f.facing)*2; z = f.pos.z + Math.cos(f.facing)*2; }
+  const y = t && t.onGround ? t.pos.y : 0;
+  for (const old of G.zones) if (old.kind === 'skull' && old.owner === f && !old.sink) old.sink = 1;   // one skeleton each: the old one sinks
+  G.zones.push({id:G.nextId++, kind:'skull', owner:f, x, y, z, r:m.radius || 3.5, t:0, life:SKULL_HIT + Math.round((m.life || 10)*60), born:G.frame,
+    m, sw:0, sink:0, rot:Math.atan2(f.pos.x - x, f.pos.z - z), last:SKULL_HIT});
+}
+// sw = frames into a slam: 1–12 fists go up, 13–17 they come down (hit on 17), 18–30 back to rest. The first slam starts at 12 (fists already up while rising).
+const SKULL_SLAM_HIT = 17, SKULL_EVERY = 90;
+function stepSkeleton(zn){
+  const o = zn.owner;
+  if (zn.sink){ zn.sink++; zn.sw = 0; return; }
+  if (zn.t === SKULL_HIT - 5) zn.sw = 12;
+  if (zn.sw > 0){
+    zn.sw++;
+    if (zn.sw === SKULL_SLAM_HIT){
+      if (zn.t < SKULL_HIT + 2) aoe(o, new V(zn.x, zn.y, zn.z), zn.r, zn.m, {root:zn.m.stunT, col:0xb48dff});   // the summoning smash: stun the whole circle
+      else {
+        const c = new V(zn.x + Math.sin(zn.rot)*1.6, zn.y, zn.z + Math.cos(zn.rot)*1.6);
+        aoe(o, c, 2.6, {dmg:Math.round(zn.m.dmg*.8*10)/10, kb:8, up:6, launch:true, hitstop:5, shake:.25});
+      }
+    }
+    if (zn.sw > 30) zn.sw = 0;
+  }
+  if (zn.t >= zn.life || !o || o.stocks <= 0 || !alive(o)){ zn.sink = 1; return; }
+  if (zn.t < SKULL_HIT + 14 || zn.sw > 0) return;
+  // Walk (slowly, it is a giant) to the nearest enemy near its master, or back to the master; slam when close
+  let best = null, bd = 14;
+  for (const e of G.fighters){
+    if (e === o || ally(o, e) || !hittable(e) || Math.hypot(e.pos.x - o.pos.x, e.pos.z - o.pos.z) > 16) continue;
+    const d = Math.hypot(e.pos.x - zn.x, e.pos.z - zn.z); if (d < bd){ bd = d; best = e; }
+  }
+  const tx = best ? best.pos.x : o.pos.x, tz = best ? best.pos.z : o.pos.z, stop = best ? 2.2 : 4;
+  const dx = tx - zn.x, dz = tz - zn.z, d = Math.hypot(dx, dz);
+  if (d > .05){ let da = Math.atan2(dx, dz) - zn.rot; da = Math.atan2(Math.sin(da), Math.cos(da)); zn.rot += da*.12; }
+  if (d > stop){
+    const sp = Math.min(d - stop, .065), nx = zn.x + dx/d*sp, nz = zn.z + dz/d*sp;
+    if (onDeck(nx, nz, .5)){ zn.x = nx; zn.z = nz; }
+  }
+  if (best && d < 3.2 && zn.t - zn.last >= SKULL_EVERY){ zn.sw = 1; zn.last = zn.t; }
+}
+function buildSkeleton(){
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const bone = toon(0xeee6d2), dark = toon(0x2a2030), glowM = new THREE.MeshBasicMaterial({color:0xc58aff});
+  const box = (p, w, h, d, x, y, z, mat = bone, ol = 1.04) => { const m = part(new THREE.BoxGeometry(w, h, d), mat, ol); m.position.set(x, y, z); p.add(m); return m; };
+  box(body, 1.5, .45, .7, 0, .6, 0);
+  box(body, .38, 2.3, .38, 0, 1.9, -.1);
+  for (let i = 0; i < 4; i++) box(body, 2 - i*.2, .16, 1, 0, 2.2 + i*.32, .05);
+  box(body, .2, 1.1, .12, 0, 2.7, .52);
+  box(body, 2.6, .3, .5, 0, 3.4, -.05);
+  const head = new THREE.Group(); head.position.set(0, 4.25, .1); body.add(head);
+  box(head, 1.6, 1.35, 1.45, 0, 0, 0);
+  for (const sd of [-1, 1]){ box(head, .42, .42, .1, sd*.36, .05, .7, dark, 0); box(head, .16, .16, .05, sd*.36, .05, .76, glowM, 0); box(head, .22, .5, .22, sd*.62, .8, -.1, dark).rotation.z = -sd*.4; }
+  box(head, .2, .25, .1, 0, -.28, .72, dark, 0);
+  box(head, 1.15, .32, 1.1, 0, -.82, .1);
+  for (let i = -2; i <= 2; i++) box(head, .14, .16, .08, i*.2, -.62, .72, bone, 0);
+  const arm = sd => {
+    const a = new THREE.Group(); a.position.set(sd*1.35, 3.35, 0); body.add(a);
+    box(a, .3, 1.5, .3, 0, -.75, 0); box(a, .26, 1.4, .26, 0, -2.15, 0); box(a, .75, .7, .75, 0, -3.1, 0);
+    return a;
+  };
+  return {g, body, armL:arm(1), armR:arm(-1)};
+}
+// Every screen draws it from its age, so guests see the same rise and smash
+function skullFx(zn){
+  if (!zn.mesh){
+    const g = new THREE.Group();
+    const disc = new THREE.Mesh(ZONE_GEO, new THREE.MeshBasicMaterial({color:0x6b2fa8, transparent:true, opacity:.35, depthWrite:false, side:THREE.DoubleSide}));
+    disc.rotation.x = -PI/2; disc.position.y = .06; g.add(disc);
+    const sk = buildSkeleton(); g.add(sk.g);
+    g.userData = {disc, sk}; scene.add(g); zn.mesh = g;
+    if (zn.born === undefined) zn.born = G.frame;
+  }
+  const a = G.frame - zn.born, {disc, sk} = zn.mesh.userData, gy = zn.y || 0, sw = zn.sw || 0;
+  zn.mesh.position.set(zn.x, gy, zn.z);
+  sk.g.rotation.y = zn.rot || 0;
+  disc.scale.setScalar(a < SKULL_HIT + 40 ? zn.r*(.95 + Math.sin(G.frame*.25)*.04) : 1.6);
+  disc.material.opacity = a < SKULL_HIT ? .25 + a/SKULL_HIT*.2 : Math.max(.18, .45*(1 - (a - SKULL_HIT)/40));
+  const rise = Math.min(1, a/28), sink = Math.min(1, (zn.sink || 0)/24);
+  sk.body.position.y = -6 + 6*(1 - Math.pow(1 - rise, 3)) - 6.5*sink*sink;
+  const rest = -.25 + Math.sin(G.frame*.06 + zn.id)*.08, top = -2.9, down = -.45;
+  const arm = a < 29 && !sw ? top : sw <= 0 ? rest : sw <= 12 ? rest + (top - rest)*sw/12 : sw <= SKULL_SLAM_HIT ? top + (down - top)*(sw - 12)/5 : down + (rest - down)*Math.min(1, (sw - SKULL_SLAM_HIT)/13);
+  sk.armL.rotation.x = sk.armR.rotation.x = arm;
+  sk.body.rotation.x = sw >= 13 && sw < 26 ? .35 : 0;
+  // a slow heavy sway while it walks
+  sk.body.rotation.z = a > SKULL_HIT + 14 && !sw ? Math.sin(G.frame*.12 + zn.id)*.05 : 0;
+  if (a < 30 && G.frame % 2 === 0){
+    const ang = Math.random()*PI*2, rr = Math.random()*zn.r*.7;
+    emit(new V(zn.x + Math.cos(ang)*rr, gy + .2, zn.z + Math.sin(ang)*rr), 2, 0x8a5ac8, 2, 3, 26, 1.6, -1, .6);
+  }
+  if (sw < SKULL_SLAM_HIT) zn.hitFx = false;
+  else if (!zn.hitFx){
+    zn.hitFx = true;
+    const first = a < SKULL_HIT + 6, rr = first ? zn.r : 2.6;
+    const c = first ? new V(zn.x, gy + .3, zn.z) : new V(zn.x + Math.sin(zn.rot || 0)*1.6, gy + .3, zn.z + Math.cos(zn.rot || 0)*1.6);
+    flash(c, 0xb46dff, .6, rr + 1, 16); emit(c, first ? 30 : 18, 0xd9c8ff, rr*3, 3, 26, 1.6, 6); dust(c, first ? 24 : 14);
+    const me = G.fighters.find(f => f.isLocal);
+    if (me && Math.hypot(me.pos.x - zn.x, me.pos.z - zn.z) < zn.r + 6) G.shake = Math.max(G.shake, .5);
+    if (G.net === 'guest') Sfx.play('stomp', c);
   }
 }
 function chainLightning(f, m){
@@ -4220,6 +4492,16 @@ function fireProj(f, kind, a, speed, life, m){
   b.vel.set(Math.sin(a), 0, Math.cos(a)).multiplyScalar(speed);
   b.life = life; b.owner = f; b.m = m;
   b.mesh.position.copy(b.pos); b.mesh.rotation.y = a;
+  // Aim up or down at whoever the shot is heading for, so shooting from a hill (or at one) still connects
+  if (f && f.idx !== undefined){
+    const tg = f.lock && hittable(f.lock) ? f.lock : nearestTarget(f, 16);
+    if (tg){
+      const dx = tg.pos.x - b.pos.x, dz = tg.pos.z - b.pos.z, d = Math.hypot(dx, dz);
+      let da = Math.atan2(dx, dz) - a; da = Math.abs(Math.atan2(Math.sin(da), Math.cos(da)));
+      const dy = tg.pos.y + .9 - b.pos.y;
+      if (d > .5 && da < .6 && Math.abs(dy) > .4) b.vel.y = dy/(d/speed);
+    }
+  }
   if (kind === 'bullet') flash(b.pos, 0xffd23a, .12, .5, 5);
   Sfx.proj(kind, b.pos);
   G.bullets.push(b); return b;
@@ -4491,6 +4773,13 @@ function buildClassWeapon(cls){
       add(SPH(.13), 0xf4f1ea, 0, -1.2, 0, 1.08);
       glow(SPH(.07), 0x9b7bff, -1.2);
       for (const sd of [-1, 1]) add(new THREE.ConeGeometry(.04, .3, 4), sd < 0 ? 0xd8342c : 0x3f8fc8, sd*.1, -1.0, 0).rotation.z = sd*.6;
+      break;
+    }
+    case 'reaper': {
+      add(new THREE.CylinderGeometry(.035, .04, 1.9, 8), 0x3a2a1a, 0, -.45, 0);
+      add(new THREE.BoxGeometry(.06, .16, .95), 0xc9d2de, 0, -1.36, .42, 1.08).rotation.x = .25;
+      add(new THREE.BoxGeometry(.05, .1, .35), 0xc9d2de, 0, -1.2, .95).rotation.x = .9;
+      add(new THREE.BoxGeometry(.04, .05, .9), 0xb46dff, 0, -1.47, .44).rotation.x = .25;
       break;
     }
     case 'lancer': {
@@ -4961,6 +5250,11 @@ function physics(f){
     else if (onDeck(f.pos.x, pz, .45)) f.pos.z = pz;
     else { f.pos.x = px; f.pos.z = pz; }
   }
+  if (STAGE.walls){
+    const [wx, wz] = STAGE.walls;
+    if (Math.abs(f.pos.x) > wx){ f.pos.x = Math.sign(f.pos.x)*wx; f.vel.x *= -.3; }
+    if (Math.abs(f.pos.z) > wz){ f.pos.z = Math.sign(f.pos.z)*wz; f.vel.z *= -.3; }
+  }
   if (f.pos.y < 6) for (const fn of FUNNELS){
     let dx = f.pos.x - fn.x, dz = f.pos.z - fn.z, d = Math.hypot(dx, dz);
     const r = fn.r + .4;
@@ -5161,6 +5455,9 @@ function pose(f){
   const v = f.vis, T = G.frame, s = f.state, t = f.stateT;
   const shown = alive(f);
   v.root.visible = shown && !(f.invuln > 0 && s !== 'getup' && (T >> 2) % 2 === 0);
+  if (G.meFrame !== G.frame){ G.meFrame = G.frame; G.meF = G.fighters.find(o => o.isLocal && alive(o)) || null; }
+  f.hidden = !!STAGE.bushes && !f.isLocal && shown && inBush(f) && (!G.meF || Math.hypot(G.meF.pos.x - f.pos.x, G.meF.pos.z - f.pos.z) > SI_HIDE) && !(G.meF && ally(G.meF, f));
+  if (f.hidden) v.root.visible = false;
   v.hurt.visible = v.hit.visible = false;
   statusFx(f, shown);
   if (!shown) return;
@@ -5296,7 +5593,7 @@ function updateTags(w, h){
   for (const f of G.fighters){
     if (!f.tag) continue;
     const el = f.tag.el;
-    if (!alive(f) || f.pos.y < SEA_Y){ el.style.opacity = 0; continue; }
+    if (!alive(f) || f.pos.y < SEA_Y || f.hidden){ el.style.opacity = 0; continue; }
     tmpV.set(f.pos.x, f.pos.y + 2.35*f.vis.root.scale.x, f.pos.z).project(camera);
     if (tmpV.z > 1 || Math.abs(tmpV.x) > 1.1 || Math.abs(tmpV.y) > 1.1){ el.style.opacity = 0; continue; }
     el.style.opacity = 1;
@@ -5317,7 +5614,7 @@ function updateAids(w, h){
   let danger = 0;
   if (me && G.countdown <= 30){
     const x = me.pos.x, z = me.pos.z, wall = inBlock(x, z, 1.6);
-    if (!(wall && wall.kind === 'edge')) danger = !onDeck(x, z, 0) ? 1 : !onDeck(x, z, 1) ? .85 : !onDeck(x, z, 2) ? .45 : 0;
+    if (!STAGE.walls && !(wall && wall.kind === 'edge')) danger = !onDeck(x, z, 0) ? 1 : !onDeck(x, z, 1) ? .85 : !onDeck(x, z, 2) ? .45 : 0;
   }
   $('edgeWarn').style.opacity = danger ? danger*(.65 + .35*Math.sin(G.frame*.25)) : 0;
   // Off-screen enemies: the nearest few get an arrow on the screen edge, in their colour
@@ -5325,7 +5622,7 @@ function updateAids(w, h){
   if (me){
     const foes = [];
     for (const o of G.fighters){
-      if (o === me || ally(me, o) || !alive(o) || o.state === 'ko' || o.pos.y < SEA_Y) continue;
+      if (o === me || ally(me, o) || !alive(o) || o.state === 'ko' || o.pos.y < SEA_Y || o.hidden) continue;
       _ov.set(o.pos.x, o.pos.y + 1, o.pos.z).project(camera);
       const behind = _ov.z > 1;
       if (!behind && Math.abs(_ov.x) < .96 && Math.abs(_ov.y) < .94) continue;
@@ -5542,8 +5839,8 @@ function showResult(rows, winnerIdx){
   {
     const me = G.fighters.find(f => f.isLocal), mine = me && rows.find(r => r.f === me);
     const txt = mine
-      ? 'ได้อันดับ ' + mine.place + ' จาก ' + rows.length + ' คน ใน BloxFighter ด่าน' + STAGE.name + ' KO ' + mine.kos + ' ครั้ง ดาเมจ ' + mine.dmg + ' ใครแน่มาสู้กัน!'
-      : 'มาดูศึก BloxFighter ด่าน' + STAGE.name + ' แล้วมาสู้กัน!';
+      ? 'ได้อันดับ ' + mine.place + ' จาก ' + rows.length + ' คน ใน Sky Brawl ด่าน' + STAGE.name + ' KO ' + mine.kos + ' ครั้ง ดาเมจ ' + mine.dmg + ' ใครแน่มาสู้กัน!'
+      : 'มาดูศึก Sky Brawl ด่าน' + STAGE.name + ' แล้วมาสู้กัน!';
     setShares('res', txt, gameUrl());
   }
   $('result').hidden = false; $('touch').hidden = true; $('spec').hidden = true;
@@ -5613,8 +5910,8 @@ function mergePres(target, patch){
 const LOBBY_ID = 'skybrawl-lobby-v2';
 function sanitizeRoom(r){
   if (!r || typeof r !== 'object' || !CODE_RE.test(String(r.code))) return null;
-  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(124, Number(r.n) || 0)),
-    mx:Math.max(2, Math.min(124, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
+  return {code:String(r.code), nm:cleanName(r.nm, 'ผู้เล่น'), n:Math.max(0, Math.min(128, Number(r.n) || 0)),
+    mx:Math.max(2, Math.min(128, Number(r.mx) || 2)), ph:['wait','play','end'].includes(r.ph) ? r.ph : 'wait'};
 }
 const PeerLobby = {
   active:false, peer:null, holder:null, conn:null, clients:new Map(), rooms:[], online:0, mine:null,
@@ -6052,8 +6349,8 @@ const NETCFG = (window.SKY_CONFIG && window.SKY_CONFIG.network) || {};
 // config.js → online: room size. maxPlayers = fighters in a room (bots fill the empty seats), maxHumans = real players
 const ONCFG = (window.SKY_CONFIG && window.SKY_CONFIG.online) || {};
 const cfgInt = (v, lo, hi, def) => { const n = Math.round(Number(v)); if (v === '' || v === null || v === undefined || !Number.isFinite(n)) return def; if (n < lo || n > hi) console.warn('[config.js] online value out of range ' + lo + '–' + hi + ':', v); return Math.max(lo, Math.min(hi, n)); };
-const ONLINE_MAX = cfgInt(ONCFG.maxPlayers, 2, 124, 64);
-const ONLINE_HUMANS = Math.min(ONLINE_MAX, cfgInt(ONCFG.maxHumans, 2, 124, 64));
+const ONLINE_MAX = cfgInt(ONCFG.maxPlayers, 2, 128, 64);
+const ONLINE_HUMANS = Math.min(ONLINE_MAX, cfgInt(ONCFG.maxHumans, 2, 128, 64));
 const RELAY_MODE = ['auto', 'always', 'off'].includes(NETCFG.supaRelay) ? NETCFG.supaRelay : 'auto';
 const RELAY_MAX = Math.max(0, Math.min(20, Number.isFinite(+NETCFG.relayMax) && NETCFG.relayMax !== '' ? Math.round(+NETCFG.relayMax) : 3));
 const RELAY_SNAP_MS = 95, RELAY_IN_MS = 110, RELAY_PING_MS = 3000, RELAY_DEAD_MS = 12000;
@@ -6331,7 +6628,7 @@ const Net = {
     const sn = {cd:G.countdown, f:G.fighters.map(f => this.encF(f)),
       it:G.items.slice(0, 10).map(it => [it.id, ITEM_TYPES.indexOf(it.type), r(it.pos.x), r(it.pos.y), r(it.pos.z), it.landed ? 1 : 0, it.t > 60*17 ? 1 : 0]),
       b:G.bombs.slice(0, 16).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), b.kind === 'meteor' ? 1 : b.kind === 'grenade' ? 2 : 0]),
-      zn:G.zones.slice(0, 8).map(zn => [zn.id, r(zn.x), r(zn.z), Math.round(zn.r*10), ZONE_KINDS.indexOf(zn.kind), r(zn.y || 0)]),
+      zn:G.zones.slice(0, 8).map(zn => [zn.id, r(zn.x), r(zn.z), Math.round(zn.r*10), ZONE_KINDS.indexOf(zn.kind), r(zn.y || 0), zn.sink ? 100 + zn.sink : zn.sw || 0, Math.round((zn.rot || 0)*100)]),
       bl:G.bullets.slice(0, 24).map(b => [b.id, r(b.pos.x), r(b.pos.y), r(b.pos.z), Math.round(b.vel.x*10), Math.round(b.vel.z*10), PROJ_KINDS.indexOf(b.kind || 'bullet')]),
       tu:G.turrets.slice(0, 16).map(t => [t.id, r(t.pos.x), r(t.pos.z), Math.round(t.rot*100)]),
       gh:G.ghosts.slice(0, 16).map(g => [g.id, r(g.pos.x), r(g.pos.z), Math.round(g.rot*100), g.sw]),
@@ -6478,8 +6775,8 @@ const Net = {
   },
   applyHost(p){
     if (!p || typeof p !== 'object') return;
-    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 124);
-    if (Array.isArray(p.sd)) this.sides = p.sd.slice(0, 124).map(v => v === 0 || v === 1 ? v : -1);
+    if (Array.isArray(p.slots)) this.slots = p.slots.slice(0, 128);
+    if (Array.isArray(p.sd)) this.sides = p.sd.slice(0, 128).map(v => v === 0 || v === 1 ? v : -1);
     if (Array.isArray(p.cfg)) this.cfg = p.cfg;
     const stk = Array.isArray(p.cfg) && STAGE_KEYS[Number(p.cfg[3])] ? stageFor(STAGE_KEYS[Number(p.cfg[3])], MODE_KEYS[Number(p.cfg[4])]) : null;
     if (stk && stk !== STAGE_KEY && G.mode !== 'play'){ setStage(stk); if (G.mode === 'menu') enterAttract(); }
@@ -6606,8 +6903,9 @@ const Net = {
         if (!Array.isArray(a)) continue;
         const id = Number(a[0]); seen.add(id);
         let zn = G.zones.find(x => x.id === id);
-        if (!zn){ zn = {id, kind:ZONE_KINDS[Number(a[4])] || 'ice'}; G.zones.push(zn); }
+        if (!zn){ zn = {id, kind:ZONE_KINDS[Number(a[4])] || 'ice', born:G.frame}; G.zones.push(zn); }
         zn.x = Number(a[1])/100 || 0; zn.z = Number(a[2])/100 || 0; zn.r = Math.max(.5, Math.min(12, Number(a[3])/10 || 4)); zn.y = Number(a[5])/100 || 0;
+        if (a.length > 6){ const ph = Number(a[6]) || 0; zn.sink = ph >= 100 ? ph - 100 : 0; zn.sw = ph >= 100 ? 0 : ph; zn.rot = (Number(a[7]) || 0)/100; }
       }
       for (const zn of [...G.zones]) if (!seen.has(zn.id)) dropZone(zn);
     }
@@ -6707,7 +7005,7 @@ function renderRoomView(){
     const link = Net.inviteLink();
     $('inviteLink').value = link;
     if (G.qrFor !== link){ G.qrFor = link; drawQr($('roomQr'), link); }
-    setShares('room', 'มาตีกันใน BloxFighter! ห้อง ' + Net.code + ' กดลิงก์แล้วเข้าห้องได้เลย', link);
+    setShares('room', 'มาตีกันใน Sky Brawl! ห้อง ' + Net.code + ' กดลิงก์แล้วเข้าห้องได้เลย', link);
   }
   $('shareLink').hidden = typeof navigator.share !== 'function';
   $('rCfg').hidden = !host; $('rCfgText').hidden = host;
@@ -6750,6 +7048,18 @@ function renderRoomView(){
 }
 
 /* ---------- Customize screen ---------- */
+// Role and difficulty (1 easy … 3 hard) of every class, for the picker's tabs and stars
+const ROLE_NAME = {melee:'ระยะใกล้', ranged:'ระยะไกล', magic:'เวทย์วงกว้าง', support:'ซัพพอร์ต/ฮีล', special:'แปลงร่าง/อัญเชิญ'};
+const CLASS_META = {
+  none:['melee', 1], knight:['melee', 1], warrior:['melee', 1], berserker:['melee', 2], paladin:['melee', 2], mage:['magic', 1], priest:['support', 1],
+  necro:['magic', 2], druid:['magic', 2], archer:['ranged', 1], assassin:['melee', 3], ninja:['melee', 2], samurai:['melee', 2], monk:['melee', 2],
+  bard:['magic', 2], gunner:['ranged', 1], engineer:['special', 2], pony:['melee', 1], gundam:['ranged', 2], merchant:['melee', 1], blacksmith:['melee', 2],
+  hunter:['ranged', 2], wizard:['magic', 2], crusader:['magic', 3], alchemist:['ranged', 2], rogue:['melee', 3], taekwon:['melee', 1], acolyte:['support', 2],
+  frost:['magic', 2], demon:['melee', 2], spacecop:['ranged', 2], soldier:['ranged', 1], volt:['magic', 2], werewolf:['special', 2], tamer:['special', 2],
+  shaman:['special', 1], lancer:['melee', 1], reaper:['special', 2],
+};
+const CLASS_TABS = [['easy', '⭐ แนะนำมือใหม่'], ['melee', 'ระยะใกล้'], ['ranged', 'ระยะไกล'], ['magic', 'เวทย์'], ['support', 'ซัพพอร์ต'], ['special', 'แปลงร่าง/อัญเชิญ'], ['all', 'ทั้งหมด']];
+const stars = n => '★'.repeat(n) + '☆'.repeat(3 - n);
 const OPTS = [
   {key:'outfit', label:'อาชีพ (ได้ชุดและสกิลประจำอาชีพ)', choices:Object.fromEntries(ON_K.map(k => [k, OUTFITS[k].name]))},
   {key:'oc', label:'สีชุดอาชีพ', tints:OUTFIT_TINTS},
@@ -6776,9 +7086,88 @@ for (const o of OPTS){
   }
   sec.appendChild(row); $('copts').appendChild(sec);
 }
+{
+  const sec = $('copts').querySelector('.opt'), old = sec.querySelector('.chips');
+  const tabs = document.createElement('div'); tabs.className = 'chips cfilter'; tabs.setAttribute('role', 'group'); tabs.setAttribute('aria-label', 'กรองอาชีพ');
+  for (const [id, label] of CLASS_TABS){ const b = document.createElement('button'); b.type = 'button'; b.dataset.tab = id; b.textContent = label; b.onclick = () => setClassTab(id); tabs.appendChild(b); }
+  const grid = document.createElement('div'); grid.className = 'cgrid';
+  for (const k of ON_K){
+    const [role, st] = CLASS_META[k] || ['melee', 2];
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'ccard';
+    b.dataset.key = 'outfit'; b.dataset.val = k; b.dataset.role = role; b.dataset.star = st;
+    const img = document.createElement('span'); img.className = 'cimg';
+    const n = document.createElement('span'); n.className = 'cn'; n.textContent = k === 'none' ? 'ไม่มีอาชีพ' : OUTFITS[k].name;
+    const sr = document.createElement('span'); sr.className = 'cs'; sr.textContent = stars(st);
+    b.title = ROLE_NAME[role] + ' · ความยาก ' + st + '/3';
+    b.append(img, n, sr); b.onclick = () => setLookVals({outfit:k});
+    grid.appendChild(b);
+  }
+  old.replaceWith(tabs, grid);
+}
+function setClassTab(id){
+  for (const b of document.querySelectorAll('.cfilter button')) b.setAttribute('aria-pressed', String(b.dataset.tab === id));
+  for (const c of document.querySelectorAll('.ccard')) c.hidden = !(id === 'all' || (id === 'easy' ? c.dataset.star === '1' : c.dataset.role === id));
+  try { localStorage.setItem('skybrawl.clsTab', id); } catch (e) {}
+}
+{
+  let tab = null; try { tab = localStorage.getItem('skybrawl.clsTab'); } catch (e) {}
+  setClassTab(CLASS_TABS.some(t => t[0] === tab) ? tab : 'easy');
+}
+
+/* ---------- Class portraits: each class's real model rendered once on a plain backdrop, kept in localStorage ---------- */
+const CLS_VER = 'c2', CLASS_THUMBS = {};
+let clsScene = null, clsCam = null, clsRT = null;
+function classThumb(k){
+  const W = 256;
+  if (!clsScene){
+    clsScene = new THREE.Scene(); clsScene.background = new THREE.Color(0xfff4dc);
+    clsScene.add(new THREE.HemisphereLight(0xffffff, 0x9a8a70, .95));
+    const d = new THREE.DirectionalLight(0xffffff, .55); d.position.set(2, 4, 3); clsScene.add(d);
+    clsCam = new THREE.PerspectiveCamera(30, 1, .1, 50); clsRT = new THREE.WebGLRenderTarget(W, W);
+  }
+  const v = buildChibi({...DEF_LOOKS[0], hat:'none', outfit:k, oc:0}, 0xffffff);
+  scene.remove(v.root, v.hurt, v.hit);
+  for (const o of [v.bubble, v.bomb, v.hammer, v.gun, v.shotgun]) if (o) o.visible = false;
+  v.armR.rotation.set(-.7, 0, -.25); v.armL.rotation.set(-.35, 0, .3);
+  v.root.rotation.y = .45; clsScene.add(v.root);
+  clsCam.position.set(0, 1.5, 3.5); clsCam.lookAt(0, 1.32, 0);
+  renderer.setRenderTarget(clsRT); renderer.render(clsScene, clsCam);
+  const px = new Uint8Array(W*W*4); renderer.readRenderTargetPixels(clsRT, 0, 0, W, W, px);
+  renderer.setRenderTarget(null);
+  clsScene.remove(v.root); v.root.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  const big = document.createElement('canvas'); big.width = big.height = W;
+  const bc = big.getContext('2d'), img = bc.createImageData(W, W);
+  for (let y = 0; y < W; y++) img.data.set(px.subarray((W - 1 - y)*W*4, (W - y)*W*4), y*W*4);
+  bc.putImageData(img, 0, 0);
+  const sm = document.createElement('canvas'); sm.width = sm.height = W/2;
+  sm.getContext('2d').drawImage(big, 0, 0, W/2, W/2);
+  return sm.toDataURL('image/jpeg', .82);
+}
+function paintClassCard(k){
+  const c = document.querySelector('.ccard[data-val="' + k + '"] .cimg'); if (!c) return;
+  if (CLASS_THUMBS[k]) c.style.backgroundImage = 'url(' + CLASS_THUMBS[k] + ')';
+  else { const o = OUTFITS[k]; c.style.backgroundImage = 'none'; c.style.backgroundColor = hex(o && o.body ? o.body : 0xfff4dc); }
+}
+for (const k of ON_K){
+  try { const v = localStorage.getItem('skybrawl.cls.' + k); if (v && v.startsWith(CLS_VER + '|')) CLASS_THUMBS[k] = v.slice(CLS_VER.length + 1); } catch (e) {}
+  paintClassCard(k);
+}
+// Two portraits a frame while the customize panel is open, visible cards first
+function classThumbStep(){
+  if ($('custom').hidden) return;
+  let n = 0;
+  for (const pass of [false, true]) for (const b of document.querySelectorAll('.ccard')){
+    const k = b.dataset.val;
+    if (CLASS_THUMBS[k] !== undefined || b.hidden !== pass) continue;
+    try { CLASS_THUMBS[k] = classThumb(k); } catch (e) { CLASS_THUMBS[k] = ''; console.warn('[class picture] ' + k, e); continue; }
+    try { localStorage.setItem('skybrawl.cls.' + k, CLS_VER + '|' + CLASS_THUMBS[k]); } catch (e) {}
+    paintClassCard(k);
+    if (++n >= 2) return;
+  }
+}
 function reflectCustom(){
   const look = LOOKS[G.editSlot];
-  for (const b of document.querySelectorAll('#copts button')) b.setAttribute('aria-pressed', String(b.dataset.key === 'oc' ? tintOf(look) : look[b.dataset.key]) === b.dataset.val);
+  for (const b of document.querySelectorAll('#copts button[data-key]')) b.setAttribute('aria-pressed', String(b.dataset.key === 'oc' ? tintOf(look) : look[b.dataset.key]) === b.dataset.val);
   $('ocOpt').hidden = !OUTFITS[look.outfit] || !OUTFITS[look.outfit].build;
   for (const b of document.querySelectorAll('#custom .ctabs .tab')) b.setAttribute('aria-pressed', b.dataset.slot === String(G.editSlot));
   $('cname').value = look.name;
@@ -6787,6 +7176,8 @@ function reflectCustom(){
   const b = document.createElement('b'); b.textContent = (k === 'none' ? 'ไม่มีอาชีพ' : OUTFITS[k].name) + ' · ' + MOVES[skillKey(k)].name;
   const p = document.createElement('div'); p.textContent = si.desc + ' · คูลดาวน์ ' + Math.round(si.cd/60) + ' วินาที · กด E (มือถือกดปุ่มสกิล)';
   box.append(b, p);
+  const meta = CLASS_META[k];
+  if (meta){ const r = document.createElement('div'); r.className = 'crole'; r.textContent = 'แนว: ' + ROLE_NAME[meta[0]] + ' · ความยาก ' + stars(meta[1]); box.appendChild(r); }
 }
 function setLookVals(patch){
   const i = G.editSlot;
@@ -6841,7 +7232,7 @@ function quickPlay(){
   // A brand-new player gets the tutorial first; it ends with a button that comes back here
   if (!tutSeen() && !(Progress.stats && Progress.stats.matches > 0)){ startTutorial(); return; }
   ensureName(() => {
-    const pool = STAGE_KEYS.filter(k => $('sg-' + k));
+    const pool = STAGE_KEYS.filter(k => $('sg-' + k) && !STAGES[k].walls);
     hideAllPanels();
     startOffline('solo', {n:4, st:2, df:'easy', mode:'ffa', stage:pool[Math.floor(Math.random()*pool.length)]});
   });
@@ -7031,7 +7422,7 @@ $('copyLink').onclick = () => {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(done, fallback); else fallback();
 };
 $('shareLink').onclick = () => {
-  navigator.share({title:'BloxFighter', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
+  navigator.share({title:'Sky Brawl', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
 };
 $('custBtn').onclick = () => openCustom();
 $('boardBtn').onclick = () => Ranks.open();
@@ -7051,14 +7442,14 @@ $('inviteBtn').onclick = () => {
   const url = gameUrl();
   $('gameLink').value = url;
   if (G.qrFor !== url){ G.qrFor = url; drawQr($('gameQr'), url); }
-  setShares('game', 'มาเล่น BloxFighter เกมต่อสู้โลกบล็อก 3D บนเว็บกัน! เล่นบนมือถือได้ ไม่ต้องติดตั้ง', url);
+  setShares('game', 'มาเล่น Sky Brawl เกมต่อสู้โลกบล็อก 3D บนเว็บกัน! เล่นบนมือถือได้ ไม่ต้องติดตั้ง', url);
   $('gameShare').hidden = typeof navigator.share !== 'function';
   $('menu').hidden = true; $('invite').hidden = false;
   $('inviteClose').focus({preventScroll:true});
 };
 $('inviteClose').onclick = () => { $('invite').hidden = true; $('menu').hidden = false; };
 $('gameCopy').onclick = () => copyText($('gameLink').value, $('gameCopy'), 'คัดลอก');
-$('gameShare').onclick = () => { navigator.share({title:'BloxFighter', text:'มาเล่น BloxFighter กัน!', url:gameUrl()}).catch(() => {}); };
+$('gameShare').onclick = () => { navigator.share({title:'Sky Brawl', text:'มาเล่น Sky Brawl กัน!', url:gameUrl()}).catch(() => {}); };
 $('onBack').onclick = () => { if (Net.role) Net.leave(); toMenu(); };
 $('mkRoom').onclick = () => Net.create();
 $('codeGo').onclick = () => Net.join($('codeIn').value.trim().toLowerCase());
@@ -7257,7 +7648,7 @@ function loop(now){
     let n = 0; while (acc >= DT && n < 5){ acc -= DT; tick(); n++; }
     if (n === 5) acc = 0;
   }
-  thumbStep();
+  thumbStep(); classThumbStep();
   render();
 }
 requestAnimationFrame(loop);
