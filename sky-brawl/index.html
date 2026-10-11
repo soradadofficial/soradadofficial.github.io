@@ -133,6 +133,26 @@ button,select,input{font-family:inherit;color:inherit}
 .seg input[type=radio]:focus-visible+label{outline:3px solid var(--p2);outline-offset:2px}
 .seg input[type=range]{flex:1 1 140px;accent-color:var(--ink);min-width:0}
 .seg output{font-family:var(--display);min-width:28px;text-align:right;font-variant-numeric:tabular-nums}
+.pick{display:flex;flex-direction:column;gap:6px}
+.pick .lbl{font-weight:500}
+.pick .lbl small{font-weight:400;opacity:.75}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:9px}
+.pickgrid.modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pickgrid input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.pickcard{position:relative;display:block;aspect-ratio:16/10;border:3px solid var(--ink);border-radius:12px;overflow:hidden;cursor:pointer;background:#9fb8d8 center/cover no-repeat;box-shadow:0 3px 0 var(--ink);transition:transform .12s,box-shadow .12s}
+.pickgrid.modes .pickcard{aspect-ratio:4/3}
+.pickcard:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--ink)}
+.pickcard svg{position:absolute;inset:0;width:100%;height:100%}
+.pickcard .nm{position:absolute;left:0;right:0;bottom:0;padding:16px 7px 5px;font-weight:700;font-size:13px;line-height:1.25;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.7))}
+.pickcard .nm small{display:block;font-weight:500;font-size:11px;opacity:.9}
+.pickgrid input:checked+.pickcard{border-color:var(--gold);box-shadow:0 0 0 3px var(--ink),0 5px 0 3px var(--ink);transform:translateY(-2px)}
+.pickgrid input:checked+.pickcard::after{content:'✓';position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:var(--gold);border:2px solid var(--ink);display:grid;place-items:center;font-weight:900;font-size:13px;color:var(--ink)}
+.pickgrid input:focus-visible+.pickcard{outline:3px solid var(--p2);outline-offset:3px}
+.pickgrid.off .pickcard{filter:grayscale(.85) brightness(.8)}
+.pickgrid input:disabled+.pickcard{cursor:default}
+.pickgrid input:disabled:not(:checked)+.pickcard{opacity:.55}
+.pickgrid input:disabled+.pickcard:hover{transform:none;box-shadow:0 3px 0 var(--ink)}
+@media (max-width:480px){.pickgrid.modes .pickcard{aspect-ratio:1/1}.pickcard .nm{font-size:12px;padding-top:10px}.pickcard .nm small{display:none}.pickgrid input:checked+.pickcard::after{width:18px;height:18px;font-size:11px}}
 .seg select{font-size:14px;font-weight:500;border:2px solid var(--ink);border-radius:8px;padding:3px 8px;background:var(--white)}
 details.keys-d summary{cursor:pointer;font-weight:700}
 .keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
@@ -335,23 +355,27 @@ button{touch-action:manipulation}
         <input type="radio" name="diff" id="d-normal" value="normal" checked><label for="d-normal">ปกติ</label>
         <input type="radio" name="diff" id="d-hard" value="hard"><label for="d-hard">ยาก</label>
       </div>
-      <div class="seg" role="radiogroup" aria-label="โหมด">
+      <div class="pick" role="radiogroup" aria-label="โหมด">
         <span class="lbl">โหมด</span>
-        <input type="radio" name="mode" id="md-ffa" value="ffa" checked><label for="md-ffa">ตะลุมบอน</label>
-        <input type="radio" name="mode" id="md-team" value="team"><label for="md-team">ทีมตีหิน</label>
-        <input type="radio" name="mode" id="md-boss" value="boss"><label for="md-boss">ตีบอส</label>
+        <div class="pickgrid modes">
+          <input type="radio" name="mode" id="md-ffa" value="ffa" checked><label class="pickcard" for="md-ffa"><svg viewBox="0 0 160 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="160" height="120" fill="#ffd25e"/><path d="M80 44 0 0h44zM80 44 116 0h44v26zM80 44l80 34v42h-30zM80 44 54 120H18zM80 44 0 86V48z" fill="#ffb02e"/><polygon points="80,18 88,33 105,29 94,43 106,56 89,54 80,70 71,54 54,56 66,43 55,29 72,33" fill="#fff" stroke="#1b2333" stroke-width="3" stroke-linejoin="round"/><g stroke="#1b2333" stroke-width="3"><circle cx="32" cy="50" r="18" fill="#ff5d4a"/><circle cx="128" cy="50" r="18" fill="#2f8cff"/><circle cx="80" cy="84" r="14" fill="#3fbf5a"/></g><g fill="#1b2333"><rect x="36" y="44" width="4" height="8" rx="2"/><rect x="44" y="44" width="4" height="8" rx="2"/><rect x="112" y="44" width="4" height="8" rx="2"/><rect x="120" y="44" width="4" height="8" rx="2"/></g><path d="M34 40l10 4M126 40l-10 4" stroke="#1b2333" stroke-width="3" stroke-linecap="round"/></svg><span class="nm">ตะลุมบอน<small>ทุกคนคือศัตรู</small></span></label>
+          <input type="radio" name="mode" id="md-team" value="team"><label class="pickcard" for="md-team"><svg viewBox="0 0 160 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="160" height="120" fill="#2f8cff"/><polygon points="0,0 98,0 62,120 0,120" fill="#ff5d4a"/><polygon points="62,120 98,0 104,0 68,120" fill="#fff" opacity=".85"/><g stroke="#1b2333" stroke-width="3" stroke-linejoin="round"><rect x="20" y="62" width="30" height="10" rx="3" fill="#9aa3b5"/><polygon points="35,14 50,38 35,62 20,38" fill="#ffb3a8"/><rect x="110" y="62" width="30" height="10" rx="3" fill="#9aa3b5"/><polygon points="125,14 140,38 125,62 110,38" fill="#a8d4ff"/></g><path d="M31 26l-4 10M121 26l-4 10" stroke="#fff" stroke-width="3" stroke-linecap="round"/><text x="80" y="54" text-anchor="middle" font-size="26" font-weight="900" font-family="Arial Black,Arial,sans-serif" fill="#ffd25e" stroke="#1b2333" stroke-width="5" paint-order="stroke">VS</text></svg><span class="nm">ทีมตีหิน<small>แดงปะทะน้ำเงิน</small></span></label>
+          <input type="radio" name="mode" id="md-boss" value="boss"><label class="pickcard" for="md-boss"><svg viewBox="0 0 160 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect width="160" height="120" fill="#1f2d55"/><g fill="#fff" opacity=".8"><circle cx="14" cy="18" r="2"/><circle cx="40" cy="8" r="1.5"/><circle cx="150" cy="22" r="2"/><circle cx="132" cy="6" r="1.5"/><circle cx="20" cy="50" r="1.5"/><circle cx="146" cy="56" r="1.5"/></g><rect y="92" width="160" height="28" fill="#dfe9f7"/><g stroke="#1b2333" stroke-width="3"><circle cx="80" cy="76" r="30" fill="#f4f8ff"/><circle cx="80" cy="36" r="20" fill="#f4f8ff"/><polygon points="64,20 68,6 74,14 80,4 86,14 92,6 96,20" fill="#ffd23a" stroke-linejoin="round"/><circle cx="24" cy="94" r="10" fill="#ff5d4a"/><circle cx="138" cy="94" r="10" fill="#2f8cff"/></g><g fill="#1b2333"><circle cx="72" cy="35" r="3.5"/><circle cx="88" cy="35" r="3.5"/><circle cx="80" cy="66" r="3"/><circle cx="80" cy="78" r="3"/></g><path d="M66 27l10 4M94 27l-10 4" stroke="#1b2333" stroke-width="3" stroke-linecap="round"/><polygon points="80,40 92,44 80,46" fill="#ff8a2a" stroke="#1b2333" stroke-width="1.5"/><path d="M73 50q7 -5 14 0" fill="none" stroke="#1b2333" stroke-width="2.5" stroke-linecap="round"/></svg><span class="nm">ตีบอส<small>รุมยักษ์หิมะ</small></span></label>
+        </div>
       </div>
-      <div class="seg" role="radiogroup" aria-label="ด่าน">
-        <span class="lbl">ด่าน</span>
-        <input type="radio" name="stage" id="sg-titanic" value="titanic" checked><label for="sg-titanic">เรือไททานิก</label>
-        <input type="radio" name="stage" id="sg-temple" value="temple"><label for="sg-temple">วัดไทย</label>
-        <input type="radio" name="stage" id="sg-siam" value="siam"><label for="sg-siam">สยาม</label>
-        <input type="radio" name="stage" id="sg-gvg" value="gvg"><label for="sg-gvg">สนามกิลวอ</label>
-        <input type="radio" name="stage" id="sg-halloween" value="halloween"><label for="sg-halloween">ฮัลโลวีน</label>
-        <input type="radio" name="stage" id="sg-christmas" value="christmas"><label for="sg-christmas">คริสต์มาส</label>
-        <input type="radio" name="stage" id="sg-ice" value="ice"><label for="sg-ice">น้ำแข็ง</label>
-        <input type="radio" name="stage" id="sg-hospital" value="hospital"><label for="sg-hospital">โรงพยาบาล</label>
-        <input type="radio" name="stage" id="sg-japan" value="japan"><label for="sg-japan">ญี่ปุ่นโบราณ</label>
+      <div class="pick" role="radiogroup" aria-label="ด่าน">
+        <span class="lbl">ด่าน <small id="stageNote"></small></span>
+        <div class="pickgrid" id="stageGrid">
+          <input type="radio" name="stage" id="sg-titanic" value="titanic" checked><label class="pickcard" for="sg-titanic"><span class="nm">เรือไททานิก</span></label>
+          <input type="radio" name="stage" id="sg-temple" value="temple"><label class="pickcard" for="sg-temple"><span class="nm">วัดไทย</span></label>
+          <input type="radio" name="stage" id="sg-siam" value="siam"><label class="pickcard" for="sg-siam"><span class="nm">สยาม</span></label>
+          <input type="radio" name="stage" id="sg-gvg" value="gvg"><label class="pickcard" for="sg-gvg"><span class="nm">สนามกิลวอ</span></label>
+          <input type="radio" name="stage" id="sg-halloween" value="halloween"><label class="pickcard" for="sg-halloween"><span class="nm">ฮัลโลวีน</span></label>
+          <input type="radio" name="stage" id="sg-christmas" value="christmas"><label class="pickcard" for="sg-christmas"><span class="nm">คริสต์มาส</span></label>
+          <input type="radio" name="stage" id="sg-ice" value="ice"><label class="pickcard" for="sg-ice"><span class="nm">ทะเลสาบน้ำแข็ง</span></label>
+          <input type="radio" name="stage" id="sg-hospital" value="hospital"><label class="pickcard" for="sg-hospital"><span class="nm">โรงพยาบาล</span></label>
+          <input type="radio" name="stage" id="sg-japan" value="japan"><label class="pickcard" for="sg-japan"><span class="nm">เมืองญี่ปุ่นโบราณ</span></label>
+        </div>
       </div>
     </div>
     <div class="btns">
@@ -445,10 +469,14 @@ button{touch-action:manipulation}
         <div class="seg"><label class="lbl" for="rN">จำนวนนักสู้</label><input type="range" id="rN" min="2" max="64" value="2"><output id="rNOut" for="rN">2</output></div>
         <div class="seg"><label class="lbl" for="rSt">ชีวิตต่อคน</label><select id="rSt"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option></select>
           <label class="lbl" for="rDf" style="margin-left:8px">ระดับบอท</label><select id="rDf"><option value="easy">ง่าย</option><option value="normal" selected>ปกติ</option><option value="hard">ยาก</option></select></div>
-        <div class="seg"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option><option value="boss">ตีบอส (ด่านคริสต์มาส)</option></select></div>
-        <div class="seg"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option><option value="ice">ทะเลสาบน้ำแข็ง</option><option value="hospital">โรงพยาบาล</option><option value="japan">เมืองญี่ปุ่นโบราณ</option></select></div>
+        <div class="seg" style="display:none"><label class="lbl" for="rMode">โหมด</label><select id="rMode"><option value="ffa">ตะลุมบอน</option><option value="team">ทีมตีหิน</option><option value="boss">ตีบอส (ด่านคริสต์มาส)</option></select></div>
+        <div class="seg" style="display:none"><label class="lbl" for="rStage">ด่าน</label><select id="rStage"><option value="titanic">เรือไททานิก</option><option value="temple">วัดไทย</option><option value="siam">สยาม</option><option value="gvg">สนามกิลวอ</option><option value="halloween">ฮัลโลวีน</option><option value="christmas">คริสต์มาส (บอส)</option><option value="ice">ทะเลสาบน้ำแข็ง</option><option value="hospital">โรงพยาบาล</option><option value="japan">เมืองญี่ปุ่นโบราณ</option></select></div>
       </div>
       <p id="rCfgText" class="note" hidden></p>
+      <div id="rPick" class="settings">
+        <div class="pick" role="radiogroup" aria-label="โหมดของห้อง"><span class="lbl">โหมด <small id="rPickWho"></small></span><div class="pickgrid modes" id="rModeGrid"></div></div>
+        <div class="pick" role="radiogroup" aria-label="ด่านของห้อง"><span class="lbl">ด่าน <small id="rStageNote"></small></span><div class="pickgrid" id="rStageGrid"></div></div>
+      </div>
       <div class="opt"><h4 id="slotHead">นักสู้ในห้อง</h4>
         <div id="teamRow" class="teamrow chips" hidden><span class="lbl">ทีมของคุณ</span><button type="button" data-tm="-1">อัตโนมัติ</button><button type="button" class="red" data-tm="0">ทีมแดง</button><button type="button" class="blue" data-tm="1">ทีมน้ำเงิน</button></div>
         <div id="slotList" class="slots"></div></div>
@@ -2202,6 +2230,60 @@ function setStage(k){
   const [sx, sz] = st.shadow || [42, 28];
   Object.assign(sun.shadow.camera, {left:-sx, right:sx, top:sz, bottom:-sz, far:sx > 50 ? 140 : 90}); sun.shadow.camera.updateProjectionMatrix();
   for (const c of clouds) c.visible = !st.noClouds;
+}
+
+/* ---------- Stage picture cards: each stage photographs itself once (fighters hidden) and the picture is kept in localStorage ---------- */
+const THUMB_VER = 'v1', STAGE_THUMBS = {}, THUMB_FAIL = new Set();
+const thumbCam = new THREE.PerspectiveCamera(42, 16/10, .1, 700);
+let thumbRT = null, thumbWait = 45;
+function stageThumb(key){
+  const st = STAGES[key], prev = STAGE_KEY, hidden = [], W = 640, H = 400;
+  setStage(key);
+  for (const o of scene.children) if (o.visible && o !== st.group && o !== sea && !o.isLight && !clouds.includes(o)){ o.visible = false; hidden.push(o); }
+  const [x0, x1, z0, z1] = st.box, cx = (x0 + x1)/2, cz = (z0 + z1)/2, w = Math.max(x1 - x0, (z1 - z0)*1.7);
+  thumbCam.position.set(cx + w*.1, w*.4, cz + w*.66); thumbCam.lookAt(cx, 0, cz - w*.05); thumbCam.updateMatrixWorld();
+  const fn = scene.fog.near, ff = scene.fog.far, d = w*.75; scene.fog.near += d; scene.fog.far += d;
+  if (!thumbRT) thumbRT = new THREE.WebGLRenderTarget(W, H);
+  renderer.shadowMap.needsUpdate = true;
+  renderer.setRenderTarget(thumbRT); renderer.render(scene, thumbCam);
+  const px = new Uint8Array(W*H*4); renderer.readRenderTargetPixels(thumbRT, 0, 0, W, H, px);
+  renderer.setRenderTarget(null);
+  scene.fog.near = fn; scene.fog.far = ff;
+  for (const o of hidden) o.visible = true;
+  setStage(prev);
+  // The render target is upside down; flip it, then halve it for smooth edges
+  const big = document.createElement('canvas'); big.width = W; big.height = H;
+  const bc = big.getContext('2d'), img = bc.createImageData(W, H);
+  for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y)*W*4, (H - y)*W*4), y*W*4);
+  bc.putImageData(img, 0, 0);
+  const sm = document.createElement('canvas'); sm.width = W/2; sm.height = H/2;
+  sm.getContext('2d').drawImage(big, 0, 0, W/2, H/2);
+  return sm.toDataURL('image/jpeg', .8);
+}
+function paintStageCard(key){
+  const t = STAGE_THUMBS[key], sky = STAGES[key].sky;
+  for (const lb of document.querySelectorAll('label[for="sg-' + key + '"],label[for="rsg-' + key + '"]'))
+    lb.style.backgroundImage = t ? 'url(' + t + ')' : 'linear-gradient(' + sky[0] + ',' + sky[2] + ' 65%,' + sky[3] + ')';
+}
+function loadStageThumbs(){
+  for (const k of STAGE_KEYS){
+    try { const v = localStorage.getItem('skybrawl.thumb.' + k); if (v && v.startsWith(THUMB_VER + '|')) STAGE_THUMBS[k] = v.slice(THUMB_VER.length + 1); } catch (e) {}
+    paintStageCard(k);
+  }
+}
+// Called from the main loop just before the frame is drawn, so the screen never shows the photo shoot. One stage at a time, only on the menu.
+function thumbStep(){
+  if (G.mode !== 'menu' || ($('menu').hidden && $('online').hidden) || --thumbWait > 0) return;
+  const k = STAGE_KEYS.find(k => !STAGE_THUMBS[k] && !THUMB_FAIL.has(k) && $('sg-' + k)); if (!k) return;
+  thumbWait = 20;
+  try { STAGE_THUMBS[k] = stageThumb(k); } catch (e) { THUMB_FAIL.add(k); console.warn('[stage picture] ' + k, e); return; }
+  try { localStorage.setItem('skybrawl.thumb.' + k, THUMB_VER + '|' + STAGE_THUMBS[k]); } catch (e) {}
+  paintStageCard(k);
+}
+function syncStagePick(){
+  const boss = G.cfg.mode === 'boss';
+  $('stageGrid').classList.toggle('off', boss);
+  $('stageNote').textContent = boss ? '· โหมดตีบอสเล่นที่ด่านคริสต์มาสเสมอ' : '';
 }
 
 /* ---------- Character customization ---------- */
@@ -6430,6 +6512,7 @@ function renderRoomView(){
   }
   const list = $('slotList'); list.textContent = '';
   const slots = Net.slots || [], sides = Net.sides || [];
+  syncRoomPicks(host);
   const team = (host ? G.cfg.mode : MODE_KEYS[Number((Net.cfg || [])[4])]) === 'team';
   $('teamRow').hidden = !team;
   for (const b of $('teamRow').querySelectorAll('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.tm) === G.myTeam));
@@ -6626,6 +6709,35 @@ for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListene
   G.cfg.mode = modeOf(e.target.value); setStage(stageFor(G.cfg.stage, G.cfg.mode)); if (G.mode === 'menu') enterAttract();
 });
 try { const sp = localStorage.getItem('skybrawl.stage'); if (STAGES[sp]){ G.cfg.stage = sp; setStage(sp); $('sg-' + sp).checked = true; } } catch (err) {}
+// Room cards: copies of the menu cards. The host's click sets the hidden select and fires its change handler; guests' cards are read-only.
+function buildRoomPicks(){
+  const add = (grid, name, src) => {
+    for (const r of document.querySelectorAll('input[name=' + src + ']')){
+      const lb = document.querySelector('label[for="' + r.id + '"]'), id = 'r' + r.id;
+      grid.insertAdjacentHTML('beforeend', '<input type="radio" name="' + name + '" id="' + id + '" value="' + r.value + '"><label class="pickcard" for="' + id + '">' + lb.innerHTML + '</label>');
+    }
+  };
+  add($('rModeGrid'), 'rmode', 'mode'); add($('rStageGrid'), 'rstage', 'stage');
+  const drive = (name, sel) => { for (const r of document.querySelectorAll('input[name=' + name + ']')) r.addEventListener('change', () => {
+    if (Net.role !== 'host' || !r.checked) return;
+    $(sel).value = r.value; $(sel).dispatchEvent(new Event('change'));
+    renderRoomView();
+  }); };
+  drive('rmode', 'rMode'); drive('rstage', 'rStage');
+}
+function syncRoomPicks(host){
+  const c = Net.cfg || [], mode = host ? G.cfg.mode : MODE_KEYS[Number(c[4])] || 'ffa', stage = host ? G.cfg.stage : STAGE_KEYS[Number(c[3])] || 'titanic';
+  for (const i of document.querySelectorAll('#rPick input')) i.disabled = !host;
+  const m = $('rmd-' + mode), st = $('rsg-' + stage);
+  if (m) m.checked = true;
+  if (st) st.checked = true;
+  $('rStageGrid').classList.toggle('off', mode === 'boss');
+  $('rStageNote').textContent = mode === 'boss' ? '· โหมดตีบอสเล่นที่ด่านคริสต์มาสเสมอ' : '';
+  $('rPickWho').textContent = host ? '· กดเลือกได้เลย' : '· host เป็นคนเลือก';
+}
+buildRoomPicks();
+loadStageThumbs(); syncStagePick();
+for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListener('change', syncStagePick);
 $('rStart').onclick = () => { if (Net.role === 'host') Net.start(); };
 $('lobbyCust').onclick = $('roomCust').onclick = customizeFromOnline;
 G.myTeam = -1;
@@ -6763,6 +6875,7 @@ function loop(now){
     let n = 0; while (acc >= DT && n < 5){ acc -= DT; tick(); n++; }
     if (n === 5) acc = 0;
   }
+  thumbStep();
   render();
 }
 requestAnimationFrame(loop);
