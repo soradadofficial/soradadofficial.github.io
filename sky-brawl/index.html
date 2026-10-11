@@ -420,7 +420,7 @@ body *{touch-action:manipulation}
       </div>
       <p class="note" id="touchNote" hidden style="margin-top:8px">เล่นบนมือถือ: แตะครึ่งซ้ายของจอแล้วลากเพื่อเดิน ใช้ปุ่มด้านขวาเพื่อต่อย กระโดด กัน และหยิบของ หมุนจอแนวนอนจะเล่นง่ายขึ้น</p>
     </div>
-    <button class="btn quick" id="quickPlay" type="button">▶ เล่นเลย<small>บอทง่าย 3 ตัว · ด่านสุ่ม · ใช้อาชีพของคุณ</small></button>
+    <button class="btn quick" id="quickPlay" type="button">▶ เล่นเลย<small>นักสู้ 8 ตัว บอทง่าย · ด่านสุ่ม · ใช้อาชีพของคุณ</small></button>
     <button class="btn plain tutb" id="tutBtn" type="button">📘 สอนเล่น 1 นาที</button>
     <details class="setd" id="setD"><summary>ตั้งค่าเกม <small id="setSum"></small></summary>
     <div class="settings">
@@ -2914,6 +2914,7 @@ const tintOf = l => Number.isInteger(l && l.oc) && l.oc > 0 && l.oc < OUTFIT_TIN
 /* ---------- Settings from config.js ---------- */
 // config.js sits next to index.html. Anything it leaves out keeps the built-in value; bad values are skipped with a console warning.
 const CLASS_ON = new Set(OUTFIT_K);
+const MIN_SKILL_CD = 300;
 (function applyConfig(){
   const C = window.SKY_CONFIG;
   if (!C || typeof C !== 'object') return;
@@ -2937,7 +2938,7 @@ const CLASS_ON = new Set(OUTFIT_K);
   for (const k of Object.keys(SKILL_INFO)){
     const s = S[k] || {}, info = SKILL_INFO[k];
     const cd = num(s.cd, .5, 120, `skills.${k}.cd`);
-    info.cd = Math.max(15, Math.round((cd !== undefined ? cd*60 : info.cd)*mCd));
+    info.cd = Math.max(MIN_SKILL_CD, Math.round((cd !== undefined ? cd*60 : info.cd)*mCd));   // never faster than 5 s, whatever config.js says
     // Gunner's volley and the engineer's turret hit with their own shot data
     const hit = k === 'gunner' ? RAPID_SHOT : k === 'engineer' ? TURRET_SHOT : k === 'shaman' ? GHOST_SLASH : MOVES['sk_' + k];
     if (!hit) continue;
@@ -7238,7 +7239,7 @@ function quickPlay(){
   ensureName(() => {
     const pool = STAGE_KEYS.filter(k => $('sg-' + k) && !STAGES[k].walls);
     hideAllPanels();
-    startOffline('solo', {n:4, st:2, df:'easy', mode:'ffa', stage:pool[Math.floor(Math.random()*pool.length)]});
+    startOffline('solo', {n:8, st:2, df:'easy', mode:'ffa', stage:pool[Math.floor(Math.random()*pool.length)]});
   });
 }
 $('quickPlay').onclick = quickPlay;
