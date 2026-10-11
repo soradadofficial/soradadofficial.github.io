@@ -1131,8 +1131,8 @@ const MOVES = {
     fire:(f, m) => meteorStorm(f, m)},
   sk_crusader: {name:'แกรนด์ครอส', anim:'roar', startup:12, active:1, recovery:16, noHit:true, dmg:13, kb:9, up:7, launch:true, hitstop:7, shake:.4, skill:true,
     fire:(f, m) => grandCross(f, m)},
-  sk_alchemist:{name:'แอซิดเทอเรอร์', anim:'cast', startup:10, active:1, recovery:16, noHit:true, dmg:12, kb:8, up:5, launch:true, breakGuard:true, blast:2.4, hitstop:6, shake:.3, skill:true,
-    fire:(f, m) => fireProj(f, 'acid', f.facing, 15, 55, m)},
+  sk_alchemist:{name:'แอซิดเทอเรอร์', anim:'cast', startup:10, active:1, recovery:16, noHit:true, dmg:12, kb:8, up:5, launch:true, breakGuard:true, blast:3.5, hitstop:6, shake:.3, skill:true,
+    fire:(f, m) => lobFlask(f, m)},
   sk_rogue:    {name:'ฉกอาวุธ', anim:'dash', startup:5, active:8, recovery:14, dmg:8, kb:5, up:3, launch:true, lunge:12, glide:true, reach:.8, rad:.85, hitstop:7, shake:.2, skill:true,
     onHit:(f, o) => steal(f, o)},
   sk_taekwon:  {name:'ทอร์นาโดคิก', anim:'spin', startup:6, active:12, recovery:16, multi:6, sweep:true, dmg:6, kb:6, up:9, launch:true, reach:0, rad:2, hitstop:5, shake:.25, skill:true,
@@ -1211,7 +1211,7 @@ const SKILL_INFO = {
   none:{cd:300, range:3, desc:'พุ่งต่อยไปข้างหน้า คนที่โดนลอย'},
   knight:{cd:360, range:5, desc:'พุ่งชาร์จด้วยโล่ ทะลุการกันได้'},
   warrior:{cd:420, range:2.8, desc:'ทุบพื้นให้ทุกคนรอบตัวลอยขึ้น'},
-  berserker:{cd:900, range:4, desc:'เสียพลัง 8 แต่ดาเมจ ×1.5 และวิ่งเร็วขึ้น 6 วินาที'},
+  berserker:{cd:900, range:4, desc:'เสียพลัง 8 แล้วคลั่ง 6 วินาที: ตาแดง มีออร่าแดงรอบตัว ดาเมจ ×1.5 ตีเร็วขึ้น วิ่งเร็วขึ้น และทุกครั้งที่ตีโดน ดูดเลือดกลับเท่าดาเมจที่ทำได้'},
   paladin:{cd:720, range:2.2, desc:'อมตะ 1.6 วินาที ฟื้นพลัง 15 และผลักคนรอบตัว'},
   mage:{cd:360, range:10, desc:'ยิงลูกไฟที่ระเบิดเป็นวง'},
   priest:{cd:900, range:-1, desc:'ฟื้นพลัง 35 ทันที'},
@@ -1232,7 +1232,7 @@ const SKILL_INFO = {
   hunter:{cd:420, range:13, desc:'ปล่อยเหยี่ยวบินไล่ศัตรูที่ใกล้ที่สุด จิกแล้วระเบิดเป็นวงเล็ก'},
   wizard:{cd:660, range:10, desc:'เรียกอุกกาบาต 5 ลูกถล่มรอบศัตรูที่ใกล้ที่สุด'},
   crusader:{cd:480, range:3, desc:'เสียพลัง 6 ปล่อยแสงกางเขนสี่ทิศรอบตัว ซัดทุกคนในแนวลอย'},
-  alchemist:{cd:420, range:8, desc:'ขว้างขวดกรด ระเบิดเป็นวง ทะลุการกัน'},
+  alchemist:{cd:420, range:8, desc:'ขว้างขวดกรดเป็นวงโค้ง ตกพื้นแล้วระเบิดเป็นวงกว้าง 7×7 ช่อง ทุกคนในวงโดนดาเมจ ทะลุการกัน (โดนตัวคนก่อนก็ระเบิดทันที)'},
   rogue:{cd:420, range:5, desc:'พุ่งฉก ขโมยอาวุธของคนที่โดน และดูดพลัง 6'},
   taekwon:{cd:360, range:2.2, desc:'เตะหมุนเป็นพายุ เตะทุกคนรอบตัวลอยขึ้นฟ้า'},
   acolyte:{cd:300, range:-1, desc:'ฮีลเพื่อนที่เลือดน้อยที่สุดในระยะ 10 ช่อง (ไม่มีเพื่อน = ฮีลตัวเอง)'},
@@ -3516,11 +3516,23 @@ function buildChibi(look, team){
   mergeMeshes(armR, new Set([hammer, gun, shotgun, cw].filter(Boolean)));
   mergeMeshes(legL); mergeMeshes(legR);
   for (const g of [hammer, gun, shotgun, cw, oh]) if (g) mergeMeshes(g);
+  let rageFx = null;
+  if (look.outfit === 'berserker'){
+    const eyes = new THREE.Group();
+    for (const sd of [-1, 1]){
+      const e = new THREE.Mesh(new THREE.BoxGeometry(.17, .17, .05), new THREE.MeshBasicMaterial({color:0xff1a1a})); e.position.set(sd*.2, .02, .56); eyes.add(e);
+      const brow = new THREE.Mesh(new THREE.BoxGeometry(.2, .05, .05), new THREE.MeshBasicMaterial({color:0x5a0a0a})); brow.position.set(sd*.2, .16, .56); brow.rotation.z = sd*.45; eyes.add(brow);
+    }
+    eyes.visible = false; head.add(eyes);
+    const aura = new THREE.Mesh(new THREE.RoundSphere(1.25, 16, 12), new THREE.MeshBasicMaterial({color:0xff2a2a, transparent:true, opacity:.25, depthWrite:false})); aura.position.y = .1; aura.visible = false; tilt.add(aura);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.9, 1.15, 4, 1), new THREE.MeshBasicMaterial({color:0xff3a3a, transparent:true, opacity:.7, depthWrite:false, side:THREE.DoubleSide})); ring.rotation.x = -PI/2; ring.position.y = .05; ring.visible = false; root.add(ring);
+    rageFx = {eyes, aura, ring};
+  }
   const form = look.outfit === 'werewolf' || look.outfit === 'tamer' ? attachForm(look.outfit, {head, tilt, armL, armR, legL, legR}) : null;
   const outlines = [];
   root.traverse(m => { if (m.isMesh){ m.castShadow = false; if (m.material === OUT) outlines.push(m); } });
   scene.add(root, hurt, hit);
-  return {root, tilt, head, armL, armR, legL, legR, hammer, gun, shotgun, cw, oh, bomb, bubble, hurt, hit, outlines, form, far:false};
+  return {root, tilt, head, armL, armR, legL, legR, hammer, gun, shotgun, cw, oh, bomb, bubble, hurt, hit, outlines, form, rageFx, far:false};
 }
 
 /* ---------- FX ---------- */
@@ -4034,8 +4046,10 @@ function attackKey(f){
   if (!f.onGround) return 'air';
   return f.weapon === 'hammer' ? 'ham1' : (CLASS_COMBO[f.cls] || 'jab1');
 }
+const RAGE_MOVES = new WeakMap();
+const rageMove = m => { let r = RAGE_MOVES.get(m); if (!r){ r = {...m, startup:Math.max(2, Math.round(m.startup*.7)), recovery:Math.max(3, Math.round(m.recovery*.6))}; RAGE_MOVES.set(m, r); } return r; };
 function startMove(f, key){
-  const m = MOVES[key];
+  const m = f.rage > 0 && !MOVES[key].skill ? rageMove(MOVES[key]) : MOVES[key];
   if (m.weapon) f.weaponUses--;
   f.move = m; f.moveKey = key; f.lastMove = key; f.hasHit = false; f.hitSet = new Set(); f.buffer = 0;
   setState(f, 'attack');
@@ -4306,6 +4320,16 @@ function statusFx(f, shown){
   if (shown && f.shock > 0 && (G.frame + f.idx) % 5 === 0)
     emit(new V(f.pos.x + (Math.random() - .5)*.9, f.pos.y + .3 + Math.random()*1.5, f.pos.z + (Math.random() - .5)*.9), 2, Math.random() < .5 ? 0xfff27a : 0xffffff, 2.6, 1.5, 9, 1.1, 0);
 }
+function rageSteal(credit, tgt, amount){
+  if (!credit || credit === tgt || !(credit.rage > 0) || !alive(credit) || amount <= 0 || credit.hp >= MAX_HP) return;
+  const was = credit.hp; credit.hp = Math.min(MAX_HP, credit.hp + amount);
+  credit.stealAcc = (credit.stealAcc || 0) + (credit.hp - was);
+  if (G.frame - (credit.stealT || -99) > 10){
+    credit.stealT = G.frame;
+    popup(new V(credit.pos.x, credit.pos.y + 2.6, credit.pos.z), '+' + Math.round(credit.stealAcc), 'th', 34); credit.stealAcc = 0;
+  }
+  if (G.frame % 2 === 0) emit(new V(tgt.pos.x, tgt.pos.y + 1, tgt.pos.z), 2, 0xff3a4a, 3, 3, 18, 1.1, -2);
+}
 function applyHit(att, tgt, m, dir, credit){
   if (ally(credit, tgt)) return;
   if (credit && credit !== tgt && credit.rage > 0) m = {...m, dmg:Math.round(m.dmg*1.5)};
@@ -4314,6 +4338,7 @@ function applyHit(att, tgt, m, dir, credit){
   const guarding = (tgt.state === 'guard' || tgt.state === 'guardstun') && front > .2;
   const at = new V(tgt.pos.x - dir.x*.35, tgt.pos.y + .9, tgt.pos.z - dir.z*.35);
   if (guarding && !m.breakGuard){
+    rageSteal(credit, tgt, m.dmg*.15);
     tgt.hp = Math.max(1, tgt.hp - m.dmg*.15);
     setState(tgt, 'guardstun'); tgt.stun = 8 + m.dmg;
     tgt.vel.x = dir.x*(m.kb*.4 + 2); tgt.vel.z = dir.z*(m.kb*.4 + 2);
@@ -4325,6 +4350,7 @@ function applyHit(att, tgt, m, dir, credit){
   if (guarding){ popup(at, 'GUARD BREAK', 'combo'); Sfx.play('gbreak', at); }
   if (tgt.chill > 0 && !m.freeze) thaw(tgt);
   const comboing = ['hitstun','tumble'].includes(tgt.state);
+  rageSteal(credit, tgt, Math.min(m.dmg, Math.max(0, tgt.hp)));
   tgt.hp -= m.dmg;
   if (credit && credit !== tgt){
     credit.hits++; credit.dmgDealt += m.dmg;
@@ -4519,6 +4545,15 @@ function fireProj(f, kind, a, speed, life, m){
   if (kind === 'bullet') flash(b.pos, 0xffd23a, .12, .5, 5);
   Sfx.proj(kind, b.pos);
   G.bullets.push(b); return b;
+}
+// A flask thrown in an arc at the nearest enemy (or 7 squares ahead): it bursts into a 7x7 cloud where it lands, or earlier if it hits someone
+function lobFlask(f, m){
+  const t = f.lock && hittable(f.lock) ? f.lock : nearestTarget(f, 14);
+  const a = t ? Math.atan2(t.pos.x - f.pos.x, t.pos.z - f.pos.z) : f.facing;
+  const d = Math.max(3, Math.min(14, t ? Math.hypot(t.pos.x - f.pos.x, t.pos.z - f.pos.z) : 7)), g = GRAV*.8, h0 = f.pos.y + 1.4, T = Math.max(.5, d/15);
+  const b = fireProj(f, 'acid', a, d/T, Math.round(T*60) + 40, m);
+  b.vel.y = (.2 - h0 + g/2*T*T)/T; b.grav = g; b.pos.y = h0; b.mesh.position.copy(b.pos);
+  return b;
 }
 function aoe(src, center, radius, m, opt = {}){
   Sfx.play('stomp', center, .7);
@@ -4715,7 +4750,9 @@ function stepBullets(){
       b.pos.y += (o.pos.y + .95 - b.pos.y)*.2;
       if (td < 1 || b.life < -60){ removeBullet(b, true); continue; }
     }
+    if (b.grav) b.vel.y -= b.grav*DT;
     b.pos.addScaledVector(b.vel, DT); b.mesh.position.copy(b.pos); b.life--;
+    if (b.grav && b.pos.y <= .25 && b.vel.y < 0){ b.pos.y = .2; b.mesh.position.copy(b.pos); burst(b); removeBullet(b, true); continue; }
     if (b.kind === 'saber') b.mesh.rotation.y += .55;
     if (trailColor(b.kind) && G.frame % 2 === 0) emit(b.pos, 1, trailColor(b.kind), .6, .5, 14, 1.4, 0);
     let hit = null;
@@ -4992,6 +5029,7 @@ function damageBoss(dmg, src){
   const B = G.boss;
   if (!B || B.hp <= 0 || !dmg || G.raidWin !== null || G.net === 'guest') return;
   dmg = Math.round(dmg*10)/10;
+  rageSteal(src, B, dmg);
   B.hp = Math.max(0, B.hp - dmg); B.shake = 6;
   Sfx.play('hit', B.pos, .8);
   if (G.frame % 2 === 0 || dmg >= 10) popup(new V(B.pos.x + (Math.random() - .5)*2, 6 + Math.random()*2, B.pos.z), String(Math.round(dmg)), '', 36);
@@ -5184,7 +5222,7 @@ function stepFighter(f){
       // Sprint: needs a direction, solid ground and some stamina; once it runs dry you must recover a quarter before the next sprint
       const sprint = !!inp.sprint && mag > .2 && f.onGround && !f.exh && f.stam > 0 && !(f.shock > 0);
       if (sprint){ f.stam -= 100/(SPRINT_SECS*60); f.stamT = 40; if (f.stam <= 0){ f.stam = 0; f.exh = true; } }
-      const sp = WALK*(sprint ? SPRINT : 1)*(f.onGround && !f.weapon ? 1 : .875)*(f.rage > 0 ? 1.25 : 1)*(f.shock > 0 ? .55 : 1)*(f.formT > 0 ? FORM_INFO[f.cls].speed : 1), k = f.onGround ? (STAGE.slip ? .09 : .35) : .12;
+      const sp = WALK*(sprint ? SPRINT : 1)*(f.onGround && !f.weapon ? 1 : .875)*(f.rage > 0 ? 1.4 : 1)*(f.shock > 0 ? .55 : 1)*(f.formT > 0 ? FORM_INFO[f.cls].speed : 1), k = f.onGround ? (STAGE.slip ? .09 : .35) : .12;
       f.vel.x += (inp.x*sp - f.vel.x)*k; f.vel.z += (inp.z*sp - f.vel.z)*k;
       if (mag > .2) f.facing = Math.atan2(inp.x, inp.z);
       f.state = f.onGround ? (mag > .2 ? 'run' : 'idle') : 'air';
@@ -5514,6 +5552,15 @@ function pose(f){
   if (v.cw) v.cw.visible = !f.weapon;
   if (v.oh) v.oh.visible = !f.weapon;
   if (v.form) poseForm(f, v, T, s);
+  if (v.rageFx){
+    const on = f.rage > 0, R = v.rageFx;
+    R.eyes.visible = R.aura.visible = R.ring.visible = on;
+    if (on){
+      R.aura.material.opacity = .2 + Math.sin(T*.3)*.07; R.aura.scale.setScalar(1 + Math.sin(T*.25)*.06);
+      R.ring.rotation.z += .08; R.ring.scale.setScalar(1 + Math.sin(T*.2)*.12);
+      if (T % 3 === 0) emit(new V(f.pos.x + (Math.random() - .5)*.9, f.pos.y + .3, f.pos.z + (Math.random() - .5)*.9), 1, 0xff3a2a, .8, 4, 22, 1.4, -3);
+    }
+  }
   if (s === 'attack' && f.move && f.move.lance) lanceFx(f);
   v.bomb.visible = f.held === 'bomb';
   if (v.bomb.visible) v.bomb.userData.spark.scale.setScalar(.7 + Math.random()*.7);
@@ -6858,7 +6905,7 @@ const Net = {
       if (st !== f.state || mk !== f.moveKey){
         if (f.netInit && st === 'attack' && mk && MOVES[mk]) Sfx.move(f, MOVES[mk]);
         else if (f.netInit && st === 'down' && f.state === 'tumble') Sfx.play('land', f.pos);
-        f.state = st; f.stateT = n(8); f.moveKey = mk; f.move = mk ? MOVES[mk] : null; if (mk) f.lastMove = mk;
+        f.state = st; f.stateT = n(8); f.moveKey = mk; f.move = mk ? ((fl & 16) && !MOVES[mk].skill ? rageMove(MOVES[mk]) : MOVES[mk]) : null; if (mk) f.lastMove = mk;
       }
       else if (Math.abs(f.stateT - n(8)) > 6) f.stateT = n(8);
       f.hp = hp; f.stocks = stk; f.stun = 18;
@@ -6889,7 +6936,7 @@ const Net = {
         b.vel.set(Number(a[4])/10 || 0, 0, Number(a[5])/10 || 0);
         b.mesh.rotation.y = Math.atan2(b.vel.x, b.vel.z);
       }
-      for (const b of [...G.bullets]) if (!seen.has(b.id)){ if (b.kind === 'fireball') explodeFx(b.pos); removeBullet(b, true); }
+      for (const b of [...G.bullets]) if (!seen.has(b.id)){ if (b.kind === 'fireball') explodeFx(b.pos); else if (b.kind === 'acid'){ const c = new V(b.pos.x, .3, b.pos.z); flash(c, 0x8dff6a, .4, 4.5, 16); emit(c, 22, 0x8dff6a, 7, 4, 28, 1.6, 4); Sfx.play('boom', c, .6); } removeBullet(b, true); }
     }
     if (Array.isArray(sn.gh)){
       const seen = new Set();
