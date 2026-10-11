@@ -115,6 +115,38 @@ button,select,input{font-family:inherit;color:inherit}
 .btn.red{background:var(--p1);color:var(--white)}
 .btn.blue{background:var(--p2);color:var(--white)}
 .btn.plain{background:var(--paper)}
+.btn.quick{display:grid;gap:2px;justify-items:center;width:100%;margin-top:12px;padding:16px 18px;font-size:24px;background:var(--p1);color:var(--white);box-shadow:5px 5px 0 var(--ink);animation:qpulse 1.6s ease-in-out infinite}
+.btn.quick small{font-family:var(--body);font-size:13px;font-weight:500;opacity:.95}
+@keyframes qpulse{50%{transform:scale(1.025)}}
+.btn.tutb{width:100%;margin-top:10px;flex:none}
+#tutBox{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 128px);transform:translateX(-50%);width:min(520px,calc(100vw - 24px));z-index:6;box-sizing:border-box;
+  background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);padding:10px 14px;display:grid;gap:6px}
+#tutBox .th{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;font-size:13px}
+#tutBox .tdots{display:flex;gap:4px}
+#tutBox .tdots i{width:14px;height:6px;background:var(--track);border:1.5px solid var(--ink)}
+#tutBox .tdots i.on{background:var(--good)} #tutBox .tdots i.cur{background:var(--gold)}
+#tutBox .tt{font-family:var(--display);font-size:18px;line-height:1.3}
+#tutBox .tw{font-size:13px;opacity:.85}
+#tutBox .tskip{font:inherit;font-size:12px;font-weight:700;padding:3px 10px;border:2px solid var(--ink);border-radius:8px;background:var(--white);cursor:pointer}
+#tutBox .tbtns{display:flex;gap:8px;flex-wrap:wrap} #tutBox .tbtns .btn{flex:1 1 150px;font-size:15px;padding:10px 12px}
+.tut-hl{animation:tuthl .8s ease-in-out infinite;outline:4px solid var(--gold)!important;outline-offset:3px}
+@keyframes tuthl{50%{outline-color:#fff;transform:scale(1.06)}}
+@media (max-height:480px){#tutBox{padding:6px 10px;gap:3px} #tutBox .tt{font-size:15px}}
+@media (prefers-reduced-motion:reduce){.btn.quick{animation:none}}
+details.setd{border:3px solid var(--ink);border-radius:12px;padding:0 12px;background:var(--white)}
+details.setd>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;padding:10px 0;font-weight:700}
+details.setd>summary::-webkit-details-marker{display:none}
+details.setd>summary::before{content:'⚙';font-size:18px}
+details.setd>summary::after{content:'▾';margin-left:auto;transition:transform .15s}
+details.setd[open]>summary::after{transform:rotate(180deg)}
+details.setd>summary small{font-weight:500;font-size:12px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+details.setd[open]>.settings{padding-bottom:12px}
+.tag .marr{width:20px;height:16px;background:var(--gold);clip-path:polygon(0 0,100% 0,50% 100%);filter:drop-shadow(0 2px 0 var(--ink));animation:mbob .8s ease-in-out infinite;margin-bottom:1px}
+@keyframes mbob{50%{transform:translateY(-5px)}}
+#edgeWarn{position:fixed;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 70px 26px rgba(255,40,40,.85);z-index:4}
+#edgeWarn b{position:absolute;left:50%;top:27%;transform:translateX(-50%);font-family:var(--display);font-size:20px;color:#fff;-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;white-space:nowrap}
+#offs{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+#offs i{position:absolute;left:0;top:0;width:24px;height:24px;margin:-12px 0 0 -12px;clip-path:polygon(0 8%,100% 50%,0 92%,24% 50%);filter:drop-shadow(0 0 1.5px #1b2333) drop-shadow(0 0 1px #1b2333);display:none}
 .btn.line,.btn.fb,.btn.x{color:var(--white);text-decoration:none;text-align:center;display:inline-flex;align-items:center;justify-content:center}
 .btn.line{background:var(--line)} .btn.fb{background:var(--fb)} .btn.x{background:var(--x)}
 .shares{display:flex;flex-wrap:wrap;gap:8px}
@@ -224,7 +256,7 @@ body *{touch-action:manipulation}
 #tbtns button[data-k="atk"]{right:0;bottom:0;width:100px;height:100px;font-size:19px;background:var(--p1);color:var(--white)}
 #tbtns button[data-k="jump"]{right:110px;bottom:4px;width:76px;height:76px;background:var(--gold)}
 #tbtns button[data-k="guard"]{right:4px;bottom:110px;width:76px;height:76px;background:var(--p2);color:var(--white)}
-#tbtns button[data-k="grab"]{right:96px;bottom:96px;width:66px;height:66px;font-size:14px}
+#tbtns button[data-k="grab"]{right:104px;bottom:104px;width:66px;height:66px;font-size:14px}
 #tbtns button[data-k="skill"]{right:186px;bottom:96px;width:72px;height:72px;font-size:14px;background:var(--skill);color:var(--white)}
 #tbtns button[data-k="lock"]{right:186px;bottom:174px;width:72px;height:32px;border-radius:16px;font-size:13px;background:var(--ink);color:var(--paper)}
 #tbtns button[data-k="lock"].on2{background:var(--gold);color:var(--ink)}
@@ -287,6 +319,24 @@ body *{touch-action:manipulation}
   .pname{font-size:14px} .pitem{font-size:11px} .card{padding:18px 16px} .chipbtn{font-size:11px;padding:4px 7px}
   .seg .lbl{min-width:0}
 }
+/* Phones held upright: the HUD becomes two rows (your card + the fighter count, then the buttons in one line),
+   and the touch buttons pack into a narrower block so they stay clear of the stick */
+@media (orientation:portrait) and (max-width:600px){
+  #hud{flex-wrap:wrap;gap:6px 8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 0}
+  #cards{flex:1 1 0;order:1;gap:4px}
+  .pcard{width:auto;max-width:280px;padding:5px 9px;gap:3px;border-width:2px;box-shadow:2px 2px 0 var(--ink)}
+  .pname{font-size:13px} .hp{height:10px} .pip{width:10px;height:10px}
+  #board{order:2;min-width:0;padding:4px 8px;border-width:2px;box-shadow:2px 2px 0 var(--ink);pointer-events:auto;cursor:pointer}
+  #boardHead{white-space:nowrap;font-size:11px} #boardHead::after{content:'▾';margin-left:2px}
+  #board.open #brows{display:grid;max-height:50vh;overflow-y:auto} #board.open #boardHead::after{content:'▴'}
+  #hudMid{order:3;flex:1 0 100%;gap:4px}
+  #hudBtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
+  .chipbtn{font-size:11px;padding:3px 7px;border-width:2px;box-shadow:2px 2px 0 var(--ink)}
+  #tbtns{width:190px;height:268px;transform:scale(.9);transform-origin:right bottom}
+  #tbtns button[data-k="skill"]{right:4px;bottom:192px}
+  #tbtns button[data-k="lock"]{right:104px;bottom:178px;width:66px}
+  body.tutOn #rotHint{display:none}
+}
 @media (prefers-reduced-motion:reduce){ #banner.show{animation:fade 1s both} @keyframes fade{0%,100%{opacity:0}15%,80%{opacity:1}} .fi{animation:none} }
 
 /* ---------- BloxFighter: blocky UI ---------- */
@@ -302,6 +352,9 @@ body *{touch-action:manipulation}
 <body>
 <canvas id="c" aria-label="สนามต่อสู้บนดาดฟ้าเรือไททานิก"></canvas>
 <div id="tags"></div>
+<div id="offs"></div>
+<div id="edgeWarn"><b>ระวังตก!</b></div>
+<div id="tutBox" hidden role="status" aria-live="polite"></div>
 <div id="fx"></div>
 <div id="feed" aria-live="polite"></div>
 <div id="banner"></div>
@@ -354,6 +407,9 @@ body *{touch-action:manipulation}
       </div>
       <p class="note" id="touchNote" hidden style="margin-top:8px">เล่นบนมือถือ: แตะครึ่งซ้ายของจอแล้วลากเพื่อเดิน ใช้ปุ่มด้านขวาเพื่อต่อย กระโดด กัน และหยิบของ หมุนจอแนวนอนจะเล่นง่ายขึ้น</p>
     </div>
+    <button class="btn quick" id="quickPlay" type="button">▶ เล่นเลย<small>บอทง่าย 3 ตัว · ด่านสุ่ม · ใช้อาชีพของคุณ</small></button>
+    <button class="btn plain tutb" id="tutBtn" type="button">📘 สอนเล่น 1 นาที</button>
+    <details class="setd" id="setD"><summary>ตั้งค่าเกม <small id="setSum"></small></summary>
     <div class="settings">
       <div class="seg"><label class="lbl" for="nf">จำนวนนักสู้</label><input type="range" id="nf" min="2" max="124" value="8"><output id="nfOut" for="nf">8</output></div>
       <div class="seg" role="radiogroup" aria-label="จำนวนชีวิต">
@@ -391,6 +447,7 @@ body *{touch-action:manipulation}
         </div>
       </div>
     </div>
+    </details>
     <div class="btns">
       <button class="btn red" id="playSolo" type="button">เล่นกับบอท</button>
       <button class="btn blue" id="play2p" type="button">2 คนเครื่องเดียว</button>
@@ -4999,6 +5056,7 @@ function tick(){
     else readHuman(f);
   }
   for (const f of G.fighters){ stepFighter(f); physics(f); if (G.teamMode) pushFromStones(f); if (G.boss) pushFromBoss(f); }
+  if (G.tut) tutTick();
   if (STAGE.pads) healPads();
   const fs = G.fighters;
   for (let i = 0; i < fs.length; i++) for (let j = i + 1; j < fs.length; j++){
@@ -5219,12 +5277,14 @@ function render(){
     p.el.style.transform = `translate(${(tmpV.x*.5 + .5)*w}px,${(-tmpV.y*.5 + .5)*h}px) translate(-50%,-50%) scale(${k > .85 ? 1 + (k - .85)*4 : 1})`;
     p.el.style.opacity = tmpV.z < 1 ? Math.min(1, k*3) : 0;
   }
-  if (G.mode === 'play'){ updateTags(w, h); updateHud(); }
+  if (G.mode === 'play'){ updateTags(w, h); updateHud(); updateAids(w, h); }
+  else if (G.aidsOn) hideAids();
 }
 
 /* ---------- HUD ---------- */
 function makeTag(f){
   const el = document.createElement('div'); el.className = 'tag' + (f.isLocal ? ' me' : '');
+  if (f.isLocal){ const a = document.createElement('div'); a.className = 'marr'; el.appendChild(a); }
   const n = document.createElement('div'); n.className = 'tn'; n.textContent = f.isLocal ? '▼ ' + f.name : f.name;
   if (!f.isLocal) n.style.color = hex(f.team);
   if (!f.isLocal && G.fighters.length > 40) n.style.display = 'none';
@@ -5244,6 +5304,43 @@ function updateTags(w, h){
     const hp = Math.ceil(f.hp);
     if (hp !== f.tag.hp){ f.tag.hp = hp; f.tag.bar.style.width = Math.min(100, hp/MAX_HP*100) + '%'; }
   }
+}
+/* ---------- Play aids: red screen edge when you are about to fall, arrows toward enemies off screen ---------- */
+const OFF_N = 4, offEls = [];
+for (let i = 0; i < OFF_N; i++){ const e = document.createElement('i'); $('offs').appendChild(e); offEls.push(e); }
+const _ov = new V();
+function hideAids(){ G.aidsOn = false; $('edgeWarn').style.opacity = 0; for (const e of offEls) e.style.display = 'none'; }
+function updateAids(w, h){
+  G.aidsOn = true;
+  const me = G.fighters.find(f => f.isLocal && alive(f) && !['ko', 'respawn'].includes(f.state) && f.pos.y > SEA_Y);
+  // Edge: how close the nearest drop is (walls that you can't fall past don't count)
+  let danger = 0;
+  if (me && G.countdown <= 30){
+    const x = me.pos.x, z = me.pos.z, wall = inBlock(x, z, 1.6);
+    if (!(wall && wall.kind === 'edge')) danger = !onDeck(x, z, 0) ? 1 : !onDeck(x, z, 1) ? .85 : !onDeck(x, z, 2) ? .45 : 0;
+  }
+  $('edgeWarn').style.opacity = danger ? danger*(.65 + .35*Math.sin(G.frame*.25)) : 0;
+  // Off-screen enemies: the nearest few get an arrow on the screen edge, in their colour
+  let used = 0;
+  if (me){
+    const foes = [];
+    for (const o of G.fighters){
+      if (o === me || ally(me, o) || !alive(o) || o.state === 'ko' || o.pos.y < SEA_Y) continue;
+      _ov.set(o.pos.x, o.pos.y + 1, o.pos.z).project(camera);
+      const behind = _ov.z > 1;
+      if (!behind && Math.abs(_ov.x) < .96 && Math.abs(_ov.y) < .94) continue;
+      foes.push({o, x:behind ? -_ov.x : _ov.x, y:behind ? -_ov.y : _ov.y, d:Math.hypot(o.pos.x - me.pos.x, o.pos.z - me.pos.z)});
+    }
+    foes.sort((a, b) => a.d - b.d);
+    for (const f of foes.slice(0, OFF_N)){
+      const k = 1/Math.max(Math.abs(f.x), Math.abs(f.y), .001);
+      const sx = Math.min(w - 26, Math.max(26, (f.x*k*.5 + .5)*w)), sy = Math.min(h - 26, Math.max(26, (-f.y*k*.5 + .5)*h));
+      const el = offEls[used++];
+      el.style.display = 'block'; el.style.background = hex(f.o.team);
+      el.style.transform = `translate(${sx}px,${sy}px) rotate(${Math.atan2(-f.y, f.x)}rad)`;
+    }
+  }
+  for (let i = used; i < OFF_N; i++) offEls[i].style.display = 'none';
 }
 function buildHud(){
   const cards = $('cards'); cards.textContent = '';
@@ -5395,8 +5492,10 @@ function beginMatch(specs, stocks){
   $('dbg').hidden = !G.debug;
   keys.clear();
 }
-function startOffline(kind){
+function startOffline(kind, over){
   readMenuCfg(); G.kind = kind; G.net = null;
+  if (G.tut) tutClose();
+  G.quick = over || null; if (over) Object.assign(G.cfg, over);
   const n = Math.max(kind === 'local2' ? 2 : 2, G.cfg.n);
   const specs = [{name:LOOKS[0].name, ctrl:'p1', look:LOOKS[0]}];
   if (kind === 'local2') specs.push({name:LOOKS[1].name, ctrl:'p2', look:LOOKS[1]});
@@ -6737,6 +6836,171 @@ function customizeFromOnline(){
 
 /* ---------- Wiring ---------- */
 $('nf').addEventListener('input', e => { $('nfOut').textContent = e.target.value; });
+// One tap: 3 easy bots, a random stage, free-for-all, the class you already wear
+function quickPlay(){
+  // A brand-new player gets the tutorial first; it ends with a button that comes back here
+  if (!tutSeen() && !(Progress.stats && Progress.stats.matches > 0)){ startTutorial(); return; }
+  ensureName(() => {
+    const pool = STAGE_KEYS.filter(k => $('sg-' + k));
+    hideAllPanels();
+    startOffline('solo', {n:4, st:2, df:'easy', mode:'ffa', stage:pool[Math.floor(Math.random()*pool.length)]});
+  });
+}
+$('quickPlay').onclick = quickPlay;
+$('tutBtn').onclick = startTutorial;
+
+/* ---------- Tutorial: seven small tasks against a training dummy that never fights back unless told to ---------- */
+const TUT_KEY = 'skybrawl.tutDone';
+const tutSeen = () => { try { return localStorage.getItem(TUT_KEY) === '1'; } catch (e) { return true; } };
+const TUT_HOW_TOUCH = {move:'ลากนิ้วที่ครึ่งซ้ายของจอ', jump:'ปุ่ม "กระโดด"', atk:'ปุ่ม "ต่อย" (กดรัว = คอมโบ)', guard:'กดค้างปุ่ม "กัน"', skill:'ปุ่ม "สกิล"', grab:'เดินไปทับแล้วกดปุ่ม "ต่อย" หรือ "หยิบ"'};
+const TUT_HOW_KEYS = {move:'ปุ่ม W A S D', jump:'ปุ่ม G หรือ Space', atk:'ปุ่ม F (กดรัว = คอมโบ)', guard:'กดค้างปุ่ม H', skill:'ปุ่ม E', grab:'เดินไปทับแล้วกด F หรือ R'};
+const TUT_STEPS = [
+  {id:'move', btn:'move', text:'เดินไปที่ช่องสีทอง'},
+  {id:'jump', btn:'jump', text:'กระโดด 2 ครั้ง', need:2},
+  {id:'atk', btn:'atk', text:'ต่อยหุ่นซ้อมให้โดน 3 ครั้ง', need:3},
+  {id:'guard', btn:'guard', text:'หุ่นจะต่อยกลับ! เข้าไปใกล้แล้วกดกันให้ป้องกันได้ 1 ครั้ง'},
+  {id:'skill', btn:'skill', text:'ใช้สกิลประจำอาชีพ'},
+  {id:'grab', btn:'grab', text:'หยิบค้อนที่ตกลงมา'},
+  {id:'ring', btn:'atk', text:'ซัดหุ่นซ้อมให้ตกขอบ! ยิ่งเลือดน้อย ยิ่งกระเด็นไกล', how:'ตามลูกศรขอบจอไปหาหุ่น แล้วต่อยให้ปลิวออกนอกเรือ'},
+];
+function startTutorial(){
+  ensureName(() => {
+    hideAllPanels();
+    startOffline('solo', {n:2, st:3, df:'easy', mode:'ffa', stage:'titanic'});
+    const dm = G.fighters[1];
+    dm.ctrl = 'net'; dm.peer = ''; dm.name = 'หุ่นซ้อม';
+    dm.setLook({...dm.look, outfit:'none', name:'หุ่นซ้อม'});
+    if (dm.tag) dm.tag.name.textContent = 'หุ่นซ้อม';
+    buildHud();
+    G.tut = {i:0, init:false, key:'', cam:G.camZoom}; G.camZoom = Math.min(G.camZoom, 1); $('camBtn').textContent = 'กล้อง: ' + CAM_LEVELS[G.camZoom].name;   // close camera while learning; the saved setting comes back after
+    $('tutBox').hidden = false; document.body.classList.add('tutOn'); tutRender(); requestAnimationFrame(tutPlace);
+  });
+}
+function tutHighlight(k){
+  for (const e of document.querySelectorAll('.tut-hl')) e.classList.remove('tut-hl');
+  if (!k) return;
+  const el = k === 'move' ? $('joy') : document.querySelector('#tbtns button[data-k="' + k + '"]');
+  if (el) el.classList.add('tut-hl');
+}
+function tutPlace(){ const b = $('hud').getBoundingClientRect().bottom; if (b > 0) $('tutBox').style.top = Math.round(b + 8) + 'px'; }
+function tutClose(){
+  document.body.classList.remove('tutOn');
+  const T = G.tut; G.tut = null;
+  if (T && T.mark) scene.remove(T.mark);
+  if (T){ G.camZoom = T.cam; $('camBtn').textContent = 'กล้อง: ' + CAM_LEVELS[G.camZoom].name; }
+  $('tutBox').hidden = true; tutHighlight(null);
+}
+function tutEnter(T, st, me, dm){
+  T.n = 0; T.air = false;
+  if (st.id === 'move'){
+    let x = me.pos.x + (me.pos.x > 0 ? -7 : 7), z = me.pos.z*.3;
+    if (!onDeck(x, z, 1.5) || inBlock(x, z, 1)){ x = 0; z = 0; }
+    const m = new THREE.Mesh(new THREE.BoxGeometry(2.2, .12, 2.2), new THREE.MeshBasicMaterial({color:0xffd23a, transparent:true, opacity:.75}));
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(1.6, 6, 1.6), new THREE.MeshBasicMaterial({color:0xffe680, transparent:true, opacity:.22, depthWrite:false})); beam.position.y = 3; m.add(beam);
+    m.position.set(x, .08, z); scene.add(m); T.mark = m;
+  }
+  if (st.id === 'atk') T.h0 = me.hits;
+  if (st.id === 'skill') me.skillCd = 0;
+  if (st.id === 'grab'){
+    const a = me.facing, x = me.pos.x + Math.sin(a)*2.5, z = me.pos.z + Math.cos(a)*2.5;
+    addItem('hammer', onDeck(x, z, 1) ? {x, y:4, z} : {x:me.pos.x, y:4, z:me.pos.z}, 0);
+  }
+  if (st.id === 'ring'){
+    // Put the dummy a step from the rail, on the side it is already on
+    let dx = dm.pos.x, dz = dm.pos.z; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d; if (Math.hypot(dm.pos.x, dm.pos.z) < .5){ dx = 1; dz = 0; }
+    let r = 0; while (r < 80 && onDeck(dx*(r + .5), dz*(r + .5), 0)) r += .5;
+    dm.pos.set(dx*Math.max(0, r - 1.8), 0, dz*Math.max(0, r - 1.8)); dm.vel.set(0, 0, 0);
+  }
+}
+function tutTick(){
+  const T = G.tut;
+  if (G.mode !== 'play' || G.net){ tutClose(); return; }
+  const me = G.fighters[0], dm = G.fighters[1]; if (!me || !dm) return;
+  G.itemTimer = 99999;
+  for (const f of [me, dm]) if (f.stocks < 3) f.stocks = 3;
+  if (G.frame % 15 === 0) tutPlace();
+  if (T.mark) T.mark.material.opacity = .5 + Math.sin(G.frame*.15)*.3;
+  if (G.countdown > 30 || T.done) return;
+  const st = TUT_STEPS[T.i];
+  if (!T.init){ T.init = true; tutEnter(T, st, me, dm); }
+  if (st.id !== 'ring' && alive(dm) && dm.hp < MAX_HP*.5) dm.hp = MAX_HP;
+  let ok = false;
+  switch (st.id){
+    case 'move': ok = Math.hypot(me.pos.x - T.mark.position.x, me.pos.z - T.mark.position.z) < 1.5 && me.pos.y < 1; break;
+    case 'jump':
+      if (!me.onGround && me.vel.y > JUMP*.7 && !T.air){ T.air = true; T.n++; }
+      if (me.onGround) T.air = false;
+      ok = T.n >= 2; break;
+    case 'atk': T.n = me.hits - T.h0; ok = T.n >= 3; break;
+    case 'guard': {
+      ok = me.state === 'guardstun';
+      const d = Math.hypot(me.pos.x - dm.pos.x, me.pos.z - dm.pos.z);
+      if (!ok && alive(dm) && dm.state === 'idle' && d < 2.4 && G.frame - (T.lastAtk || 0) > 70){
+        dm.facing = Math.atan2(me.pos.x - dm.pos.x, me.pos.z - dm.pos.z); startMove(dm, 'jab1'); T.lastAtk = G.frame;
+      }
+      break;
+    }
+    case 'skill':
+      ok = me.state === 'attack' && !!me.moveKey && me.moveKey.startsWith('sk_');
+      if (!ok && me.state !== 'attack') me.skillCd = 0;
+      break;
+    case 'grab': ok = !!me.weapon; if (!ok && !G.items.length) tutEnter(T, st, me, dm); break;
+    case 'ring':
+      ok = ['wait', 'out', 'respawn', 'ko'].includes(dm.state) || dm.pos.y < SEA_Y;
+      if (!ok && alive(dm)) dm.hp = Math.min(dm.hp, MAX_HP*.2);
+      break;
+  }
+  if (ok){
+    if (T.mark){ scene.remove(T.mark); T.mark = null; }
+    popup(new V(me.pos.x, me.pos.y + 3, me.pos.z), 'ผ่าน!', 'combo th', 40); Sfx.play('pickup', me.pos);
+    T.i++; T.init = false;
+    if (T.i >= TUT_STEPS.length){ T.done = true; try { localStorage.setItem(TUT_KEY, '1'); } catch (e) {} Sfx.play('win'); }
+  }
+  tutRender();
+}
+function tutRender(){
+  const T = G.tut; if (!T) return;
+  const N = TUT_STEPS.length, st = TUT_STEPS[Math.min(T.i, N - 1)];
+  const key = T.done ? 'done' : T.i + ':' + T.n;
+  if (key === T.key) return;
+  T.key = key;
+  const box = $('tutBox'); box.textContent = '';
+  const head = document.createElement('div'); head.className = 'th';
+  const lab = document.createElement('span'); lab.textContent = T.done ? 'สอนเล่นครบแล้ว' : 'สอนเล่น ' + (T.i + 1) + '/' + N;
+  const dots = document.createElement('span'); dots.className = 'tdots';
+  for (let i = 0; i < N; i++){ const d = document.createElement('i'); if (i < T.i || T.done) d.className = 'on'; else if (i === T.i) d.className = 'cur'; dots.appendChild(d); }
+  head.append(lab, dots);
+  const tt = document.createElement('div'); tt.className = 'tt';
+  const tw = document.createElement('div'); tw.className = 'tw';
+  box.append(head, tt, tw);
+  if (T.done){
+    tt.textContent = 'เยี่ยมมาก! พร้อมลุยของจริงแล้ว';
+    tw.textContent = 'ทิปส์: ผลักคู่แข่งตกขอบคือวิธีชนะที่เร็วที่สุด · ข้าวปั้นฟื้นพลัง · ระเบิดหยิบแล้วกดอีกครั้งเพื่อขว้าง';
+    const row = document.createElement('div'); row.className = 'tbtns';
+    const go = document.createElement('button'); go.type = 'button'; go.className = 'btn red'; go.textContent = '▶ เริ่มเล่นจริง';
+    go.onclick = () => { tutClose(); quickPlay(); };
+    const back = document.createElement('button'); back.type = 'button'; back.className = 'btn plain'; back.textContent = 'กลับเมนู';
+    back.onclick = () => { tutClose(); toMenu(); };
+    row.append(go, back); box.appendChild(row);
+    tutHighlight(null);
+    return;
+  }
+  tt.textContent = st.text + (st.need ? '  (' + Math.min(T.n, st.need) + '/' + st.need + ')' : '');
+  tw.textContent = st.how || (IS_TOUCH ? TUT_HOW_TOUCH : TUT_HOW_KEYS)[st.id];
+  const skip = document.createElement('button'); skip.type = 'button'; skip.className = 'tskip'; skip.textContent = 'ข้ามบทสอน';
+  skip.onclick = () => { try { localStorage.setItem(TUT_KEY, '1'); } catch (e) {} tutClose(); toMenu(); };
+  head.appendChild(skip);
+  tutHighlight(IS_TOUCH ? st.btn : null);
+}
+// The folded settings say what is chosen; open/closed is remembered
+function setSummary(){
+  readMenuCfg();
+  const stg = G.cfg.mode === 'boss' ? BOSS_STAGE : G.cfg.stage;
+  $('setSum').textContent = [{ffa:'ตะลุมบอน', team:'ทีมตีหิน', boss:'ตีบอส'}[G.cfg.mode], STAGES[stg].name, 'บอท' + {easy:'ง่าย', normal:'ปกติ', hard:'ยาก'}[G.cfg.df], G.cfg.n + ' คน', G.cfg.st + ' ชีวิต'].join(' · ');
+}
+$('setD').addEventListener('change', setSummary); $('setD').addEventListener('input', setSummary);
+try { $('setD').open = localStorage.getItem('skybrawl.setOpen') === '1'; } catch (e) {}
+$('setD').addEventListener('toggle', () => { try { localStorage.setItem('skybrawl.setOpen', $('setD').open ? '1' : '0'); } catch (e) {} });
 $('playSolo').onclick = () => ensureName(() => openCustom(() => startOffline('solo')));
 $('play2p').onclick = () => ensureName(() => openCustom(() => startOffline('local2')));
 function openOnline(){ readMenuCfg(); hideAllPanels(); $('online').hidden = false; showLobbyView(); showOnMsg(''); Lobby.start(); }
@@ -6844,7 +7108,7 @@ function syncRoomPicks(host){
   $('rPickWho').textContent = host ? '· กดเลือกได้เลย' : '· host เป็นคนเลือก';
 }
 buildRoomPicks();
-loadStageThumbs(); syncStagePick();
+loadStageThumbs(); syncStagePick(); setSummary();
 for (const r of document.querySelectorAll('input[name=mode]')) r.addEventListener('change', syncStagePick);
 $('rStart').onclick = () => { if (Net.role === 'host') Net.start(); };
 $('lobbyCust').onclick = $('roomCust').onclick = customizeFromOnline;
@@ -6883,10 +7147,10 @@ $('spec').onclick = () => {
   const i = list.findIndex(f => f.idx === G.spec); G.spec = list[(i + 1) % list.length].idx;
 };
 $('resume').onclick = () => togglePause(false);
-$('restart').onclick = () => startOffline(G.kind);
+$('restart').onclick = () => G.tut ? startTutorial() : startOffline(G.kind, G.quick && {...G.quick, stage:G.cfg.stage});
 $('toMenu').onclick = () => { if (G.net){ Net.leave(); hideAllPanels(); enterAttract(); $('online').hidden = false; showLobbyView(); } else toMenu(); };
 $('dbgBtn').onclick = toggleDebug;
-$('rematch').onclick = () => { if (G.net) Net.backToRoom(); else startOffline(G.kind); };
+$('rematch').onclick = () => { if (G.net) Net.backToRoom(); else if (G.quick) quickPlay(); else startOffline(G.kind); };
 $('resMenu').onclick = () => { if (G.net){ Net.leave(); hideAllPanels(); enterAttract(); $('online').hidden = false; showLobbyView(); } else toMenu(); };
 $('cdone').onclick = () => {
   saveLooks();

@@ -248,3 +248,24 @@ python -m http.server 8765 --directory sky-brawl
 - `config.js` → `fighter`: `hp` (ตัวแปร `MAX_HP` แทนเลข 100 ทุกจุด: เลือดเริ่ม/เกิดใหม่ เพดานฮีล แถบเลือด แรงกระเด็นตามเลือดที่หาย เกณฑ์บอทหาฮีล), `walkSpeed` (`WALK`), `jump` (`JUMP`), `riceballHeal` (`RICE_HEAL`), `normalDamage`/`normalKnockback` = ตัวคูณทุกท่าใน `MOVES` ที่ไม่มี `skill:true` และไม่ใช่ท่าร่างแปลง
 - `forms.<werewolf|tamer>`: `speed`, `scale` → `FORM_INFO`; `forms.tamer.breathRange`/`breathAngle` (องศาเต็ม) → `MOVES.dg1.range`/`arc` (ครึ่งมุม เรเดียน) และปรับระยะบอท `FORM_INFO.tamer.reach/stop` ตามระยะไฟ
 - ค่าเริ่มต้นใหม่ของมังกร: speed 0.8 → 1.1, breathRange 7.5 → 9
+
+## กันการซูมบน iPhone (2026-10-11)
+- iOS Safari ไม่สน `user-scalable=no` ตั้งแต่ iOS 10: นิ้วหนึ่งบนจอย + อีกนิ้วบนปุ่ม = pinch, แตะเร็วๆ = double-tap zoom
+- แก้: `body *{touch-action:manipulation}` (ไม่มี double-tap zoom แต่ยังเลื่อนได้), `#touch,#touch *,#hud{touch-action:none}`, preventDefault `gesturestart/change/end`, `touchmove` ที่มี 2 นิ้วขึ้นไป, `touchstart` บนจอย/ปุ่มกด, และ `touchend` ที่ห่างกันไม่ถึง 350ms (ยกเว้นปุ่ม/ลิงก์/ช่องกรอก); ช่องกรอกบนจอสัมผัสใช้ฟอนต์ 16px กัน iOS ซูมตอนโฟกัส
+- ปุ่มควบคุมใช้ pointer events อยู่แล้ว การ preventDefault touch ไม่กระทบ
+
+## เล่นง่ายขึ้น ขั้น 1 (2026-10-11)
+- ปุ่ม `#quickPlay` "เล่นเลย" → `quickPlay()` = `startOffline('solo', {n:4, st:2, df:'easy', mode:'ffa', stage:สุ่ม})`; `startOffline(kind, over)` ใส่ทับค่าในเมนูชั่วคราว (`G.quick`) ไม่เปลี่ยนค่าที่ผู้เล่นตั้งไว้; แข่งอีกรอบ = สุ่มด่านใหม่
+- ตั้งค่าในเมนูพับอยู่ใน `<details id="setD">` สรุปค่าใน `#setSum` (`setSummary()`), จำสถานะเปิด/ปิดใน localStorage `skybrawl.setOpen`
+- ในเกม (`updateAids()` เรียกจาก render ตอน `G.mode === 'play'`, ออกจากเกมแล้ว `hideAids()`):
+  - ลูกศรทองเด้งเหนือหัวผู้เล่นในเครื่อง (`.tag .marr` ใน `makeTag`)
+  - ขอบจอแดง + "ระวังตก!" (`#edgeWarn`) เมื่อห่างขอบ < 2 ช่อง (`onDeck` margin 0/1/2) ไม่นับข้างกำแพง `kind:'edge'`
+  - ลูกศรขอบจอสีตามศัตรู (`#offs`) ชี้ศัตรูที่ใกล้ที่สุด 4 คนที่อยู่นอกจอ
+
+## เล่นง่ายขึ้น ขั้น 2: สอนเล่น (2026-10-11)
+- ปุ่ม `#tutBtn` "📘 สอนเล่น 1 นาที" ในเมนู → `startTutorial()`; คนใหม่ (ไม่มี localStorage `skybrawl.tutDone` และ `Progress.stats.matches` = 0) กด "เล่นเลย" ครั้งแรกจะเข้าสอนเล่นก่อน
+- ด่านเรือไททานิก ผู้เล่น + `หุ่นซ้อม` (ctrl `'net'` ไม่มี peer = ยืนนิ่ง) ชีวิตเติมเองไม่มีวันจบเกม/ไม่บันทึกผล; กล้องซูมระดับ "ปกติ" ระหว่างสอน แล้วคืนค่าเดิม
+- `TUT_STEPS` 7 ขั้น: เดินไปช่องทอง → กระโดด 2 → ต่อยโดน 3 → กันหมัดหุ่น (หุ่น `startMove('jab1')` เมื่อเข้าใกล้) → ใช้สกิล → หยิบค้อน (`addItem('hammer')`) → ซัดหุ่นตกขอบ (หุ่นย้ายไปใกล้ขอบ เลือดถูกกดไว้ 20%); ตรวจใน `tutTick()` (เรียกจาก `tick`)
+- `#tutBox` บอกขั้น/จุดความคืบหน้า/วิธีกด (ข้อความต่างกันระหว่างคีย์บอร์ดกับจอสัมผัส `IS_TOUCH`), บนมือถือปุ่มที่ต้องกดจะมีกรอบทองกระพริบ (`.tut-hl`), ปุ่ม "ข้ามบทสอน"; จบแล้วมีปุ่ม "เริ่มเล่นจริง" (→ `quickPlay`) / "กลับเมนู"
+- ออกกลางคัน (เมนู/เริ่มเกมอื่น/ออนไลน์) → `tutClose()` ล้างทุกอย่าง
+- มือถือแนวตั้ง (2026-10-11): `@media (orientation:portrait) and (max-width:600px)` HUD เป็น 2 แถว (การ์ดผู้เล่น + กล่องนักสู้ย่อ กดเปิดรายชื่อได้ / ปุ่มเมนู-กล้อง-ปุ่มจอ-ออโต้เรียงแถวเดียว), `#tbtns` แคบลงเหลือ 190px (สกิลย้ายไปเหนือปุ่มกัน) ไม่ทับจอย; `#tutBox` ใช้ `tutPlace()` วางใต้ HUD ทุก 15 เฟรม; ปุ่มหยิบเลื่อนเป็น right/bottom 104px (เดิมมุมทับปุ่มต่อยเมื่อเป็นสี่เหลี่ยม)
