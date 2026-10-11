@@ -383,6 +383,7 @@ body *{touch-action:manipulation}
       <button id="pauseBtn" class="chipbtn" type="button">II เมนู</button>
       <button id="camBtn" class="chipbtn" type="button" title="ปรับมุมกล้อง (ปุ่ม - และ = หรือล้อเมาส์)">กล้อง: ปกติ</button>
       <button id="touchBtn" class="chipbtn" type="button">ปุ่มจอ: ปิด</button>
+      <button id="aimBtn" class="chipbtn" type="button" title="ล็อกเป้าศัตรูที่ใกล้ที่สุดให้เอง">เล็ง: ออโต้</button>
       <button id="autoBtn" class="chipbtn" type="button" title="ให้บอทเล่นแทน (ปุ่ม T)">ออโต้: ปิด</button>
       <button id="spec" class="chipbtn" type="button" hidden>ดูคนถัดไป</button>
     </div>
@@ -435,6 +436,11 @@ body *{touch-action:manipulation}
         <input type="radio" name="diff" id="d-easy" value="easy"><label for="d-easy">ง่าย</label>
         <input type="radio" name="diff" id="d-normal" value="normal" checked><label for="d-normal">ปกติ</label>
         <input type="radio" name="diff" id="d-hard" value="hard"><label for="d-hard">ยาก</label>
+      </div>
+      <div class="seg" role="radiogroup" aria-label="เล็งอัตโนมัติ">
+        <span class="lbl">เล็งอัตโนมัติ</span>
+        <input type="radio" name="al" id="al-on" value="1" checked><label for="al-on">เปิด</label>
+        <input type="radio" name="al" id="al-off" value="0"><label for="al-off">ปิด (กดล็อกเอง)</label>
       </div>
       <div class="pick" role="radiogroup" aria-label="โหมด">
         <span class="lbl">โหมด</span>
@@ -1190,9 +1196,6 @@ const MOVES = {
   rp3:{name:'เคียวเกี่ยววิญญาณ', anim:'slam', startup:11, active:3, recovery:18, dmg:9, kb:9, up:7, launch:true, reach:1.8, rad:1.2, lunge:1.5, hitstop:8, shake:.3},
   sk_reaper:{name:'อัญเชิญโครงกระดูกยักษ์', anim:'cast', startup:14, active:1, recovery:14, noHit:true, dmg:12, radius:3.5, stunT:100, life:10, hitstop:6, shake:.5, reach:0, rad:0, skill:true, snd:'skull',
     fire:(f, m) => summonSkeleton(f, m)},
-  // Ranged poke for casters and gunners: used by itself when nobody is within arm's reach but an enemy is in range
-  rpk:{name:'ยิงเวท', anim:'cast', startup:7, active:1, recovery:13, noHit:true, dmg:4, kb:3, up:0, stun:14, hitstop:2, shake:.04, reach:0, rad:0, next:'rpk', fire:f => pokeShot(f)},
-  rps:{name:'ยิงระยะไกล', anim:'shoot', startup:5, active:1, recovery:12, noHit:true, dmg:4, kb:3, up:0, stun:14, hitstop:2, shake:.04, reach:0, rad:0, next:'rps', fire:f => pokeShot(f)},
 };
 const MOVE_KEYS = Object.keys(MOVES);
 // Cooldown in frames (60 = 1 s); range = how close a bot wants its target before using it, -1 = use when hurt
@@ -3872,10 +3875,7 @@ function think(b){
   else if (!tOk){ goal = item ? item.it.pos : {x:0, z:0}; stop = item ? 0 : 2; }
   else if (b.held === 'bomb'){ if (dist < 4) goal = {x:b.pos.x - dx, z:b.pos.z - dz}; }
   else if (item && item.d < dist*.8){ goal = item.it.pos; }
-  else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : b.weapon ? 1.1 : b.formT > 0 ? FORM_INFO[b.cls].stop : (CLASS_STOP[b.cls] || (POKE_KIND[b.cls] ? 6.5 : 1.1));
-    // Ranged classes back off when someone gets too close (most of the time; sometimes they stand and fight)
-    if (G.frame % 45 === b.idx % 45) ai.kite = Math.random() < .65;
-    if (stop >= 5 && !b.weapon && dist < 2.6 && ai.kite){ goal = {x:b.pos.x - dx/dist*4, z:b.pos.z - dz/dist*4}; stop = 0; } }
+  else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : b.weapon ? 1.1 : b.formT > 0 ? FORM_INFO[b.cls].stop : (CLASS_STOP[b.cls] || 1.1); }
   inp.x = inp.z = 0;
   if (goal){
     const mx = goal.x - b.pos.x, mz = goal.z - b.pos.z, md = Math.hypot(mx, mz);
@@ -3895,7 +3895,7 @@ function think(b){
   const near = nearestItem(b, 1.3);
   if (near && near.it.type !== 'heal'){ press('grab'); ai.cd = 4; return; }
   const isGun = b.weapon === 'gun' || b.weapon === 'shotgun';
-  if (tOk && dist < (isGun ? (b.weapon === 'gun' ? 11 : 5.5) : b.weapon ? 2.3 : b.formT > 0 ? FORM_INFO[b.cls].reach : POKE_KIND[b.cls] ? 11 : (CLASS_REACH[b.cls] || 1.9)) && Math.random() < D.aggr*(isGun ? .5 : 1)){
+  if (tOk && dist < (isGun ? (b.weapon === 'gun' ? 11 : 5.5) : b.weapon ? 2.3 : b.formT > 0 ? FORM_INFO[b.cls].reach : (CLASS_REACH[b.cls] || 1.9)) && Math.random() < D.aggr*(isGun ? .5 : 1)){
     inp.x = dx/dist*.3; inp.z = dz/dist*.3; press('atk'); ai.wantCombo = Math.random() < D.combo; ai.cd = 4; return;
   }
   if (tOk && t.pos.y > 1 && dist < 2.5 && Math.random() < .3) press('jump');
@@ -3908,6 +3908,22 @@ function think(b){
 const lockable = (f, o, maxD) => !!o && o !== f && !ally(f, o) && alive(o) && o.state !== 'ko' && o.stocks > 0 && o.pos.y > SEA_Y + .5 &&
   Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z) < maxD;
 // Press once: nearest enemy. Press again: next nearest (up to 6). After the last one: lock off.
+// Auto-aim: every few frames, lock the nearest enemy within 14 squares (not someone hidden in tall grass).
+// Keeps the current target unless a new one is clearly closer; a manual lock press is respected for 4 seconds.
+function autoLockStep(f){
+  if (G.frame % 6 !== f.idx % 6) return;
+  if (f.lockManual && G.frame - f.lockManual < 240 && lockable(f, f.lock, 18)) return;
+  let best = null, bd = 14;
+  for (const o of G.fighters){
+    if (!lockable(f, o, 14) || o.state === 'respawn') continue;
+    const d = Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z);
+    if (STAGE.bushes && inBush(o) && d > SI_HIDE) continue;
+    if (d < bd){ bd = d; best = o; }
+  }
+  const cur = lockable(f, f.lock, 16) ? Math.hypot(f.lock.pos.x - f.pos.x, f.lock.pos.z - f.pos.z) : Infinity;
+  if (!best){ if (cur === Infinity && f.autoPicked){ f.lock = null; f.autoPicked = false; } return; }
+  if (best !== f.lock && bd < cur*.7){ f.lock = best; f.autoPicked = true; }
+}
 function cycleLock(f){
   const list = G.fighters.filter(o => lockable(f, o, 18))
     .sort((a, b) => Math.hypot(a.pos.x - f.pos.x, a.pos.z - f.pos.z) - Math.hypot(b.pos.x - f.pos.x, b.pos.z - f.pos.z)).slice(0, 6);
@@ -4000,23 +4016,10 @@ function wantsHeal(b){
 }
 
 /* ---------- Combat ---------- */
-// Classes that fight from range: their normal attack becomes a shot when nobody is within arm's reach
-const POKE_KIND = {mage:'bolt', wizard:'thunder', frost:'ice', volt:'spark', necro:'soul', druid:'acid', bard:'note', priest:'holy', acolyte:'holy', crusader:'holy',
-  gundam:'beam', alchemist:'potion', spacecop:'saber', soldier:'bullet'};
-const POKE_SHOOT = new Set(['gundam', 'soldier', 'spacecop']);
-const POKE_NEAR = 2.8, POKE_FAR = 13;
-function pokeTarget(f){
-  if (nearestTarget(f, POKE_NEAR)) return null;
-  if (f.lock && hittable(f.lock) && Math.hypot(f.lock.pos.x - f.pos.x, f.lock.pos.z - f.pos.z) < POKE_FAR) return f.lock;
-  const B = G.boss;
-  return nearestTarget(f, POKE_FAR) || (B && B.hp > 0 && Math.hypot(B.pos.x - f.pos.x, B.pos.z - f.pos.z) < POKE_FAR + BOSS_R ? B : null);
-}
-function pokeShot(f){ fireProj(f, POKE_KIND[f.cls] || 'bolt', aimAngle(f, POKE_FAR), 24, 34, f.move); }
 function attackKey(f){
   if (f.weapon === 'gun') return 'shoot';
   if (f.weapon === 'shotgun') return 'blast';
   if (f.formT > 0 && FORM_INFO[f.cls]) return FORM_INFO[f.cls].atk;
-  if (POKE_KIND[f.cls] && f.onGround && pokeTarget(f)) return POKE_SHOOT.has(f.cls) ? 'rps' : 'rpk';
   if (!f.onGround) return 'air';
   return f.weapon === 'hammer' ? 'ham1' : (CLASS_COMBO[f.cls] || 'jab1');
 }
@@ -5129,7 +5132,8 @@ function stepFighter(f){
   const lockP = inp.lock && !prev.lock; prev.lock = inp.lock;
   if (f.lock && !lockable(f, f.lock, 26)) f.lock = null;
   if (f.state === 'out') return;
-  if (lockP) cycleLock(f);
+  if (lockP){ cycleLock(f); f.lockManual = G.frame; f.autoPicked = false; }
+  if ((f.ctrl === 'p1' || f.ctrl === 'p2') ? G.autoLock && !isAuto(f) : f.ctrl === 'net' && f.netAuto) autoLockStep(f);
   if (f.state === 'wait'){ if (--f.waitT <= 0) respawn(f); return; }
   if (atkP) f.buffer = 8;
   if (f.freeze > 0){ f.freeze--; return; }
@@ -6607,7 +6611,7 @@ const Net = {
     const num = k => Number(a[k]) || 0;
     let x = Math.max(-1, Math.min(1, num(0)/100)), z = Math.max(-1, Math.min(1, num(1)/100));
     const m = Math.hypot(x, z); if (m > 1){ x /= m; z /= m; }
-    inp.x = x; inp.z = z; inp.guard = num(2) === 1;
+    inp.x = x; inp.z = z; inp.guard = num(2) === 1; f.netAuto = num(8) === 1;
     if (!f.nc) f.nc = {a:num(3), j:num(4), g:num(5), s:num(6), l:num(7)};
     inp.atk = num(3) !== f.nc.a; inp.jump = num(4) !== f.nc.j; inp.grab = num(5) !== f.nc.g; inp.skill = num(6) !== f.nc.s; inp.lock = num(7) !== f.nc.l;
     f.nc = {a:num(3), j:num(4), g:num(5), s:num(6), l:num(7)};
@@ -6674,7 +6678,7 @@ const Net = {
         // counters carry over from earlier connections; sending zeros would register as a phantom button press on the host
         const c = this.counts;
         this.lastIn = '';
-        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:G.myTeam, in:[0,0,0,c.a,c.j,c.g,c.s,c.l]});
+        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:G.myTeam, in:[0,0,0,c.a,c.j,c.g,c.s,c.l,G.autoLock ? 1 : 0]});
         if (G.mode !== 'play') showRoomView();
       });
       conn.on('data', msg => {
@@ -6935,7 +6939,7 @@ const Net = {
     const raw = readRaw([MAP1, MAPALT], true), c = this.counts;
     if (raw.atk && !c.pa) c.a++; if (raw.jump && !c.pj) c.j++; if (raw.grab && !c.pg) c.g++; if (raw.skill && !c.ps) c.s++; if (raw.lock && !c.pl) c.l++;
     c.pa = raw.atk; c.pj = raw.jump; c.pg = raw.grab; c.ps = raw.skill; c.pl = raw.lock;
-    const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s, c.l];
+    const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s, c.l, G.autoLock ? 1 : 0];
     const key = arr.join(',');
     if (key === this.lastIn) return;
     if (this.hostConn && this.hostConn.relay){ const t = performance.now(); if (t - (this.inT || 0) < RELAY_IN_MS) return; this.inT = t; }
@@ -7523,6 +7527,20 @@ function camStep(d){
 }
 camStep(0);
 $('autoBtn').onclick = e => { toggleAuto('p1'); e.currentTarget.blur(); };
+// Auto-aim: on unless the player turned it off
+G.autoLock = true;
+try { G.autoLock = localStorage.getItem('skybrawl.autoLock') !== '0'; } catch (e) {}
+function setAutoLock(on){
+  G.autoLock = !!on;
+  try { localStorage.setItem('skybrawl.autoLock', on ? '1' : '0'); } catch (e) {}
+  $('aimBtn').textContent = 'เล็ง: ' + (on ? 'ออโต้' : 'กดเอง'); $('aimBtn').classList.toggle('on', !!on);
+  $(on ? 'al-on' : 'al-off').checked = true;
+  if (!on) for (const f of G.fighters) if (f.isLocal && f.autoPicked) f.lock = null;
+  if (G.net === 'guest') Net.lastIn = '';   // resend the input row so the host hears the new setting
+}
+setAutoLock(G.autoLock);
+$('aimBtn').onclick = e => { setAutoLock(!G.autoLock); e.currentTarget.blur(); };
+for (const r of document.querySelectorAll('input[name=al]')) r.addEventListener('change', () => setAutoLock(r.value === '1'));
 $('camBtn').onclick = () => camStep(G.camZoom === CAM_LEVELS.length - 1 ? -G.camZoom : 1);
 {
   let acc = 0;
