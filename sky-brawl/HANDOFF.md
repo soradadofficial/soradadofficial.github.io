@@ -1,4 +1,4 @@
-# Sky Brawl — เอกสารส่งต่องาน
+# BloxFighter (เดิม Sky Brawl) — เอกสารส่งต่องาน
 
 > อัปเดตล่าสุด: 11 ต.ค. 2026 · ไฟล์หลัก `index.html` ยาวประมาณ 4,500 บรรทัด
 > ใช้ไฟล์นี้เป็นจุดเริ่มต้นเมื่อทำงานต่อจากบัญชีอื่น หรือส่งให้ AI ตัวใหม่อ่านก่อนลงมือ
@@ -235,3 +235,11 @@ python -m http.server 8765 --directory sky-brawl
 - ด่านใหม่: เพิ่ม radio+label `class="pickcard"` ใน `#stageGrid` ภาพจะถูกถ่ายเองอัตโนมัติ; ก่อนถ่ายเสร็จการ์ดใช้สีท้องฟ้าของด่าน (`st.sky`) เป็นพื้นหลัง
 - โหมดตีบอส: `syncStagePick()` ทำการ์ดด่านเป็นสีเทาและขึ้นข้อความว่าเล่นที่ด่านคริสต์มาสเสมอ
 - ห้องออนไลน์ (2026-10-11): `#rPick` การ์ดโหมด/ด่านชุดเดียวกับเมนู (สร้างโดย `buildRoomPicks()` จากการ์ดเมนู id `rmd-*`/`rsg-*`) host กดแล้วไปตั้งค่า `<select id="rMode/rStage">` ที่ซ่อนไว้ + ยิง change เดิม; guest การ์ดเป็น disabled แสดงตาม `Net.cfg` (`syncRoomPicks()` เรียกใน `renderRoomView`); ภาพด่านถ่ายได้ทั้งตอนอยู่เมนูหรือหน้าออนไลน์
+
+## เปลี่ยนชื่อเป็น BloxFighter + ภาพสไตล์โลกบล็อก (2026-10-11)
+- ชื่อที่ผู้เล่นเห็นเปลี่ยนเป็น **BloxFighter** ทั้งหมด (title, meta/og, โลโก้, ข้อความแชร์) แต่ **ของภายในยังใช้ชื่อเดิม** เพื่อไม่ให้ของเก่าพัง: โฟลเดอร์/URL `sky-brawl/`, คีย์ localStorage `skybrawl.*`, peer id `skybrawl-v1-`, ช่อง Supabase `skybrawl-lobby`, Redirect URL ใน Supabase
+- ภาพบล็อกทำที่บล็อก `/* ---------- Voxel look (BloxFighter) ---------- */` ต้น `<script>` หลัก (ก่อนสร้างโมเดลใดๆ): แทนคลาสเรขาคณิตของ THREE — `SphereGeometry` → กล่องตามกรอบของทรงกลม ×0.82 (ครึ่งทรงกลม/แถบก็ได้กล่องตามส่วนนั้น), `Cylinder/Cone/Lathe` → 4 เหลี่ยมหมุน 45°, `Torus/Ring/Circle` → สี่เหลี่ยม, `Icosahedron/Dodecahedron` → ลูกบาศก์ ของที่ต้องกลมจริงใช้ `THREE.RoundSphere` / `THREE.RoundCylinder` (ตอนนี้ใช้กับ hitbox และฟองโล่)
+- ลายพิกเซล: `MeshToonMaterial.prototype.onBeforeCompile` เติมจุดสว่าง-มืดเป็นช่องละ 1/7 หน่วย (`VOX`) จากตำแหน่งในโมเดล ใช้กับ mesh ที่ถูก `mergeMeshes` ได้ (ไม่ต้องมี UV), บน WebGL2 ลายจางลงเองเมื่อช่องเล็กกว่าพิกเซล
+- เส้นขอบดำ `OUT` ถูกซ่อน (`OUT.visible = false`) ถ้าอยากได้คืนลบบรรทัดนั้น
+- UI: ท้าย `<style>` มีชุด `BloxFighter: blocky UI` — มุมเหลี่ยมทั้งหมด, โลโก้ฟอนต์ Silkscreen (`.logo.blox`), พื้นการ์ดลายตาราง
+- `THUMB_VER` = `v2-blox` ภาพการ์ดด่านในเมนูถ่ายใหม่เองครั้งแรกที่เปิด, `og.png` ทำใหม่เป็นโลโก้ BloxFighter

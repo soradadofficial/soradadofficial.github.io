@@ -3,24 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#3f6fb5">
-<meta name="description" content="Sky Brawl เกมต่อสู้ 3 มิติบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 64 คน">
+<meta name="theme-color" content="#5a8f3a">
+<meta name="description" content="BloxFighter เกมต่อสู้ 3 มิติโลกบล็อกบนดาดฟ้าเรือไททานิก ตะลุมบอนกับบอทได้สูงสุด 124 คน หรือชวนเพื่อนเล่นออนไลน์ได้สูงสุด 64 คน">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://soradadofficial.github.io/sky-brawl/">
 <meta property="og:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="นักสู้หลายอาชีพตะลุมบอนกันบนดาดฟ้าเรือไททานิก พร้อมโลโก้ Sky Brawl">
-<meta property="og:title" content="Sky Brawl เกมต่อสู้ 3D บนเว็บ">
-<meta property="og:description" content="ตะลุมบอนบนเรือไททานิก วัดไทย และสยาม 18 อาชีพ เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง ชวนเพื่อนเล่นออนไลน์ได้">
+<meta property="og:image:alt" content="นักสู้หลายอาชีพตะลุมบอนกันบนดาดฟ้าเรือไททานิก ในโลกบล็อก พร้อมโลโก้ BloxFighter">
+<meta property="og:title" content="BloxFighter เกมต่อสู้โลกบล็อก 3D บนเว็บ">
+<meta property="og:description" content="ตะลุมบอนในโลกบล็อก บนเรือไททานิก วัดไทย สยาม และอีกหลายด่าน กว่า 30 อาชีพ เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง ชวนเพื่อนเล่นออนไลน์ได้">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://soradadofficial.github.io/sky-brawl/og.png">
-<meta name="twitter:title" content="Sky Brawl เกมต่อสู้ 3D บนเว็บ">
+<meta name="twitter:title" content="BloxFighter เกมต่อสู้โลกบล็อก 3D บนเว็บ">
 <meta name="twitter:description" content="ตะลุมบอนบนเรือไททานิก วัดไทย และสยาม เล่นบนมือถือได้ทันที ไม่ต้องติดตั้ง">
-<title>Sky Brawl</title>
+<title>BloxFighter</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Kanit:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Kanit:wght@400;500;700&family=Silkscreen:wght@400;700&display=swap">
 <style>
 /* Layout: full-bleed 3D brawl on the Titanic's deck; local HUD top-left, scoreboard top-right; menus float as cards over the live scene */
 :root{
@@ -288,6 +288,14 @@ body *{touch-action:manipulation}
   .seg .lbl{min-width:0}
 }
 @media (prefers-reduced-motion:reduce){ #banner.show{animation:fade 1s both} @keyframes fade{0%,100%{opacity:0}15%,80%{opacity:1}} .fi{animation:none} }
+
+/* ---------- BloxFighter: blocky UI ---------- */
+:root{--sky:#7fb7e8;--pixel:"Silkscreen","Dela Gothic One","Kanit",system-ui,sans-serif}
+*,*::before,*::after{border-radius:0!important}
+.logo.blox{font-family:var(--pixel);font-weight:700;font-size:clamp(28px,7.6vw,50px);line-height:1;margin-bottom:12px;letter-spacing:.02em;color:#c9c9c9;-webkit-text-stroke:0;
+  text-shadow:0 3px 0 #8a8a8a,0 6px 0 #5f5f5f,3px 9px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink),2px 2px 0 var(--ink);display:flex;flex-wrap:wrap;gap:0 .32em}
+.logo.blox span{color:#7ccf3f;text-shadow:0 3px 0 #4f8f26,0 6px 0 #33641a,3px 9px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink),2px 2px 0 var(--ink)}
+.card{background-image:linear-gradient(rgba(20,33,58,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(20,33,58,.035) 1px,transparent 1px);background-size:8px 8px}
 </style>
 
 </head>
@@ -335,7 +343,7 @@ body *{touch-action:manipulation}
 <div id="menu" class="overlay">
   <div class="card">
     <div>
-      <h1 class="logo">SKY <span>BRAWL</span></h1>
+      <h1 class="logo blox" aria-label="BloxFighter">BLOX<span>FIGHTER</span></h1>
       <p class="sub">ศึกตะลุมบอนบนดาดฟ้าเรือไททานิก ต่อยคู่แข่งจนพลังหมด หรือซัดให้ลอยข้ามราวลงทะเล ลงได้สูงสุด 124 คน (ออนไลน์ 64 คน) ทั้งคนจริงและบอท คนสุดท้ายที่เหลืออยู่ชนะ</p>
       <div id="lvChip" class="lvchip" hidden><span class="lv"></span><span class="lt"></span><span class="xpbar"><i></i></span></div>
       <div id="acctBox" class="acct" hidden>
@@ -594,6 +602,73 @@ body *{touch-action:manipulation}
 <!-- Settings you can tweak without touching this file: skill cooldowns/power, classes on/off -->
 <script src="config.js"></script>
 <script>
+/* ---------- Voxel look (BloxFighter) ----------
+   Runs before any model is built: round geometry becomes blocky, so every character, prop and stage
+   piece comes out made of cubes without touching the model code. The original round classes stay
+   available as THREE.RoundSphere / THREE.RoundCylinder for things that must stay round (hitbox view,
+   shield bubble). Toon materials also get a pixel "texture" (see VOXEL_GRAIN below). */
+(() => {
+  const T = THREE, PI = Math.PI;
+  const Sphere = T.SphereGeometry, Cyl = T.CylinderGeometry, Torus = T.TorusGeometry, Lathe = T.LatheGeometry;
+  const Ring = T.RingGeometry, Circle = T.CircleGeometry;
+  T.RoundSphere = Sphere; T.RoundCylinder = Cyl;
+  const _b = new T.Box3();
+  // A cube that fills the same part of space as the round shape: its bounding box pulled in a little
+  // toward the shape's centre, so a sphere of radius r becomes a cube of side about 1.64r
+  const boxFrom = (round, k, cx = 0, cy = 0, cz = 0) => {
+    round.computeBoundingBox(); _b.copy(round.boundingBox); round.dispose();
+    const lo = _b.min, hi = _b.max;
+    const sx = Math.max((hi.x - lo.x)*k, .01), sy = Math.max((hi.y - lo.y)*k, .01), sz = Math.max((hi.z - lo.z)*k, .01);
+    const g = new T.BoxGeometry(sx, sy, sz);
+    g.translate(cx + ((lo.x + hi.x)/2 - cx)*k, cy + ((lo.y + hi.y)/2 - cy)*k, cz + ((lo.z + hi.z)/2 - cz)*k);
+    return g;
+  };
+  T.SphereGeometry = function(r = 1, w, h, ps = 0, pl = PI*2, ts = 0, tl = PI){
+    return boxFrom(new Sphere(r, 16, 12, ps, pl, ts, tl), .82);
+  };
+  T.CylinderGeometry = function(rt = 1, rb = 1, h = 1, rs, hs = 1, open = false, ts = 0, tl = PI*2){
+    if (tl < PI*2 - 1e-3) return new Cyl(rt, rb, h, Math.max(4, Math.min(rs || 8, 6)), hs, open, ts, tl);
+    // Four sides turned 45 degrees = a square post; radius scaled so the square is about as wide as the circle was
+    const g = new Cyl(rt*1.25, rb*1.25, h, 4, 1, open); g.rotateY(PI/4); return g;
+  };
+  T.ConeGeometry = function(r = 1, h = 1, rs, hs, open = false, ts = 0, tl = PI*2){ return T.CylinderGeometry(0, r, h, 4, 1, open, ts, tl); };
+  T.TorusGeometry = function(R = 1, t = .4, rs, ts, arc = PI*2){
+    const n = arc < PI*2 - 1e-3 ? Math.max(3, Math.round(arc/(PI/4))) : (R < 1.2 ? 4 : 8);
+    const g = new Torus(R*(n === 4 ? 1.2 : 1.05), t*1.1, 4, n, arc);
+    if (n === 4) g.rotateZ(PI/4);
+    return g;
+  };
+  T.LatheGeometry = function(pts, seg, ps = 0, pl = PI*2){
+    if (pl < PI*2 - 1e-3) return new Lathe(pts, Math.min(seg || 12, 6), ps, pl);
+    const g = new Lathe(pts, 4); g.rotateY(PI/4); g.scale(1.25, 1, 1.25); return g;
+  };
+  T.RingGeometry = function(ri = .5, ro = 1, seg, ps, ts = 0, tl = PI*2){
+    if (tl < PI*2 - 1e-3) return new Ring(ri, ro, Math.min(seg || 8, 8), 1, ts, tl);
+    const g = new Ring(ri*1.15, ro*1.15, 4, 1); g.rotateZ(PI/4); return g;
+  };
+  T.CircleGeometry = function(r = 1, seg, ts = 0, tl = PI*2){
+    if (tl < PI*2 - 1e-3) return new Circle(r, Math.min(seg || 8, 8), ts, tl);
+    const g = new Circle(r*1.15, 4); g.rotateZ(PI/4); return g;
+  };
+  T.IcosahedronGeometry = T.DodecahedronGeometry = function(r = 1){ const s = r*1.5; return new T.BoxGeometry(s, s, s); };
+
+  // Pixel grain: each block face is split into little squares (VOX per unit) with slightly different
+  // brightness, worked out from the model-space position so it sticks to the model as it moves.
+  // Works on merged meshes too, which have no UVs.
+  const VOX = '7.0';
+  T.MeshToonMaterial.prototype.onBeforeCompile = function(sh, r){
+    // WebGL2: fade the grain where a little square gets smaller than a screen pixel (far away / huge
+    // planes like the sea), otherwise it shimmers. WebGL1 phones just keep the grain everywhere.
+    const fade = r && r.capabilities && r.capabilities.isWebGL2 ? '1. - smoothstep(.3, .8, max(max(fwidth(vVox.x), fwidth(vVox.y)), fwidth(vVox.z)))' : '1.';
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vVox;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvVox = position*' + VOX + ' - objectNormal*.5;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vVox;\nfloat voxH(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719)))*43758.5453); }')
+      .replace('#include <color_fragment>', '#include <color_fragment>\n{ vec3 c = floor(vVox); float n = voxH(c); float e = voxH(c + 17.0); diffuseColor.rgb *= 1. + (' + fade + ')*(.2*n - .16 + (e > .93 ? .1 : 0.)); }');
+  };
+  T.MeshToonMaterial.prototype.customProgramCacheKey = function(){ return 'vox1'; };
+})();
 (() => {
 const V = THREE.Vector3, PI = Math.PI;
 const DT = 1/60, GRAV = 40, INK = 0x14213a;
@@ -1152,6 +1227,7 @@ gmap.minFilter = gmap.magFilter = THREE.NearestFilter; gmap.needsUpdate = true;
 const matCache = {};
 const toon = c => matCache[c] || (matCache[c] = new THREE.MeshToonMaterial({color:c, gradientMap:gmap}));
 const OUT = new THREE.MeshBasicMaterial({color:INK, side:THREE.BackSide});
+OUT.visible = false; // BloxFighter: blocks have no ink outline
 const SPH = r => new THREE.SphereGeometry(r, r > .3 ? 18 : 12, r > .3 ? 12 : 8);
 function part(geo, mat, outline){
   const m = new THREE.Mesh(geo, mat); m.castShadow = true;
@@ -2238,7 +2314,7 @@ function setStage(k){
 }
 
 /* ---------- Stage picture cards: each stage photographs itself once (fighters hidden) and the picture is kept in localStorage ---------- */
-const THUMB_VER = 'v1', STAGE_THUMBS = {}, THUMB_FAIL = new Set();
+const THUMB_VER = 'v2-blox', STAGE_THUMBS = {}, THUMB_FAIL = new Set();
 const thumbCam = new THREE.PerspectiveCamera(42, 16/10, .1, 700);
 let thumbRT = null, thumbWait = 45;
 function stageThumb(key){
@@ -3187,9 +3263,9 @@ function buildChibi(look, team){
   const cw = buildClassWeapon(look.outfit); if (cw){ cw.position.y = -.36; armR.add(cw); }
   const oh = buildOffhand(look.outfit); if (oh){ oh.position.y = -.36; armL.add(oh); }
   const bomb = buildBomb(); bomb.position.y = 1.55; tilt.add(bomb);
-  const bubble = new THREE.Mesh(SPH(1.05), new THREE.MeshBasicMaterial({color:team, transparent:true, opacity:.22, depthWrite:false}));
+  const bubble = new THREE.Mesh(new THREE.RoundSphere(1.05, 18, 12), new THREE.MeshBasicMaterial({color:team, transparent:true, opacity:.22, depthWrite:false}));
   bubble.position.y = .1; tilt.add(bubble);
-  const wire = c => new THREE.Mesh(new THREE.SphereGeometry(1,12,8), new THREE.MeshBasicMaterial({color:c, wireframe:true}));
+  const wire = c => new THREE.Mesh(new THREE.RoundSphere(1,12,8), new THREE.MeshBasicMaterial({color:c, wireframe:true}));
   const hurt = wire(0x3fbf5a); hurt.scale.setScalar(.55); const hit = wire(0xff2a2a);
   // Bake each rigid piece: about 58 draw calls per fighter become about 16
   mergeMeshes(tilt, new Set([head, armL, armR, legL, legR, bomb, bubble]));
@@ -5340,8 +5416,8 @@ function showResult(rows, winnerIdx){
   {
     const me = G.fighters.find(f => f.isLocal), mine = me && rows.find(r => r.f === me);
     const txt = mine
-      ? 'ได้อันดับ ' + mine.place + ' จาก ' + rows.length + ' คน ใน Sky Brawl ด่าน' + STAGE.name + ' KO ' + mine.kos + ' ครั้ง ดาเมจ ' + mine.dmg + ' ใครแน่มาสู้กัน!'
-      : 'มาดูศึก Sky Brawl ด่าน' + STAGE.name + ' แล้วมาสู้กัน!';
+      ? 'ได้อันดับ ' + mine.place + ' จาก ' + rows.length + ' คน ใน BloxFighter ด่าน' + STAGE.name + ' KO ' + mine.kos + ' ครั้ง ดาเมจ ' + mine.dmg + ' ใครแน่มาสู้กัน!'
+      : 'มาดูศึก BloxFighter ด่าน' + STAGE.name + ' แล้วมาสู้กัน!';
     setShares('res', txt, gameUrl());
   }
   $('result').hidden = false; $('touch').hidden = true; $('spec').hidden = true;
@@ -6505,7 +6581,7 @@ function renderRoomView(){
     const link = Net.inviteLink();
     $('inviteLink').value = link;
     if (G.qrFor !== link){ G.qrFor = link; drawQr($('roomQr'), link); }
-    setShares('room', 'มาตีกันใน Sky Brawl! ห้อง ' + Net.code + ' กดลิงก์แล้วเข้าห้องได้เลย', link);
+    setShares('room', 'มาตีกันใน BloxFighter! ห้อง ' + Net.code + ' กดลิงก์แล้วเข้าห้องได้เลย', link);
   }
   $('shareLink').hidden = typeof navigator.share !== 'function';
   $('rCfg').hidden = !host; $('rCfgText').hidden = host;
@@ -6664,7 +6740,7 @@ $('copyLink').onclick = () => {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(done, fallback); else fallback();
 };
 $('shareLink').onclick = () => {
-  navigator.share({title:'Sky Brawl', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
+  navigator.share({title:'BloxFighter', text:`มาต่อยกันบนเรือไททานิก ห้อง ${Net.code}`, url:Net.inviteLink()}).catch(() => {});
 };
 $('custBtn').onclick = () => openCustom();
 $('boardBtn').onclick = () => Ranks.open();
@@ -6684,14 +6760,14 @@ $('inviteBtn').onclick = () => {
   const url = gameUrl();
   $('gameLink').value = url;
   if (G.qrFor !== url){ G.qrFor = url; drawQr($('gameQr'), url); }
-  setShares('game', 'มาเล่น Sky Brawl เกมต่อสู้ 3D บนเว็บกัน! เล่นบนมือถือได้ ไม่ต้องติดตั้ง', url);
+  setShares('game', 'มาเล่น BloxFighter เกมต่อสู้โลกบล็อก 3D บนเว็บกัน! เล่นบนมือถือได้ ไม่ต้องติดตั้ง', url);
   $('gameShare').hidden = typeof navigator.share !== 'function';
   $('menu').hidden = true; $('invite').hidden = false;
   $('inviteClose').focus({preventScroll:true});
 };
 $('inviteClose').onclick = () => { $('invite').hidden = true; $('menu').hidden = false; };
 $('gameCopy').onclick = () => copyText($('gameLink').value, $('gameCopy'), 'คัดลอก');
-$('gameShare').onclick = () => { navigator.share({title:'Sky Brawl', text:'มาเล่น Sky Brawl กัน!', url:gameUrl()}).catch(() => {}); };
+$('gameShare').onclick = () => { navigator.share({title:'BloxFighter', text:'มาเล่น BloxFighter กัน!', url:gameUrl()}).catch(() => {}); };
 $('onBack').onclick = () => { if (Net.role) Net.leave(); toMenu(); };
 $('mkRoom').onclick = () => Net.create();
 $('codeGo').onclick = () => Net.join($('codeIn').value.trim().toLowerCase());
