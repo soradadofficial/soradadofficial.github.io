@@ -54,6 +54,9 @@ button,select,input{font-family:inherit;color:inherit}
 .skbar{flex:1;min-width:40px;height:8px;border:2px solid var(--ink);border-radius:6px;background:var(--track);overflow:hidden}
 .skbar i{display:block;height:100%;background:var(--skill)}
 .skbar.ready i{background:var(--gold)}
+.stam{height:6px;border:2px solid var(--ink);border-radius:5px;background:var(--track);overflow:hidden}
+.stam i{display:block;height:100%;width:100%;background:#4ad2ff}
+.stam.low i{background:#ff8a3a}
 .skillinfo{border:2px solid var(--ink);border-radius:12px;padding:8px 10px;background:var(--white);font-size:13px;line-height:1.5}
 .skillinfo b{color:var(--skill)}
 #hudMid{display:grid;gap:6px;justify-items:center;pointer-events:auto}
@@ -257,6 +260,7 @@ body *{touch-action:manipulation}
 #tbtns button[data-k="jump"]{right:110px;bottom:4px;width:76px;height:76px;background:var(--gold)}
 #tbtns button[data-k="guard"]{right:4px;bottom:110px;width:76px;height:76px;background:var(--p2);color:var(--white)}
 #tbtns button[data-k="grab"]{right:104px;bottom:104px;width:66px;height:66px;font-size:14px}
+#tbtns button[data-k="sprint"]{right:186px;bottom:4px;width:66px;height:66px;font-size:14px;background:#7fe3ff}
 #tbtns button[data-k="skill"]{right:186px;bottom:96px;width:72px;height:72px;font-size:14px;background:var(--skill);color:var(--white)}
 #tbtns button[data-k="lock"]{right:186px;bottom:174px;width:72px;height:32px;border-radius:16px;font-size:13px;background:var(--ink);color:var(--paper)}
 #tbtns button[data-k="lock"].on2{background:var(--gold);color:var(--ink)}
@@ -344,7 +348,8 @@ body *{touch-action:manipulation}
   #hudMid{order:3;flex:1 0 100%;gap:4px}
   #hudBtns{display:flex;flex-wrap:wrap;justify-content:center;gap:4px}
   .chipbtn{font-size:11px;padding:3px 7px;border-width:2px;box-shadow:2px 2px 0 var(--ink)}
-  #tbtns{width:190px;height:268px;transform:scale(.9);transform-origin:right bottom}
+  #tbtns{width:190px;height:300px;transform:scale(.9);transform-origin:right bottom}
+  #tbtns button[data-k="sprint"]{right:104px;bottom:214px;width:62px;height:62px}
   #tbtns button[data-k="skill"]{right:4px;bottom:192px}
   #tbtns button[data-k="lock"]{right:104px;bottom:178px;width:66px}
   body.tutOn #rotHint{display:none}
@@ -399,6 +404,7 @@ body *{touch-action:manipulation}
     <button type="button" data-k="guard" aria-label="กดค้างเพื่อกัน">กัน</button>
     <button type="button" data-k="jump">กระโดด</button>
     <button type="button" data-k="grab" id="grabBtn">หยิบ</button>
+    <button type="button" data-k="sprint" id="sprintBtn">วิ่ง</button>
     <button type="button" data-k="skill" id="skillBtn">สกิล</button>
     <button type="button" data-k="lock" id="lockBtn" aria-label="ล็อกเป้า กดซ้ำเพื่อสลับเป้า">ล็อก</button>
     <button type="button" data-k="atk">ต่อย</button>
@@ -485,6 +491,7 @@ body *{touch-action:manipulation}
             <dt><kbd>F</kbd></dt><dd>ต่อย (กดรัว = คอมโบ 3 จังหวะ)</dd>
             <dt><kbd>G</kbd> <kbd>Space</kbd></dt><dd>กระโดด</dd>
             <dt><kbd>H</kbd></dt><dd>กดค้างเพื่อกัน</dd>
+            <dt><kbd>Shift</kbd></dt><dd>กดค้างเพื่อวิ่งเร็ว (มีแถบแรง สีฟ้าใต้แถบสกิล)</dd>
             <dt><kbd>R</kbd></dt><dd>หยิบของ / ขว้างระเบิด</dd>
             <dt><kbd>E</kbd></dt><dd>สกิลอาชีพ</dd>
             <dt><kbd>Q</kbd></dt><dd>ล็อกเป้า (กดซ้ำ = สลับเป้า)</dd>
@@ -750,6 +757,7 @@ const V = THREE.Vector3, PI = Math.PI;
 const DT = 1/60, GRAV = 40, INK = 0x14213a;
 // Fighter basics; config.js → fighter can change them (applyConfig)
 let MAX_HP = 100, WALK = 6.4, JUMP = 12.5, RICE_HEAL = 30;
+let SPRINT = 1.6, SPRINT_SECS = 3;   // speed multiplier, and how long a full stamina bar lasts (config.js → fighter)
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
 const $ = id => document.getElementById(id);
@@ -2960,6 +2968,8 @@ const MIN_SKILL_CD = 300;
   const F = C.fighter || {};
   MAX_HP = num(F.hp, 10, 1000, 'fighter.hp') ?? MAX_HP;
   WALK = num(F.walkSpeed, 1, 30, 'fighter.walkSpeed') ?? WALK;
+  SPRINT = num(F.sprintSpeed, 1, 3, 'fighter.sprintSpeed') ?? SPRINT;
+  SPRINT_SECS = num(F.sprintSeconds, .5, 30, 'fighter.sprintSeconds') ?? SPRINT_SECS;
   JUMP = num(F.jump, 4, 40, 'fighter.jump') ?? JUMP;
   RICE_HEAL = num(F.riceballHeal, 0, 1000, 'fighter.riceballHeal') ?? RICE_HEAL;
   // Every move that is not a class skill (punches, class combos, picked-up weapons); form moves follow their skill below
@@ -3654,7 +3664,7 @@ class Fighter {
     Object.assign(this, {chill:0, shock:0, hp:MAX_HP, hpLag:MAX_HP, stocks, state:'idle', stateT:0, move:null, moveKey:'', hasHit:false,
       buffer:0, invuln:0, onGround:true, weapon:null, weaponUses:0, held:null, stun:16, squash:0, combo:0, freeze:0,
       hits:0, dmgDealt:0, kos:0, lastHitBy:-1, lastHitT:-9999, place:0, lr:0, waitT:0, lastMove:null,
-      splashed:false, netInit:false, nc:null, skillCd:0, rage:0, lock:null, lockIdx:-1, formT:0});
+      splashed:false, netInit:false, nc:null, skillCd:0, rage:0, lock:null, lockIdx:-1, formT:0, stam:100, exh:false, stamT:0});
   }
 }
 const setState = (f, s) => { f.state = s; f.stateT = 0; };
@@ -3724,9 +3734,9 @@ function createFighters(specs, stocks, tags){
 
 /* ---------- Input ---------- */
 const keys = new Set();
-const MAP1 = {up:['KeyW'], down:['KeyS'], left:['KeyA'], right:['KeyD'], atk:['KeyF'], jump:['KeyG','Space'], guard:['KeyH'], grab:['KeyR'], skill:['KeyE'], lock:['KeyQ']};
-const MAP2 = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['Comma','Numpad1'], jump:['Period','Numpad2'], guard:['Slash','Numpad3'], grab:['KeyM','Numpad0'], skill:['Semicolon','Numpad4'], lock:['Quote','Numpad6']};
-const MAPALT = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['KeyJ'], jump:['KeyK'], guard:['KeyL'], grab:['KeyU'], skill:['KeyI'], lock:['KeyO']};
+const MAP1 = {up:['KeyW'], down:['KeyS'], left:['KeyA'], right:['KeyD'], atk:['KeyF'], jump:['KeyG','Space'], guard:['KeyH'], grab:['KeyR'], skill:['KeyE'], lock:['KeyQ'], sprint:['ShiftLeft','ShiftRight']};
+const MAP2 = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], sprint:['KeyN','Numpad4'], atk:['Comma','Numpad1'], jump:['Period','Numpad2'], guard:['Slash','Numpad3'], grab:['KeyM','Numpad0'], skill:['Semicolon','Numpad4'], lock:['Quote','Numpad6']};
+const MAPALT = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['KeyJ'], jump:['KeyK'], guard:['KeyL'], grab:['KeyU'], skill:['KeyI'], lock:['KeyO'], sprint:['ShiftLeft','ShiftRight']};
 const GAME_KEYS = new Set([...Object.values(MAP1), ...Object.values(MAP2), ...Object.values(MAPALT)].flat());
 addEventListener('keydown', e => {
   if (e.code === 'Escape' && G.mode === 'custom'){ closeCustom(); return; }
@@ -3741,25 +3751,25 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => keys.clear());
-const touch = {x:0, z:0, atk:false, jump:false, guard:false, grab:false, atkL:false, jumpL:false, grabL:false, skill:false, skillL:false, lock:false, lockL:false};
+const touch = {x:0, z:0, sprint:false, atk:false, jump:false, guard:false, grab:false, atkL:false, jumpL:false, grabL:false, skill:false, skillL:false, lock:false, lockL:false};
 function readRaw(maps, withTouch){
   const k = arr => arr.some(c => keys.has(c));
-  let x = 0, z = 0, atk = false, jump = false, guard = false, grab = false, skill = false, lock = false;
+  let x = 0, z = 0, atk = false, jump = false, guard = false, grab = false, skill = false, lock = false, sprint = false;
   if (!G.paused || G.net){
     for (const m of maps){
       if (k(m.left)) x -= 1; if (k(m.right)) x += 1; if (k(m.up)) z -= 1; if (k(m.down)) z += 1;
-      atk ||= k(m.atk); jump ||= k(m.jump); guard ||= k(m.guard); grab ||= k(m.grab); skill ||= k(m.skill); lock ||= k(m.lock);
+      atk ||= k(m.atk); jump ||= k(m.jump); guard ||= k(m.guard); grab ||= k(m.grab); skill ||= k(m.skill); lock ||= k(m.lock); sprint ||= !!m.sprint && k(m.sprint);
     }
     if (withTouch){
       // Latches keep a tap that starts and ends between two frames from being lost
-      x += touch.x; z += touch.z; guard ||= touch.guard;
+      x += touch.x; z += touch.z; guard ||= touch.guard; sprint ||= touch.sprint;
       atk ||= touch.atk || touch.atkL; jump ||= touch.jump || touch.jumpL; grab ||= touch.grab || touch.grabL; skill ||= touch.skill || touch.skillL; lock ||= touch.lock || touch.lockL;
       touch.atkL = touch.jumpL = touch.grabL = touch.skillL = touch.lockL = false;
     }
   }
   x = Math.max(-1, Math.min(1, x)); z = Math.max(-1, Math.min(1, z));
   const m = Math.hypot(x, z); if (m > 1){ x /= m; z /= m; }
-  return {x, z, atk, jump, guard, grab, skill, lock};
+  return {x, z, atk, jump, guard, grab, skill, lock, sprint};
 }
 function readHuman(f){
   const two = G.fighters.some(o => o.ctrl === 'p2');
@@ -3877,7 +3887,7 @@ function think(b){
   else if (b.held === 'bomb'){ if (dist < 4) goal = {x:b.pos.x - dx, z:b.pos.z - dz}; }
   else if (item && item.d < dist*.8){ goal = item.it.pos; }
   else { goal = t.pos; stop = b.weapon === 'gun' ? 6 : b.weapon === 'shotgun' ? 3 : b.weapon ? 1.1 : b.formT > 0 ? FORM_INFO[b.cls].stop : (CLASS_STOP[b.cls] || 1.1); }
-  inp.x = inp.z = 0;
+  inp.x = inp.z = 0; inp.sprint = tOk && dist > 8 && b.stam > 35 && b.ctrl === 'bot';
   if (goal){
     const mx = goal.x - b.pos.x, mz = goal.z - b.pos.z, md = Math.hypot(mx, mz);
     if (md > stop + .1){ inp.x = mx/md; inp.z = mz/md; }
@@ -5159,6 +5169,8 @@ function stepFighter(f){
     }
   }
   if (f.skillCd > 0) f.skillCd--;
+  // Stamina refills after a short pause in sprinting (a little slower while attacking or guarding)
+  if (f.stamT > 0) f.stamT--; else if (f.stam < 100){ f.stam = Math.min(100, f.stam + (f.state === 'idle' ? .55 : f.state === 'run' ? .33 : .2)); if (f.exh && f.stam >= 25) f.exh = false; }
   if (f.formT > 0){ f.formT--; if (f.formT === 0) endForm(f); }
   if (f.rage > 0){ f.rage--; if (G.frame % 6 === 0) emit(new V(f.pos.x, f.pos.y + .9, f.pos.z), 1, 0xff4a3a, 1.5, 2, 18, 1.2, -1); }
   if (!atkP && f.buffer > 0) f.buffer--;
@@ -5169,7 +5181,10 @@ function stepFighter(f){
   switch (f.state){
     case 'idle': case 'run': case 'air': {
       if (G.countdown > 30){ fric(.8); break; }
-      const sp = WALK*(f.onGround && !f.weapon ? 1 : .875)*(f.rage > 0 ? 1.25 : 1)*(f.shock > 0 ? .55 : 1)*(f.formT > 0 ? FORM_INFO[f.cls].speed : 1), k = f.onGround ? (STAGE.slip ? .09 : .35) : .12;
+      // Sprint: needs a direction, solid ground and some stamina; once it runs dry you must recover a quarter before the next sprint
+      const sprint = !!inp.sprint && mag > .2 && f.onGround && !f.exh && f.stam > 0 && !(f.shock > 0);
+      if (sprint){ f.stam -= 100/(SPRINT_SECS*60); f.stamT = 40; if (f.stam <= 0){ f.stam = 0; f.exh = true; } }
+      const sp = WALK*(sprint ? SPRINT : 1)*(f.onGround && !f.weapon ? 1 : .875)*(f.rage > 0 ? 1.25 : 1)*(f.shock > 0 ? .55 : 1)*(f.formT > 0 ? FORM_INFO[f.cls].speed : 1), k = f.onGround ? (STAGE.slip ? .09 : .35) : .12;
       f.vel.x += (inp.x*sp - f.vel.x)*k; f.vel.z += (inp.z*sp - f.vel.z)*k;
       if (mag > .2) f.facing = Math.atan2(inp.x, inp.z);
       f.state = f.onGround ? (mag > .2 ? 'run' : 'idle') : 'air';
@@ -5474,9 +5489,11 @@ function pose(f){
   legL.rotation.set(0, 0, .05); legR.rotation.set(0, 0, -.05); head.rotation.set(0,0,0);
   if (s === 'idle'){ const b = Math.sin(T*.09 + f.idx); tilt.position.y += b*.02; armL.rotation.x = -.75 + b*.05; armR.rotation.x = -.75 - b*.05; }
   else if (s === 'run'){
-    f.phase = (f.phase || 0) + .32; const p = Math.sin(f.phase);
+    const fast = Math.hypot(f.vel.x, f.vel.z) > WALK*1.25;
+    f.phase = (f.phase || 0) + (fast ? .5 : .32); const p = Math.sin(f.phase);
+    if (fast && G.frame % 5 === 0) dust(f.pos, 2);
     legL.rotation.x = p*.9; legR.rotation.x = -p*.9; armL.rotation.x = -p*.8 - .2; armR.rotation.x = p*.8 - .2;
-    tilt.rotation.x = .18; tilt.position.y += Math.abs(Math.cos(f.phase))*.08;
+    tilt.rotation.x = fast ? .38 : .18; tilt.position.y += Math.abs(Math.cos(f.phase))*.08;
   }
   else if (s === 'air' || s === 'respawn'){
     legL.rotation.x = -.7; legR.rotation.x = .3; armL.rotation.set(0, 0, 1.2); armR.rotation.set(0, 0, -1.2);
@@ -5651,10 +5668,11 @@ function buildHud(){
     c.innerHTML = `<div class="row"><span class="pname"></span><span class="pitem">มือเปล่า</span></div>
       <div class="hp"><div class="lag"></div><div class="fill"></div></div>
       <div class="row"><span class="stocks"></span><span class="hpnum">${MAX_HP}</span></div>
-      <div class="skrow"><span class="skn"></span><div class="skbar"><i></i></div></div>`;
+      <div class="skrow"><span class="skn"></span><div class="skbar"><i></i></div></div>
+      <div class="stam"><i></i></div>`;
     c.querySelector('.pname').textContent = ((f.ctrl === 'p1' || (G.net === 'guest' && f.isLocal)) && Progress.level ? 'Lv.' + Progress.level + ' ' : '') + f.name;
     cards.appendChild(c);
-    f.card = {fill:c.querySelector('.fill'), lag:c.querySelector('.lag'), item:c.querySelector('.pitem'), stocks:c.querySelector('.stocks'), hpn:c.querySelector('.hpnum'), sk:c.querySelector('.skn'), skb:c.querySelector('.skbar i'), k:{}};
+    f.card = {fill:c.querySelector('.fill'), lag:c.querySelector('.lag'), item:c.querySelector('.pitem'), stocks:c.querySelector('.stocks'), hpn:c.querySelector('.hpnum'), sk:c.querySelector('.skn'), skb:c.querySelector('.skbar i'), stam:c.querySelector('.stam i'), k:{}};
   }
   const rows = $('brows'); rows.textContent = '';
   for (const f of G.fighters){
@@ -5680,6 +5698,7 @@ function updateHud(){
       const skt = MOVES[skillKey(f.cls)].name + (f.formT > 0 ? ' · กำลังแปลงร่าง' : ready ? ' · พร้อม' : ' · ' + Math.ceil(f.skillCd/60) + ' วิ');
       if (c.k.sk !== skt){ c.k.sk = skt; c.sk.textContent = skt; c.skb.parentNode.classList.toggle('ready', ready); }
       c.skb.style.width = (ready ? 100 : Math.max(0, 100 - f.skillCd/si.cd*100)) + '%';
+      c.stam.style.width = Math.max(0, f.stam) + '%'; c.stam.parentNode.classList.toggle('low', !!f.exh || f.stam < 25);
     }
   }
   const me = G.fighters.find(f => f.isLocal);
@@ -6612,7 +6631,7 @@ const Net = {
     const num = k => Number(a[k]) || 0;
     let x = Math.max(-1, Math.min(1, num(0)/100)), z = Math.max(-1, Math.min(1, num(1)/100));
     const m = Math.hypot(x, z); if (m > 1){ x /= m; z /= m; }
-    inp.x = x; inp.z = z; inp.guard = num(2) === 1; f.netAuto = num(8) === 1;
+    inp.x = x; inp.z = z; inp.guard = num(2) === 1; f.netAuto = num(8) === 1; inp.sprint = num(9) === 1;
     if (!f.nc) f.nc = {a:num(3), j:num(4), g:num(5), s:num(6), l:num(7)};
     inp.atk = num(3) !== f.nc.a; inp.jump = num(4) !== f.nc.j; inp.grab = num(5) !== f.nc.g; inp.skill = num(6) !== f.nc.s; inp.lock = num(7) !== f.nc.l;
     f.nc = {a:num(3), j:num(4), g:num(5), s:num(6), l:num(7)};
@@ -6621,7 +6640,7 @@ const Net = {
     const r = v => Math.round(v);
     const flags = (f.weapon ? 1 : 0) | (f.held ? 2 : 0) | (f.invuln > 0 ? 4 : 0) | (f.onGround ? 8 : 0) | (f.rage > 0 ? 16 : 0) | (f.chill > 0 ? 32 : 0) | (f.shock > 0 ? 64 : 0) | (f.formT > 0 ? 128 : 0);
     return [r(f.pos.x*100), r(f.pos.y*100), r(f.pos.z*100), r(f.vel.x*10), r(f.vel.y*10), r(f.vel.z*10), r(f.facing*100),
-      STATES.indexOf(f.state), Math.min(f.stateT, 999), Math.ceil(Math.max(0, f.hp)), f.stocks, flags, f.move ? MOVE_KEYS.indexOf(f.moveKey) : -1, f.weaponUses, f.lr, WEAPONS.indexOf(f.weapon), Math.ceil(f.skillCd/6), f.lock ? f.lock.idx : -1];
+      STATES.indexOf(f.state), Math.min(f.stateT, 999), Math.ceil(Math.max(0, f.hp)), f.stocks, flags, f.move ? MOVE_KEYS.indexOf(f.moveKey) : -1, f.weaponUses, f.lr, WEAPONS.indexOf(f.weapon), Math.ceil(f.skillCd/6), f.lock ? f.lock.idx : -1, Math.round(f.stam)];
   },
   // 30 / 20 / 15 / 10 / 7.5 snapshots a second for up to 8 / 16 / 32 / 63 / 123 guests
   sendEvery(){ const g = this.conns.size; return g <= 8 ? 2 : g <= 16 ? 3 : g <= 32 ? 4 : g <= 63 ? 6 : 8; },
@@ -6679,7 +6698,7 @@ const Net = {
         // counters carry over from earlier connections; sending zeros would register as a phantom button press on the host
         const c = this.counts;
         this.lastIn = '';
-        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:G.myTeam, in:[0,0,0,c.a,c.j,c.g,c.s,c.l,G.autoLock ? 1 : 0]});
+        this.presence({r:'g', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:G.myTeam, in:[0,0,0,c.a,c.j,c.g,c.s,c.l,G.autoLock ? 1 : 0,0]});
         if (G.mode !== 'play') showRoomView();
       });
       conn.on('data', msg => {
@@ -6844,7 +6863,7 @@ const Net = {
       else if (Math.abs(f.stateT - n(8)) > 6) f.stateT = n(8);
       f.hp = hp; f.stocks = stk; f.stun = 18;
       f.weapon = a.length > 15 ? (WEAPONS[n(15)] || null) : (fl & 1 ? 'hammer' : null); f.held = fl & 2 ? 'bomb' : null; f.invuln = fl & 4 ? 10 : 0; f.onGround = !!(fl & 8);
-      f.weaponUses = n(13); f.skillCd = n(16)*6; f.rage = fl & 16 ? 30 : 0; f.chill = fl & 32 ? 30 : 0; f.shock = fl & 64 ? 30 : 0; { const was = f.formT > 0; f.formT = fl & 128 ? 30 : 0; if ((f.formT > 0) !== was) f.formT > 0 ? formFx(f) : endForm(f); } f.lockIdx = a.length > 17 ? n(17) : -1;
+      f.weaponUses = n(13); f.skillCd = n(16)*6; f.rage = fl & 16 ? 30 : 0; f.chill = fl & 32 ? 30 : 0; f.shock = fl & 64 ? 30 : 0; { const was = f.formT > 0; f.formT = fl & 128 ? 30 : 0; if ((f.formT > 0) !== was) f.formT > 0 ? formFx(f) : endForm(f); } f.lockIdx = a.length > 17 ? n(17) : -1; f.stam = a.length > 18 ? n(18) : 100;
     });
     if (Array.isArray(sn.it)){
       const seen = new Set();
@@ -6940,7 +6959,7 @@ const Net = {
     const raw = readRaw([MAP1, MAPALT], true), c = this.counts;
     if (raw.atk && !c.pa) c.a++; if (raw.jump && !c.pj) c.j++; if (raw.grab && !c.pg) c.g++; if (raw.skill && !c.ps) c.s++; if (raw.lock && !c.pl) c.l++;
     c.pa = raw.atk; c.pj = raw.jump; c.pg = raw.grab; c.ps = raw.skill; c.pl = raw.lock;
-    const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s, c.l, G.autoLock ? 1 : 0];
+    const arr = [Math.round(raw.x*100), Math.round(raw.z*100), raw.guard ? 1 : 0, c.a, c.j, c.g, c.s, c.l, G.autoLock ? 1 : 0, raw.sprint ? 1 : 0];
     const key = arr.join(',');
     if (key === this.lastIn) return;
     if (this.hostConn && this.hostConn.relay){ const t = performance.now(); if (t - (this.inT || 0) < RELAY_IN_MS) return; this.inT = t; }
@@ -7613,7 +7632,7 @@ function syncTouch(){
   for (const b of document.querySelectorAll('#tbtns button')){
     const k = b.dataset.k;
     const on = e => {
-      touch[k] = true; if (k !== 'guard') touch[k + 'L'] = true;
+      touch[k] = true; if (k !== 'guard' && k !== 'sprint') touch[k + 'L'] = true;
       b.classList.add('on'); b.setPointerCapture(e.pointerId); e.preventDefault();
       if (navigator.vibrate && k === 'atk') try { navigator.vibrate(8); } catch (err) {}
     };
@@ -7625,7 +7644,7 @@ function syncTouch(){
   $('touchBtn').onclick = () => {
     touchPref = touchOn() ? 'off' : 'on';
     try { localStorage.setItem('skybrawl.touch', touchPref); } catch (e) {}
-    for (const k of ['atk','jump','guard','grab']) touch[k] = false;
+    for (const k of ['atk','jump','guard','grab','sprint']) touch[k] = false;
     touch.x = touch.z = 0;
     syncTouch();
   };
