@@ -243,3 +243,8 @@ python -m http.server 8765 --directory sky-brawl
 - เส้นขอบดำ `OUT` ถูกซ่อน (`OUT.visible = false`) ถ้าอยากได้คืนลบบรรทัดนั้น
 - UI: ท้าย `<style>` มีชุด `BloxFighter: blocky UI` — มุมเหลี่ยมทั้งหมด, โลโก้ฟอนต์ Silkscreen (`.logo.blox`), พื้นการ์ดลายตาราง
 - `THUMB_VER` = `v2-blox` ภาพการ์ดด่านในเมนูถ่ายใหม่เองครั้งแรกที่เปิด, `og.png` ทำใหม่เป็นโลโก้ BloxFighter
+
+## config ใหม่: fighter / forms (2026-10-11)
+- `config.js` → `fighter`: `hp` (ตัวแปร `MAX_HP` แทนเลข 100 ทุกจุด: เลือดเริ่ม/เกิดใหม่ เพดานฮีล แถบเลือด แรงกระเด็นตามเลือดที่หาย เกณฑ์บอทหาฮีล), `walkSpeed` (`WALK`), `jump` (`JUMP`), `riceballHeal` (`RICE_HEAL`), `normalDamage`/`normalKnockback` = ตัวคูณทุกท่าใน `MOVES` ที่ไม่มี `skill:true` และไม่ใช่ท่าร่างแปลง
+- `forms.<werewolf|tamer>`: `speed`, `scale` → `FORM_INFO`; `forms.tamer.breathRange`/`breathAngle` (องศาเต็ม) → `MOVES.dg1.range`/`arc` (ครึ่งมุม เรเดียน) และปรับระยะบอท `FORM_INFO.tamer.reach/stop` ตามระยะไฟ
+- ค่าเริ่มต้นใหม่ของมังกร: speed 0.8 → 1.1, breathRange 7.5 → 9

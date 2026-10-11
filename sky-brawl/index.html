@@ -672,6 +672,8 @@ body *{touch-action:manipulation}
 (() => {
 const V = THREE.Vector3, PI = Math.PI;
 const DT = 1/60, GRAV = 40, INK = 0x14213a;
+// Fighter basics; config.js → fighter can change them (applyConfig)
+let MAX_HP = 100, WALK = 6.4, JUMP = 12.5, RICE_HEAL = 30;
 const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || (navigator.maxTouchPoints || 0) > 0;
 const $ = id => document.getElementById(id);
@@ -920,7 +922,7 @@ const MOVES = {
   sk_berserker:{name:'คลั่ง', anim:'roar', startup:10, active:1, recovery:12, noHit:true, skill:true,
     fire:f => { f.rage = 360; f.hp = Math.max(1, f.hp - 8); flash(new V(f.pos.x, 1, f.pos.z), 0xff4a3a, .5, 2.4, 16); emit(new V(f.pos.x, 1, f.pos.z), 20, 0xff4a3a, 4, 4, 24, 1.6, 2); }},
   sk_paladin:  {name:'โล่ศักดิ์สิทธิ์', anim:'roar', startup:8, active:1, recovery:12, noHit:true, dmg:6, kb:8, up:4, launch:true, hitstop:5, skill:true, heal:15,
-    fire:(f, m) => { f.invuln = Math.max(f.invuln, 100); f.hp = Math.min(100, f.hp + m.heal); const c = f.pos.clone(); flash(new V(c.x, 1, c.z), 0xffd23a, .5, 2.6, 16); emit(new V(c.x, 1, c.z), 18, 0xffe9a0, 4, 5, 26, 1.4, 1); aoe(f, c, 2.4, m); }},
+    fire:(f, m) => { f.invuln = Math.max(f.invuln, 100); f.hp = Math.min(MAX_HP, f.hp + m.heal); const c = f.pos.clone(); flash(new V(c.x, 1, c.z), 0xffd23a, .5, 2.6, 16); emit(new V(c.x, 1, c.z), 18, 0xffe9a0, 4, 5, 26, 1.4, 1); aoe(f, c, 2.4, m); }},
   sk_mage:     {name:'ลูกไฟ', anim:'cast', startup:12, active:1, recovery:16, noHit:true, dmg:14, kb:10, up:8, launch:true, hitstop:6, shake:.4, skill:true,
     fire:(f, m) => fireProj(f, 'fireball', f.facing, 13, 70, m)},
   sk_priest:   {name:'ฮีลหมู่', anim:'cast', startup:10, active:1, recovery:14, noHit:true, skill:true, heal:35,
@@ -2080,9 +2082,9 @@ function buildHospital(){
 function healPads(){
   if (G.countdown > 30 || G.frame % 20 !== 0) return;
   for (const f of G.fighters){
-    if (!alive(f) || f.state === 'ko' || !f.onGround || f.hp >= 100) continue;
+    if (!alive(f) || f.state === 'ko' || !f.onGround || f.hp >= MAX_HP) continue;
     for (const p of STAGE.pads) if (Math.hypot(f.pos.x - p.x, f.pos.z - p.z) < p.r){
-      f.hp = Math.min(100, f.hp + STAGE.padHeal);
+      f.hp = Math.min(MAX_HP, f.hp + STAGE.padHeal);
       emit(new V(f.pos.x, f.pos.y + .3, f.pos.z), 2, 0x6fe8a8, 1, 3, 26, 1.1, -1);
       if (f.isLocal && G.frame % 60 === 0) Sfx.play('heal', f.pos, .5);
       break;
@@ -2750,6 +2752,31 @@ const CLASS_ON = new Set(OUTFIT_K);
     if (rad !== undefined && hit.radius !== undefined) hit.radius = rad;
   }
   { const gl = num((S.shaman || {}).life, 2, 60, 'skills.shaman.life'); if (gl !== undefined) GHOST_INFO.secs = gl; }
+  // Fighters: max HP, walking speed, jump, rice ball
+  const F = C.fighter || {};
+  MAX_HP = num(F.hp, 10, 1000, 'fighter.hp') ?? MAX_HP;
+  WALK = num(F.walkSpeed, 1, 30, 'fighter.walkSpeed') ?? WALK;
+  JUMP = num(F.jump, 4, 40, 'fighter.jump') ?? JUMP;
+  RICE_HEAL = num(F.riceballHeal, 0, 1000, 'fighter.riceballHeal') ?? RICE_HEAL;
+  // Every move that is not a class skill (punches, class combos, picked-up weapons); form moves follow their skill below
+  const nDmg = num(F.normalDamage, 0, 10, 'fighter.normalDamage') ?? 1, nKb = num(F.normalKnockback, 0, 10, 'fighter.normalKnockback') ?? 1;
+  const formMoves = new Set(Object.values(FORM_INFO).flatMap(fi => fi.moves));
+  for (const [mk, m] of Object.entries(MOVES)){
+    if (m.skill || formMoves.has(mk)) continue;
+    if (typeof m.dmg === 'number') m.dmg = Math.round(m.dmg*nDmg*10)/10;
+    if (typeof m.kb === 'number') m.kb *= nKb;
+  }
+  // Transformations: walking speed, size; the dragon's flame reach and width
+  const FM = C.forms || {};
+  for (const k of Object.keys(FORM_INFO)){
+    const c = FM[k] || {}, fi = FORM_INFO[k];
+    fi.speed = num(c.speed, .2, 5, `forms.${k}.speed`) ?? fi.speed;
+    fi.scale = num(c.scale, .5, 4, `forms.${k}.scale`) ?? fi.scale;
+  }
+  { const c = FM.tamer || {}, m = MOVES.dg1, fi = FORM_INFO.tamer;
+    m.range = num(c.breathRange, 2, 30, 'forms.tamer.breathRange') ?? m.range;
+    const ang = num(c.breathAngle, 10, 180, 'forms.tamer.breathAngle'); if (ang !== undefined) m.arc = ang/2*PI/180;
+    fi.reach = Math.max(1.5, m.range - 1); fi.stop = Math.max(1.2, m.range*.6); }
   for (const k of Object.keys(FORM_INFO)){
     const fi = FORM_INFO[k], sk = MOVES['sk_' + k], secs = num((S[k] || {}).form, 1, 60, `skills.${k}.form`);
     if (secs !== undefined) fi.secs = secs;
@@ -2919,7 +2946,7 @@ function buildRice(){
 function refreshFormDescs(){
   const w = FORM_INFO.werewolf, d = FORM_INFO.tamer, n1 = n => +n.toFixed(1);
   SKILL_INFO.werewolf.desc = 'ฮาวล์แล้วแปลงร่างเป็นหมาป่า ' + n1(w.secs) + ' วินาที: วิ่งเร็วขึ้น ตะปบเป็นวงกว้างกวาดทุกคนรอบตัว (ใช้แล้วต้องรอคูลดาวน์ก่อนแปลงอีก)';
-  SKILL_INFO.tamer.desc = 'เรียกพลังมังกรแปลงร่างเป็นมังกรยักษ์ ' + n1(d.secs) + ' วินาที: กดต่อยเพื่อพ่นไฟวงกว้างต่อเนื่อง แต่เดินช้าลง';
+  SKILL_INFO.tamer.desc = 'เรียกพลังมังกรแปลงร่างเป็นมังกรยักษ์ ' + n1(d.secs) + ' วินาที: กดต่อยเพื่อพ่นไฟวงกว้างต่อเนื่อง ไกล ' + n1(MOVES.dg1.range) + ' ช่อง' + (d.speed < .95 ? ' แต่เดินช้าลง' : d.speed > 1.05 ? ' และเดินเร็วขึ้น' : '');
 }
 function formFx(f){
   const wolf = f.cls === 'werewolf', c = new V(f.pos.x, f.pos.y + 1, f.pos.z), col = wolf ? 0xd8c8a8 : 0xffa53a;
@@ -3419,7 +3446,7 @@ class Fighter {
   reset(p, facing, stocks){
     this.pos.copy(p); this.vel.set(0,0,0); this.netPos.copy(p); this.netVel.set(0,0,0);
     this.facing = facing; this.vis.root.rotation.y = facing;
-    Object.assign(this, {chill:0, shock:0, hp:100, hpLag:100, stocks, state:'idle', stateT:0, move:null, moveKey:'', hasHit:false,
+    Object.assign(this, {chill:0, shock:0, hp:MAX_HP, hpLag:MAX_HP, stocks, state:'idle', stateT:0, move:null, moveKey:'', hasHit:false,
       buffer:0, invuln:0, onGround:true, weapon:null, weaponUses:0, held:null, stun:16, squash:0, combo:0, freeze:0,
       hits:0, dmgDealt:0, kos:0, lastHitBy:-1, lastHitT:-9999, place:0, lr:0, waitT:0, lastMove:null,
       splashed:false, netInit:false, nc:null, skillCd:0, rage:0, lock:null, lockIdx:-1, formT:0});
@@ -3572,7 +3599,7 @@ function nearestItem(b, maxD){
   let best = null, bd = maxD;
   for (const it of G.items){
     if (!it.landed) continue;
-    if (it.type === 'heal' && b.hp > 65) continue;
+    if (it.type === 'heal' && b.hp > MAX_HP*.65) continue;
     if (WEAPON_INFO[it.type] && b.weapon) continue;
     if (it.type === 'bomb' && b.held) continue;
     const d = Math.hypot(it.pos.x - b.pos.x, it.pos.z - b.pos.z);
@@ -3726,7 +3753,7 @@ function updateLockMarks(){
 
 /* ---------- Heals that reach allies (team mode, boss raid); in free-for-all there are no allies, so they heal you ---------- */
 function healFx(o, amount){
-  const was = o.hp; o.hp = Math.min(100, o.hp + amount);
+  const was = o.hp; o.hp = Math.min(MAX_HP, o.hp + amount);
   const got = Math.round(o.hp - was);
   popup(new V(o.pos.x, 2.4, o.pos.z), '+' + got, 'heal');
   emit(new V(o.pos.x, 1, o.pos.z), 12, 0x6fe08a, 2.5, 4, 28, 1.3, -1);
@@ -3747,7 +3774,7 @@ function groupHeal(f, amount, radius){
 function healOne(f, amount, range){
   let best = null, bh = 101;
   for (const o of G.fighters){
-    if (!ally(f, o) || !alive(o) || o.state === 'ko' || o.hp >= 100) continue;
+    if (!ally(f, o) || !alive(o) || o.state === 'ko' || o.hp >= MAX_HP) continue;
     if (Math.hypot(o.pos.x - f.pos.x, o.pos.z - f.pos.z) > range) continue;
     if (o.hp < bh){ bh = o.hp; best = o; }
   }
@@ -3762,9 +3789,9 @@ function healOne(f, amount, range){
 }
 // Bots: use a heal when they or an ally nearby is hurt
 function wantsHeal(b){
-  if (b.hp < 55) return true;
+  if (b.hp < MAX_HP*.55) return true;
   const r = b.cls === 'priest' ? 7 : 10;
-  return G.fighters.some(o => ally(b, o) && alive(o) && o.hp < 60 && Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) < r);
+  return G.fighters.some(o => ally(b, o) && alive(o) && o.hp < MAX_HP*.6 && Math.hypot(o.pos.x - b.pos.x, o.pos.z - b.pos.z) < r);
 }
 
 /* ---------- Combat ---------- */
@@ -3964,7 +3991,7 @@ function applyHit(att, tgt, m, dir, credit){
   popup(at, String(m.dmg));
   if (tgt.held === 'bomb'){ dropItem('bomb', tgt.pos); tgt.held = null; }
   tgt.facing = Math.atan2(-dir.x, -dir.z);
-  const sc = 1 + (100 - Math.max(0, tgt.hp))/100*.8;
+  const sc = 1 + (MAX_HP - Math.max(0, tgt.hp))/MAX_HP*.8;
   if (tgt.hp <= 0){
     tgt.hp = 0; setState(tgt, 'ko'); tgt.vel.set(dir.x*14, 13, dir.z*14); tgt.onGround = false;
     tgt.freeze = 14; if (att) att.freeze = 14;
@@ -4248,7 +4275,7 @@ function steal(f, o){
     o.weapon = null; o.weaponUses = 0;
     popup(at, 'ฉกอาวุธ!', 'th');
   }
-  if (alive(f)){ f.hp = Math.min(100, f.hp + 6); popup(new V(f.pos.x, 2.4, f.pos.z), '+6', 'heal'); }
+  if (alive(f)){ f.hp = Math.min(MAX_HP, f.hp + 6); popup(new V(f.pos.x, 2.4, f.pos.z), '+6', 'heal'); }
 }
 function makeTurret(id){
   const g = new THREE.Group();
@@ -4347,7 +4374,7 @@ function stepBullets(){
       if (burst(b)){}
       else {
         applyHit(null, hit, b.m, b.vel.clone().setY(0).normalize(), b.owner);
-        if (b.kind === 'soul' && b.owner && alive(b.owner)){ b.owner.hp = Math.min(100, b.owner.hp + b.m.dmg); popup(new V(b.owner.pos.x, 2.4, b.owner.pos.z), '+' + b.m.dmg, 'heal'); }
+        if (b.kind === 'soul' && b.owner && alive(b.owner)){ b.owner.hp = Math.min(MAX_HP, b.owner.hp + b.m.dmg); popup(new V(b.owner.pos.x, 2.4, b.owner.pos.z), '+' + b.m.dmg, 'heal'); }
       }
       if (b.pierce){ (b.hitSet = b.hitSet || new Set()).add(hit); continue; }
       removeBullet(b, true); continue;
@@ -4791,11 +4818,11 @@ function stepFighter(f){
   switch (f.state){
     case 'idle': case 'run': case 'air': {
       if (G.countdown > 30){ fric(.8); break; }
-      const sp = (f.onGround ? (f.weapon ? 5.6 : 6.4) : 5.6)*(f.rage > 0 ? 1.25 : 1)*(f.shock > 0 ? .55 : 1)*(f.formT > 0 ? FORM_INFO[f.cls].speed : 1), k = f.onGround ? (STAGE.slip ? .09 : .35) : .12;
+      const sp = WALK*(f.onGround && !f.weapon ? 1 : .875)*(f.rage > 0 ? 1.25 : 1)*(f.shock > 0 ? .55 : 1)*(f.formT > 0 ? FORM_INFO[f.cls].speed : 1), k = f.onGround ? (STAGE.slip ? .09 : .35) : .12;
       f.vel.x += (inp.x*sp - f.vel.x)*k; f.vel.z += (inp.z*sp - f.vel.z)*k;
       if (mag > .2) f.facing = Math.atan2(inp.x, inp.z);
       f.state = f.onGround ? (mag > .2 ? 'run' : 'idle') : 'air';
-      if (jumpP && f.onGround && !(f.shock > 0)){ f.vel.y = 12.5; f.onGround = false; f.state = 'air'; dust(f.pos); Sfx.play('jump', f.pos); }
+      if (jumpP && f.onGround && !(f.shock > 0)){ f.vel.y = JUMP; f.onGround = false; f.state = 'air'; dust(f.pos); Sfx.play('jump', f.pos); }
       else if (skillP && f.skillCd <= 0 && G.countdown <= 30) useSkill(f);
       else if (grabP) doGrab(f);
       else if (f.buffer > 0){
@@ -4928,7 +4955,7 @@ function respawn(f){
   let p = randomDeckPoint(1.5);
   if (G.teamMode) for (let k = 0; k < 20 && (p.x < 0) !== (f.side === 0); k++) p = randomDeckPoint(1.5);
   f.pos.copy(p); f.pos.y = 10; f.vel.set(0,0,0);
-  f.hp = 100; f.invuln = 150; f.onGround = false; f.splashed = false; f.chill = 0; f.shock = 0; setState(f, 'respawn');
+  f.hp = MAX_HP; f.invuln = 150; f.onGround = false; f.splashed = false; f.chill = 0; f.shock = 0; setState(f, 'respawn');
 }
 function checkEnd(){
   if (G.raid){ if (!G.fighters.some(f => f.stocks > 0)) endRaid(false); return; }
@@ -4994,7 +5021,7 @@ function tick(){
     if (it.t > 60*20){ removeItem(it); continue; }
     if (it.landed && it.type === 'heal'){
       for (const f of fs) if (alive(f) && f.state !== 'ko' && f.pos.y < 1 && Math.hypot(it.pos.x - f.pos.x, it.pos.z - f.pos.z) < 1.1){
-        f.hp = Math.min(100, f.hp + 30); popup(new V(f.pos.x, 2.4, f.pos.z), '+30', 'heal');
+        f.hp = Math.min(MAX_HP, f.hp + RICE_HEAL); popup(new V(f.pos.x, 2.4, f.pos.z), '+' + RICE_HEAL, 'heal');
         emit(it.pos, 10, 0x6fe08a, 3, 4, 24, 1.3, 2); removeItem(it); break;
       }
     }
@@ -5215,7 +5242,7 @@ function updateTags(w, h){
     el.style.opacity = 1;
     el.style.transform = `translate(${(tmpV.x*.5 + .5)*w}px,${(-tmpV.y*.5 + .5)*h}px) translate(-50%,-100%)`;
     const hp = Math.ceil(f.hp);
-    if (hp !== f.tag.hp){ f.tag.hp = hp; f.tag.bar.style.width = hp + '%'; }
+    if (hp !== f.tag.hp){ f.tag.hp = hp; f.tag.bar.style.width = Math.min(100, hp/MAX_HP*100) + '%'; }
   }
 }
 function buildHud(){
@@ -5224,7 +5251,7 @@ function buildHud(){
     const c = document.createElement('div'); c.className = 'pcard'; c.style.setProperty('--c', hex(f.team));
     c.innerHTML = `<div class="row"><span class="pname"></span><span class="pitem">มือเปล่า</span></div>
       <div class="hp"><div class="lag"></div><div class="fill"></div></div>
-      <div class="row"><span class="stocks"></span><span class="hpnum">100</span></div>
+      <div class="row"><span class="stocks"></span><span class="hpnum">${MAX_HP}</span></div>
       <div class="skrow"><span class="skn"></span><div class="skbar"><i></i></div></div>`;
     c.querySelector('.pname').textContent = ((f.ctrl === 'p1' || (G.net === 'guest' && f.isLocal)) && Progress.level ? 'Lv.' + Progress.level + ' ' : '') + f.name;
     cards.appendChild(c);
@@ -5245,7 +5272,7 @@ function updateHud(){
     if (f.card){
       const c = f.card;
       f.hpLag += (f.hp - f.hpLag)*(f.hpLag > f.hp ? .04 : 1);
-      c.fill.style.width = Math.max(0, f.hp) + '%'; c.lag.style.width = Math.max(0, f.hpLag) + '%';
+      c.fill.style.width = Math.max(0, f.hp)/MAX_HP*100 + '%'; c.lag.style.width = Math.max(0, f.hpLag)/MAX_HP*100 + '%';
       const hp = Math.ceil(Math.max(0, f.hp)); if (c.k.hp !== hp){ c.k.hp = hp; c.hpn.textContent = hp; }
       if (c.k.st !== f.stocks){ c.k.st = f.stocks; c.stocks.innerHTML = Array.from({length:G.stocks}, (_, n) => `<span class="pip${n < f.stocks ? '' : ' off'}"></span>`).join(''); }
       const item = f.held === 'bomb' ? 'ถือระเบิด' : f.weapon ? WEAPON_INFO[f.weapon].name + ' ×' + f.weaponUses : 'มือเปล่า';
