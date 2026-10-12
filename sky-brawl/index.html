@@ -92,6 +92,25 @@ button,select,input{font-family:inherit;color:inherit}
 .tag.me .tn{color:var(--gold);font-size:13px}
 .tag .tb{width:42px;height:5px;background:var(--track);border:1.5px solid var(--ink);border-radius:3px;overflow:hidden}
 .tag .tb i{display:block;height:100%;background:var(--good)}
+.tag .tt{font-weight:700;font-size:10px;line-height:1;color:var(--gold);-webkit-text-stroke:2.5px var(--ink);paint-order:stroke fill;white-space:nowrap}
+.dgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:10px 0}
+.dcell{position:relative;display:grid;justify-items:center;align-content:start;gap:3px;padding:8px 3px 7px;border:2.5px solid var(--ink);border-radius:10px;background:#fff;text-align:center;min-width:0}
+.dcell .dn{font-size:11px;font-weight:700;opacity:.65}
+.dcell .di{font-size:24px;line-height:1.15}
+.dcell .dt{font-size:10.5px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.dcell.done{background:#e3f5dc}
+.dcell.done::after{content:'✓';position:absolute;top:1px;right:5px;font-weight:900;color:#2e9a3a}
+.dcell.today{background:var(--gold);box-shadow:0 0 0 3px var(--paper),0 0 0 5.5px var(--ink);animation:dpulse .9s ease-in-out infinite alternate}
+@keyframes dpulse{to{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.dcell.today{animation:none}}
+@media (max-width:520px){.dgrid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+#daily .card{align-content:start}
+#dailyGot{font-weight:700;text-align:center;min-height:1.2em;margin:0}
+#dailyGot:empty{display:none}
+#dailyBtn{position:relative}
+#dailyBtn .rdot{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;background:#ff3b30;border:2.5px solid var(--ink)}
+.chips button.locked{opacity:.55}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:calc(100% - 32px);padding:10px 16px;border:2.5px solid var(--ink);border-radius:12px;background:var(--paper);box-shadow:3px 3px 0 var(--ink);font-weight:700;pointer-events:none;transition:opacity .25s}
 .pop{position:absolute;left:0;top:0;font-family:var(--display);font-size:22px;color:var(--white);-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;white-space:nowrap;will-change:transform}
 .pop.combo{color:var(--gold);font-size:18px}
 .pop.heal{color:var(--good)}
@@ -477,6 +496,7 @@ body *{touch-action:manipulation}
       <button class="btn red" id="playSolo" type="button">เล่นกับบอท</button>
       <button class="btn blue" id="play2p" type="button">2 คนเครื่องเดียว</button>
       <button class="btn wide" id="playOnline" type="button">เล่นออนไลน์ (สร้าง/เข้าห้อง)</button>
+      <button class="btn wide" id="dailyBtn" type="button" hidden>🎁 รางวัลล็อกอินรายวัน<i class="rdot" hidden></i></button>
       <button class="btn plain wide" id="custBtn" type="button">แต่งตัวละคร</button>
       <button class="btn plain wide" id="soundBtnMenu" type="button">เสียง: เปิด</button>
       <button class="btn line wide" id="inviteBtn" type="button">ชวนเพื่อนมาเล่น (LINE / Facebook / X / QR)</button>
@@ -506,6 +526,7 @@ body *{touch-action:manipulation}
             <dt><kbd>M</kbd> หรือ <kbd>Num0</kbd></dt><dd>หยิบ / ขว้าง</dd>
             <dt><kbd>;</kbd> หรือ <kbd>Num4</kbd></dt><dd>สกิลอาชีพ</dd>
             <dt><kbd>'</kbd> หรือ <kbd>Num6</kbd></dt><dd>ล็อกเป้า</dd>
+            <dt><kbd>N</kbd> หรือ <kbd>Num7</kbd></dt><dd>กดค้างเพื่อวิ่งเร็ว</dd>
           </dl>
         </div>
       </div>
@@ -604,6 +625,22 @@ body *{touch-action:manipulation}
   </div>
 </div>
 
+<div id="daily" class="overlay" hidden>
+  <div class="card" style="max-width:600px">
+    <h2 class="logo sm">รางวัลรายวัน</h2>
+    <p class="note" id="dailyStreak"></p>
+    <div class="dgrid" id="dailyGrid"></div>
+    <p id="dailyGot" aria-live="polite"></p>
+    <p class="note">เข้าเกมทุกวันเพื่อรับของต่อเนื่อง ขาดวันเมื่อไรจะกลับไปเริ่มวันที่ 1 (ของที่ได้แล้วไม่หาย) · ล็อกอินรวมครบ 14 และ 30 วันได้ฉายาพิเศษ · ผูกบัญชี Google ไว้ ของจะตามไปทุกเครื่อง</p>
+    <div class="btns">
+      <button class="btn" id="dailyClaim" type="button">รับรางวัลวันนี้</button>
+      <button class="btn plain" id="dailyWear" type="button" hidden>ไปแต่งตัว</button>
+      <button class="btn plain" id="dailyClose" type="button">ปิด</button>
+    </div>
+  </div>
+</div>
+<div id="toast" role="status" hidden></div>
+
 <div id="invite" class="overlay" hidden>
   <div class="card" style="max-width:460px">
     <h2 class="logo sm">ชวนเพื่อน</h2>
@@ -669,7 +706,7 @@ body *{touch-action:manipulation}
     <div class="opt"><h4><label for="cname">ชื่อ (ไม่เกิน 12 ตัว)</label></h4><input id="cname" class="tin" style="width:100%" type="text" maxlength="12" autocomplete="off"></div>
     <div class="opt"><h4>สกิลอาชีพ</h4><div id="skillInfo" class="skillinfo"></div></div>
     <div id="copts"></div>
-    <p class="note">ชุดอาชีพมีหมวกหรือหมวกเกราะของตัวเอง จะใช้แทนของบนหัวและสีชุด ของแต่งเปลี่ยนแค่หน้าตา ไม่มีผลกับพลัง ชุดของผู้เล่น 1 ใช้ตอนเล่นออนไลน์ด้วย และจำไว้ในเบราว์เซอร์นี้</p>
+    <p class="note">ของที่มี 🔒 ปลดล็อกจากรางวัลล็อกอินรายวัน (วงแหวนนางฟ้าและดาวลอยฟ้าใส่คู่กับชุดอาชีพได้) · ชุดอาชีพมีหมวกหรือหมวกเกราะของตัวเอง จะใช้แทนของบนหัวและสีชุด ของแต่งเปลี่ยนแค่หน้าตา ไม่มีผลกับพลัง ชุดของผู้เล่น 1 ใช้ตอนเล่นออนไลน์ด้วย และจำไว้ในเบราว์เซอร์นี้</p>
     <div class="btns">
       <button class="btn plain" id="cback" type="button" hidden>ย้อนกลับ</button>
       <button class="btn plain" id="crand" type="button">สุ่มชุด</button>
@@ -2570,9 +2607,14 @@ function syncStagePick(){
 
 /* ---------- Character customization ---------- */
 const HAIRS = {short:'สั้น', spiky:'ชี้ฟู', buns:'จุกคู่', long:'ยาว', mohawk:'โมฮอว์ก', none:'โล้น'};
-const HATS = {band:'ผ้าคาดหัว', cap:'หมวกแก๊ป', ears:'หูแมว', horns:'เขา', crown:'มงกุฎ', none:'ไม่ใส่'};
+const HATS = {band:'ผ้าคาดหัว', cap:'หมวกแก๊ป', ears:'หูแมว', horns:'เขา', crown:'มงกุฎ', none:'ไม่ใส่', halo:'วงแหวนนางฟ้า', tophat:'หมวกทรงสูง', flower:'มงกุฎดอกไม้', star:'ดาวลอยฟ้า'};
 const EYES = {round:'ตากลม', angry:'ตาดุ', sleepy:'ตาง่วง', happy:'ตายิ้ม'};
 const HAIR_K = Object.keys(HAIRS), HAT_K = Object.keys(HATS), EYE_K = Object.keys(EYES);
+// Daily-login rewards: these hats and titles are unlocked by claim_daily() (supabase-daily.sql); bots never wear them
+const DAILY_HATS = new Set(['halo', 'tophat', 'flower', 'star']), HAT_FREE = HAT_K.filter(k => !DAILY_HATS.has(k));
+const FLOAT_HATS = new Set(['halo', 'star']);   // float above the head, so they also show with a class helmet
+const TITLES = {none:'ไม่ใช้ฉายา', regular:'ขาประจำ', steady:'ไม่เคยขาด', guardian:'ผู้พิทักษ์ลอยฟ้า', legend7:'ตำนาน 7 วัน', d14:'ขาประจำ 14 วัน', d30:'สุดยอดขาประจำ 30 วัน'};
+const TITLE_K = Object.keys(TITLES);
 // Class outfits: each one recolors the body and adds its own gear; head:true replaces the hat, noHair hides the hair
 const OP = (geo, c, ol) => part(geo, toon(c), ol);
 const oCape = (t, c) => { const m = OP(new THREE.BoxGeometry(.62, .78, .04), c); m.position.set(0, -.08, -.37); m.rotation.x = .18; t.add(m); };
@@ -3038,12 +3080,12 @@ function botNames(n){
   return Array.from({length:n}, (_, i) => withNum(pool[i % pool.length], Math.floor(i/pool.length)));
 }
 const seededBotName = seed => BOT_NAMES[(Number(seed) >>> 0) % BOT_NAMES.length];
-const randomLook = name => ({name, body:pick(BODY_COLORS), skin:pick(SKIN_COLORS), hairColor:pick(HAIR_COLORS), hair:pick(HAIR_K), hat:pick(HAT_K), eyes:pick(EYE_K), outfit:pick(ON_K), oc:Math.random() < .3 ? 1 + (Math.random()*(OUTFIT_TINTS.length - 1) | 0) : 0});
+const randomLook = name => ({name, body:pick(BODY_COLORS), skin:pick(SKIN_COLORS), hairColor:pick(HAIR_COLORS), hair:pick(HAIR_K), hat:pick(HAT_FREE), eyes:pick(EYE_K), outfit:pick(ON_K), oc:Math.random() < .3 ? 1 + (Math.random()*(OUTFIT_TINTS.length - 1) | 0) : 0});
 function seededLook(seed, name){
   let a = (seed >>> 0) || 1;
   const rnd = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; };
   const pk = arr => arr[Math.floor(rnd()*arr.length)];
-  const lk = {name, body:pk(BODY_COLORS), skin:pk(SKIN_COLORS), hairColor:pk(HAIR_COLORS), hair:pk(HAIR_K), hat:pk(HAT_K), eyes:pk(EYE_K), outfit:pk(ON_K)};
+  const lk = {name, body:pk(BODY_COLORS), skin:pk(SKIN_COLORS), hairColor:pk(HAIR_COLORS), hair:pk(HAIR_K), hat:pk(HAT_FREE), eyes:pk(EYE_K), outfit:pk(ON_K)};
   lk.oc = rnd() < .3 ? 1 + Math.floor(rnd()*(OUTFIT_TINTS.length - 1)) : 0;
   return lk;
 }
@@ -3052,12 +3094,12 @@ function slotName(sl, i){
   const base = seededBotName(sl[1]);
   return withNum(base, Net.slots.slice(0, i).filter(x => !x[0] && x.length === 2 && seededBotName(x[1]) === base).length);
 }
-const encLook = l => [l.body, l.skin, l.hairColor, HAIR_K.indexOf(l.hair), HAT_K.indexOf(l.hat), EYE_K.indexOf(l.eyes), OUTFIT_K.indexOf(l.outfit || 'none'), tintOf(l)];
+const encLook = l => [l.body, l.skin, l.hairColor, HAIR_K.indexOf(l.hair), HAT_K.indexOf(l.hat), EYE_K.indexOf(l.eyes), OUTFIT_K.indexOf(l.outfit || 'none'), tintOf(l), Math.max(0, TITLE_K.indexOf(l.title || 'none'))];
 function decLook(a, name){
   if (!Array.isArray(a)) return randomLook(name);
   const col = (v, d) => Number.isInteger(v) && v >= 0 && v <= 0xffffff ? v : d;
   const idx = (v, arr) => arr[Number.isInteger(v) && v >= 0 && v < arr.length ? v : 0];
-  return {name, body:col(a[0], 0xff5d4a), skin:col(a[1], 0xffd7b5), hairColor:col(a[2], 0x2b1d16), hair:idx(a[3], HAIR_K), hat:idx(a[4], HAT_K), eyes:idx(a[5], EYE_K), outfit:idx(a[6], OUTFIT_K), oc:tintOf({oc:a[7]})};
+  return {name, body:col(a[0], 0xff5d4a), skin:col(a[1], 0xffd7b5), hairColor:col(a[2], 0x2b1d16), hair:idx(a[3], HAIR_K), hat:idx(a[4], HAT_K), eyes:idx(a[5], EYE_K), outfit:idx(a[6], OUTFIT_K), oc:tintOf({oc:a[7]}), title:idx(a[8], TITLE_K)};
 }
 
 /* ---------- Models ---------- */
@@ -3097,8 +3139,36 @@ function buildHair(head, look){
       break;
   }
 }
-function buildHat(head, look){
+function buildHat(head, look, helmet){
+  const up = helmet ? .3 : 0;   // above a class helmet
   switch (look.hat){
+    case 'halo': {
+      const h = new THREE.Mesh(new THREE.TorusGeometry(.34, .055, 6, 20), new THREE.MeshBasicMaterial({color:0xffe066}));
+      h.rotation.x = PI/2; h.position.y = .98 + up; head.add(h); break;
+    }
+    case 'tophat': {
+      const blk = toon(0x23242c);
+      const c = part(new THREE.CylinderGeometry(.34, .36, .5, 16), blk, 1.05); c.position.y = .8; head.add(c);
+      const br = part(new THREE.CylinderGeometry(.58, .58, .06, 20), blk, 1.05); br.position.y = .56; head.add(br);
+      const band = part(new THREE.CylinderGeometry(.37, .37, .11, 16), toon(0xd8342c)); band.position.y = .64; head.add(band);
+      break;
+    }
+    case 'flower': {
+      const ring = part(new THREE.TorusGeometry(.6, .06, 6, 24), toon(0x4caf50)); ring.rotation.x = PI/2; ring.position.y = .46; head.add(ring);
+      for (let i = 0; i < 7; i++){
+        const a = i/7*PI*2, fl = part(SPH(.16), toon([0xff8fb8, 0xffffff, 0xffd23a][i % 3]), 1.1);
+        fl.position.set(Math.cos(a)*.6, .52, Math.sin(a)*.6); head.add(fl);
+        const c = new THREE.Mesh(SPH(.055), toon(0xffa21a)); c.position.set(Math.cos(a)*.67, .58, Math.sin(a)*.67); head.add(c);
+      }
+      break;
+    }
+    case 'star': {
+      const sh = new THREE.Shape();
+      for (let i = 0; i < 10; i++){ const r = i % 2 ? .14 : .32, a = PI/2 + i*PI/5; if (i) sh.lineTo(Math.cos(a)*r, Math.sin(a)*r); else sh.moveTo(Math.cos(a)*r, Math.sin(a)*r); }
+      const st = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, {depth:.1, bevelEnabled:false}), new THREE.MeshBasicMaterial({color:0xffd23a}));
+      st.position.set(0, 1.08 + up, -.05); st.userData.spin = true; head.add(st);
+      break;
+    }
     case 'band': { const b = part(new THREE.TorusGeometry(.57, .06, 6, 28), toon(look.body)); b.rotation.x = PI/2 - .3; b.position.y = .1; head.add(b); break; }
     case 'cap': {
       const d = part(halfDome(.62), toon(look.body), 1.04); d.position.y = .05; d.rotation.x = -.12; head.add(d);
@@ -3478,7 +3548,7 @@ function buildChibi(look, team){
   const head = new THREE.Group(); head.position.y = .78; tilt.add(head);
   head.add(part(SPH(.56), toon(skin), 1.05));
   if (!o.noHair) buildHair(head, look);
-  if (!o.head) buildHat(head, look);
+  if (!o.head || FLOAT_HATS.has(look.hat)) buildHat(head, look, !!o.head);
   buildEyes(head, look);
   if (o.build){
     const before = new Set([...head.children, ...tilt.children]);
@@ -3747,11 +3817,12 @@ function createFighters(specs, stocks, tags){
 /* ---------- Input ---------- */
 const keys = new Set();
 const MAP1 = {up:['KeyW'], down:['KeyS'], left:['KeyA'], right:['KeyD'], atk:['KeyF'], jump:['KeyG','Space'], guard:['KeyH'], grab:['KeyR'], skill:['KeyE'], lock:['KeyQ'], sprint:['ShiftLeft','ShiftRight']};
-const MAP2 = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], sprint:['KeyN','Numpad4'], atk:['Comma','Numpad1'], jump:['Period','Numpad2'], guard:['Slash','Numpad3'], grab:['KeyM','Numpad0'], skill:['Semicolon','Numpad4'], lock:['Quote','Numpad6']};
+const MAP2 = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], sprint:['KeyN','Numpad7'], atk:['Comma','Numpad1'], jump:['Period','Numpad2'], guard:['Slash','Numpad3'], grab:['KeyM','Numpad0'], skill:['Semicolon','Numpad4'], lock:['Quote','Numpad6']};
 const MAPALT = {up:['ArrowUp'], down:['ArrowDown'], left:['ArrowLeft'], right:['ArrowRight'], atk:['KeyJ'], jump:['KeyK'], guard:['KeyL'], grab:['KeyU'], skill:['KeyI'], lock:['KeyO'], sprint:['ShiftLeft','ShiftRight']};
 const GAME_KEYS = new Set([...Object.values(MAP1), ...Object.values(MAP2), ...Object.values(MAPALT)].flat());
 addEventListener('keydown', e => {
   if (e.code === 'Escape' && G.mode === 'custom'){ closeCustom(); return; }
+  if (e.code === 'Escape' && !$('daily').hidden){ $('dailyClose').click(); return; }
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   if (e.code === 'Escape' && G.mode === 'play' && $('result').hidden){ togglePause(); return; }
   if (e.code === 'KeyX' && !e.repeat) toggleDebug();
@@ -5655,6 +5726,8 @@ function makeTag(f){
   if (!f.isLocal) n.style.color = hex(f.team);
   if (!f.isLocal && G.fighters.length > 40) n.style.display = 'none';
   const b = document.createElement('div'); b.className = 'tb'; const i = document.createElement('i'); b.appendChild(i);
+  const ti = f.look && f.look.title && f.look.title !== 'none' && TITLES[f.look.title];
+  if (ti){ const t = document.createElement('div'); t.className = 'tt'; t.textContent = '« ' + ti + ' »'; t.style.display = n.style.display; el.appendChild(t); }
   el.append(n, b); $('tags').appendChild(el);
   f.tag = {el, bar:i, hp:-1, name:n};
 }
@@ -5812,7 +5885,7 @@ async function copyText(text, btn, label){
   catch (e) { const inp = btn.previousElementSibling; if (inp && inp.select){ inp.select(); try { if (document.execCommand('copy')) done(); } catch (err) {} } }
 }
 function hideAllPanels(){
-  for (const id of ['menu','online','pause','result','custom','hud','touch','dbg','invite','ranks']) $(id).hidden = true;
+  for (const id of ['menu','online','pause','result','custom','hud','touch','dbg','invite','ranks','daily']) $(id).hidden = true;
   $('banner').className = '';
 }
 function enterAttract(){
@@ -6331,6 +6404,104 @@ const Ranks = {
   },
 };
 
+/* ---------- Daily login rewards: the server keeps the streak and the unlocks (claim_daily in supabase-daily.sql) ---------- */
+const DAILY_CYCLE = [['t', 'regular'], ['h', 'halo'], ['t', 'steady'], ['h', 'tophat'], ['t', 'guardian'], ['h', 'flower'], ['h', 'star']];
+const DAILY_ICON = {halo:'😇', tophat:'🎩', flower:'🌸', star:'⭐'};
+const rewardName = u => { const [t, k] = String(u).split(':'); return t === 'h' ? 'หมวก "' + (HATS[k] || k) + '"' : 'ฉายา "' + (TITLES[k] || k) + '"'; };
+function lockedItem(key, val){
+  if (key === 'hat') return DAILY_HATS.has(val) && !Daily.owns('h:' + val);
+  if (key === 'title') return val !== 'none' && !Daily.owns('t:' + val);
+  return false;
+}
+function lockedHint(val){
+  const d = DAILY_CYCLE.findIndex(c => c[1] === val) + 1;
+  const how = {legend7:'ล็อกอินต่อเนื่องครบ 7 วัน', d14:'ล็อกอินรวมครบ 14 วัน', d30:'ล็อกอินรวมครบ 30 วัน'}[val] || 'รางวัลล็อกอินรายวัน วันที่ ' + d;
+  toast('🔒 ปลดล็อกได้จาก' + how);
+}
+let toastT = 0;
+function toast(text){
+  const t = $('toast'); t.textContent = text; t.hidden = false; t.style.opacity = 1;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = 0; toastT = setTimeout(() => { t.hidden = true; }, 300); }, 2600);
+}
+const Daily = {
+  st:null, uid:null, off:false, autoShown:false, busy:false,
+  owns(u){ return !!(this.st && this.st.unlocks.includes(u)); },
+  loadCache(){
+    try { const c = JSON.parse(localStorage.getItem('skybrawl.daily')); if (c && c.st && Array.isArray(c.st.unlocks)){ this.st = c.st; this.uid = c.uid; } } catch (e) {}
+  },
+  store(){ try { localStorage.setItem('skybrawl.daily', JSON.stringify({uid:this.uid, st:this.st})); } catch (e) {} },
+  set(r, can){
+    this.st = {streak:r.streak | 0, best:r.best | 0, total:r.total | 0, can, unlocks:Array.isArray(r.unlocks) ? r.unlocks : []};
+    this.store();
+  },
+  async refresh(auto){
+    if (!Supa.available) return;
+    const u = await Supa.signIn(); if (!u) return;
+    if (this.uid !== u.id){ this.st = null; this.uid = u.id; }
+    const {data, error} = await Supa.client.rpc('daily_status');
+    if (error){
+      // The SQL has not been run yet: hide the feature instead of showing a broken button
+      if (/daily_status|function|schema cache|not find/i.test(error.message)) this.off = true;
+      renderDaily(); return;
+    }
+    const r = Array.isArray(data) ? data[0] : data; if (!r) return;
+    this.off = false; this.set(r, !!r.can_claim);
+    this.fixLooks(); renderDaily();
+    if (auto && this.st.can && !this.autoShown && !$('menu').hidden){ this.autoShown = true; this.open(); }
+  },
+  // Items this account does not own come off (e.g. after switching accounts)
+  fixLooks(){
+    let ch = false;
+    for (const l of LOOKS){
+      if (lockedItem('hat', l.hat)){ l.hat = 'band'; ch = true; }
+      if (l.title && lockedItem('title', l.title)){ l.title = 'none'; ch = true; }
+    }
+    if (ch) saveLooks();
+  },
+  open(){
+    hideAllPanels(); $('daily').hidden = false; $('dailyGot').textContent = ''; $('dailyWear').hidden = true;
+    renderDaily();
+    ($('dailyClaim').hidden ? $('dailyClose') : $('dailyClaim')).focus({preventScroll:true});
+  },
+  async claim(){
+    if (this.busy) return;
+    this.busy = true; $('dailyClaim').disabled = true; $('dailyGot').textContent = 'กำลังรับรางวัล…';
+    const {data, error} = await Supa.client.rpc('claim_daily');
+    this.busy = false; $('dailyClaim').disabled = false;
+    if (error){
+      $('dailyGot').textContent = /already/.test(error.message) ? 'วันนี้รับรางวัลไปแล้ว พรุ่งนี้มาใหม่นะ' : 'รับรางวัลไม่สำเร็จ ลองใหม่อีกครั้ง';
+      if (/already/.test(error.message)) await this.refresh();
+      return;
+    }
+    const r = Array.isArray(data) ? data[0] : data;
+    this.set(r, false); renderDaily();
+    $('dailyGot').textContent = '🎉 ได้รับ ' + (r.reward || []).map(rewardName).join(' และ ') + ' แล้ว!';
+    $('dailyWear').hidden = false; $('dailyWear').focus({preventScroll:true});
+    Sfx.play('level');
+  },
+};
+function renderDaily(){
+  const st = Daily.st, btn = $('dailyBtn');
+  btn.hidden = Daily.off || !Supa.available || !st;
+  btn.querySelector('.rdot').hidden = !(st && st.can);
+  if (!st || $('daily').hidden) return;
+  // Days already done in the current round of 7 (a full round starts again at day 1)
+  const done = st.can ? st.streak % 7 : (st.streak - 1) % 7 + 1;
+  $('dailyStreak').textContent = (st.can
+    ? (st.streak ? 'ล็อกอินต่อเนื่อง ' + st.streak + ' วัน · รับรางวัลวันนี้ได้เลย' : 'เริ่มนับวันที่ 1 · รับรางวัลวันนี้ได้เลย')
+    : 'ล็อกอินต่อเนื่อง ' + st.streak + ' วัน · วันนี้รับแล้ว พรุ่งนี้มาใหม่นะ') + ' · รวม ' + st.total + ' วัน';
+  const grid = $('dailyGrid'); grid.textContent = '';
+  DAILY_CYCLE.forEach(([t, k], i) => {
+    const d = i + 1, c = document.createElement('div');
+    c.className = 'dcell' + (d <= done ? ' done' : '') + (st.can && d === done + 1 ? ' today' : '');
+    const dn = document.createElement('span'); dn.className = 'dn'; dn.textContent = st.can && d === done + 1 ? 'วันนี้' : 'วันที่ ' + d;
+    const di = document.createElement('span'); di.className = 'di'; di.textContent = t === 'h' ? DAILY_ICON[k] : '🏷️';
+    const dt = document.createElement('span'); dt.className = 'dt'; dt.textContent = (t === 'h' ? HATS[k] : '"' + TITLES[k] + '"') + (d === 7 ? ' + ฉายา "' + TITLES.legend7 + '"' : '');
+    c.append(dn, di, dt); grid.appendChild(c);
+  });
+  $('dailyClaim').hidden = !st.can;
+}
+
 /* ---------- Google account: the anonymous account is linked, so its id (and its XP) stay the same ---------- */
 const Account = {
   note:'', busy:false,
@@ -6367,6 +6538,7 @@ const Account = {
       named = true;
     } else Supa.saveProfile();
     await Progress.refresh();
+    Daily.refresh();
     renderAccount();
   },
   async linkGoogle(){
@@ -6390,8 +6562,10 @@ const Account = {
     Supa.user = null; Supa.authFailed = false;
     Progress.stats = null; try { localStorage.removeItem('skybrawl.stats'); } catch (e) {}
     renderLevelChip();
+    Daily.st = null; Daily.uid = null; try { localStorage.removeItem('skybrawl.daily'); } catch (e) {}
     await Supa.signIn();   // a fresh guest account
     await Progress.refresh();
+    Daily.refresh();
     renderAccount();
   },
 };
@@ -6628,7 +6802,7 @@ const Net = {
   computeSlots(){
     const tmOf = v => v === 0 || v === 1 ? v : -1;
     const humans = [{peer:this.me || '', nm:LOOKS[0].name, lk:encLook(LOOKS[0]), tm:tmOf(G.myTeam)}]
-      .concat(this.guests().slice(0, ONLINE_HUMANS - 1).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 8) : null, tm:tmOf(p.presence.tm)})));
+      .concat(this.guests().slice(0, ONLINE_HUMANS - 1).map(p => ({peer:p.peer, nm:cleanName(p.presence.nm, 'ผู้เล่น'), lk:Array.isArray(p.presence.lk) ? p.presence.lk.slice(0, 9) : null, tm:tmOf(p.presence.tm)})));
     const n = Math.min(ONLINE_MAX, Math.max(G.cfg.n, humans.length));
     const slots = humans.map(h => [h.peer, h.nm, h.lk]);
     for (let i = humans.length, b = 1; i < n; i++, b++){
@@ -7139,6 +7313,7 @@ const OPTS = [
   {key:'hair', label:'ทรงผม', choices:HAIRS},
   {key:'hairColor', label:'สีผม', colors:HAIR_COLORS},
   {key:'hat', label:'ของบนหัว', choices:HATS},
+  {key:'title', label:'ฉายาเหนือหัว (ปลดล็อกจากรางวัลรายวัน)', choices:TITLES},
   {key:'eyes', label:'ดวงตา', choices:EYES},
 ];
 for (const o of OPTS){
@@ -7152,7 +7327,7 @@ for (const o of OPTS){
     b.dataset.key = o.key; b.dataset.val = String(val);
     if (o.tints){ b.style.background = o.tints[val].show; b.setAttribute('aria-label', text); b.title = o.tints[val].name; }
     else if (o.colors){ b.style.background = hex(val); b.setAttribute('aria-label', text); } else b.textContent = text;
-    b.onclick = () => setLookVals({[o.key]: val});
+    b.onclick = () => { if (lockedItem(o.key, val)) lockedHint(val); else setLookVals({[o.key]: val}); };
     row.appendChild(b);
   }
   sec.appendChild(row); $('copts').appendChild(sec);
@@ -7238,7 +7413,12 @@ function classThumbStep(){
 }
 function reflectCustom(){
   const look = LOOKS[G.editSlot];
-  for (const b of document.querySelectorAll('#copts button[data-key]')) b.setAttribute('aria-pressed', String(b.dataset.key === 'oc' ? tintOf(look) : look[b.dataset.key]) === b.dataset.val);
+  for (const b of document.querySelectorAll('#copts button[data-key]')) b.setAttribute('aria-pressed', String(b.dataset.key === 'oc' ? tintOf(look) : look[b.dataset.key] || (b.dataset.key === 'title' ? 'none' : '')) === b.dataset.val);
+  for (const b of document.querySelectorAll('#copts button[data-key="hat"], #copts button[data-key="title"]')){
+    const lock = lockedItem(b.dataset.key, b.dataset.val);
+    b.classList.toggle('locked', lock);
+    b.textContent = (lock ? '🔒 ' : '') + (b.dataset.key === 'hat' ? HATS : TITLES)[b.dataset.val];
+  }
   $('ocOpt').hidden = !OUTFITS[look.outfit] || !OUTFITS[look.outfit].build;
   for (const b of document.querySelectorAll('#custom .ctabs .tab')) b.setAttribute('aria-pressed', b.dataset.slot === String(G.editSlot));
   $('cname').value = look.name;
@@ -7503,7 +7683,12 @@ Progress.load(); renderLevelChip(); Progress.refresh();
 $('acctGoogle').onclick = () => Account.linkGoogle();
 $('acctExisting').onclick = () => Account.useExisting();
 $('acctOut').onclick = () => Account.signOut();
-Account.boot();
+Daily.loadCache(); renderDaily();
+$('dailyBtn').onclick = () => Daily.open();
+$('dailyClaim').onclick = () => Daily.claim();
+$('dailyClose').onclick = () => { $('daily').hidden = true; $('menu').hidden = false; renderDaily(); };
+$('dailyWear').onclick = () => { $('daily').hidden = true; openCustom(); };
+Account.boot().then(() => Daily.refresh(true));
 $('chatForm').addEventListener('submit', async e => {
   e.preventDefault();
   const inp = $('chatIn');
