@@ -49,7 +49,7 @@ function puffAtlas() {
       let d = 0;
       for (const b of blobs) { const q = ((x - b.x) ** 2 + (y - b.y) ** 2) / (b.r * b.r); d += Math.exp(-q * 2.2); }
       const n = fbm(x * 6, y * 6, cell * 31, 5);
-      d = d * (0.55 + 0.9 * n);
+      d = d * (0.5 + 1.0 * n) + (fbm(x * 15, y * 15, cell * 53 + 7, 3) - 0.5) * 0.45; // cauliflower billows
       const edge = sstep(0.5, 0.36, Math.hypot(x - 0.5, y - 0.5)); // keep inside the quad
       // flatter base
       const base = sstep(0.86, 0.7, y);
@@ -60,8 +60,8 @@ function puffAtlas() {
       // light: how much density lies above this pixel (toward the sun at the top)
       let above = 0;
       for (let k = 1; k <= 10; k++) { const jj = j - k * 3; if (jj >= 0) above += dens[jj * N + i]; }
-      const lit = Math.min(1, Math.max(0, 1.05 - above * 0.11 + (0.5 - j / N) * 0.25));
-      const a = sstep(0.06, 0.95, d) * 0.96;
+      const lit = Math.min(1, Math.max(0, 1.08 - above * 0.14 + (0.5 - j / N) * 0.35));
+      const a = sstep(0.3, 0.72, d) * 0.97;
       const p = ((oy + j) * S + ox + i) * 4;
       img.data[p] = lit * 255; img.data[p + 1] = lit * 255; img.data[p + 2] = lit * 255; img.data[p + 3] = a * 255;
     }
@@ -142,7 +142,7 @@ void main() {
   if (a < 0.004) discard;
   vec3 n = normalize(vec3(vQ, sqrt(max(0.05, 1.0 - dot(vQ, vQ)))));
   float sph = clamp(dot(n, vSunV) * 0.5 + 0.5, 0.0, 1.0);
-  float lit = clamp(t.r * 0.5 + sph * 0.45 + vShade * 0.35 - 0.2, 0.0, 1.0);
+  float lit = clamp(t.r * 0.55 + sph * 0.4 + vShade * 0.5 - 0.32, 0.0, 1.0);
   lit = lit * lit * (3.0 - 2.0 * lit);
   vec3 col = mix(uShadow, uLit, lit);
   // silver lining when looking toward the sun: thin edges glow
@@ -205,9 +205,9 @@ export function createCloudField(spec, groundAt = () => 0) {
       for (let i = 0; i < n; i++) {
         const a = rnd() * Math.PI * 2, rr = Math.sqrt(rnd());
         const h = Math.pow(rnd(), 1.4) * (1 - rr * 0.55);
-        const ps = size * R(0.38, 0.62) * (1 - rr * 0.35);
+        const ps = size * R(0.6, 0.95) * (1 - rr * 0.35); // big enough to overlap into one mass
         puffs.push({
-          p: new THREE.Vector3(cx + Math.cos(a) * rr * size * 1.25, base + h * size * 0.85 + ps * 0.3, cz + Math.sin(a) * rr * size * 0.9),
+          p: new THREE.Vector3(cx + Math.cos(a) * rr * size * 1.1, base + h * size * 0.7 + ps * 0.3, cz + Math.sin(a) * rr * size * 0.8),
           size: ps, squash: R(0.75, 0.95), shade: Math.min(1, h * 1.3 + 0.1), rot: Math.floor(rnd() * 4) + R(0.1, 0.9), alpha: op * R(0.75, 1),
         });
       }
@@ -215,7 +215,7 @@ export function createCloudField(spec, groundAt = () => 0) {
   }
   for (const s of spec.sea || []) {
     const dir = s.dir.clone().setY(0).normalize(), side = new THREE.Vector3(-dir.z, 0, dir.x);
-    for (let i = 0; i < s.count; i++) {
+    for (let i = 0; i < s.count * 0.55; i++) {
       const u = R(-1, 1), v = R(-1, 1);
       const taper = s.taper ? s.taper(u) : 1;
       if (rnd() > taper) continue;
@@ -223,8 +223,13 @@ export function createCloudField(spec, groundAt = () => 0) {
       if (rnd() > edge) continue;
       const p = s.center.clone().addScaledVector(dir, u * s.halfL).addScaledVector(side, v * s.halfW);
       p.y = s.y + R(-1, 1) * s.thick;
-      const size = R(s.size[0], s.size[1]);
-      puffs.push({ p, size, squash: R(0.45, 0.65), shade: Math.min(1, 0.45 + (p.y - s.y + s.thick) / (2 * s.thick) * 0.55), rot: Math.floor(rnd() * 4) + R(0.1, 0.9), alpha: (s.opacity ?? 0.95) * R(0.7, 1) });
+      const size = R(s.size[0], s.size[1]), al = (s.opacity ?? 0.95) * R(0.8, 1);
+      puffs.push({ p, size, squash: R(0.5, 0.65), shade: 0.3, rot: Math.floor(rnd() * 4) + R(0.1, 0.9), alpha: al });
+      const kids = 2 + Math.floor(rnd() * 3);
+      for (let k = 0; k < kids; k++) {
+        const a = rnd() * Math.PI * 2, rr = Math.sqrt(rnd()) * size * 0.42, ks = size * R(0.3, 0.55), lift = R(0.12, 0.4);
+        puffs.push({ p: new THREE.Vector3(p.x + Math.cos(a) * rr, p.y + lift * size, p.z + Math.sin(a) * rr), size: ks, squash: R(0.75, 0.95), shade: Math.min(1, 0.55 + lift * 1.2), rot: Math.floor(rnd() * 4) + R(0.1, 0.9), alpha: al });
+      }
     }
   }
 

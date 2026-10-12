@@ -433,6 +433,10 @@ export function createWorld() {
     const p = flight.at(FD.climb3 + (FD.J1 - FD.climb3) * k / 12);
     cumulus.push({ count: 3, min: [p.x - 80, 22, p.z - 80], max: [p.x + 80, 23, p.z + 80], size: [6, 10], puffs: [14, 22] });
   }
+  for (let k = 1; k < 9; k++) { // scattered cumulus under the descent into Japan
+    const p = flight.at(FD.J1 + (flight.length - FD.J1) * k / 9);
+    cumulus.push({ count: 5, min: [p.x - 70, 7, p.z - 70], max: [p.x + 70, 13, p.z + 70], size: [4, 8], puffs: [14, 22] });
+  }
   const clouds = createCloudField({
     cumulus, sea: seaSegs,
     cirrus: [{ count: 16, min: [-420, 72, -620], max: [520, 92, 320], size: [70, 150], opacity: 0.2 },
