@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Covaverse Japan Journeys</title>
+<meta name="description" content="ทัวร์ญี่ปุ่นแบบ 3 มิติ เลื่อนดูเส้นทางตั้งแต่สนามบินถึงโรงแรม ชมห้องพักก่อนจอง และจัดทัวร์เองได้">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=Noto+Serif+Thai:wght@500;700;800&family=Shippori+Mincho:wght@600;800&display=swap">
+<link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="veil" id="veil"><div class="veil-mark">日本の旅<span>กำลังเตรียมเครื่องบิน…</span></div></div>
+
+<header class="nav">
+  <a class="brand" href="#top" data-jump="top"><span class="brand-mark">C</span><span class="brand-name">COVAVERSE<small>Japan Journeys</small></span></a>
+  <nav class="nav-links" aria-label="เมนูหลัก">
+    <a href="#story" data-jump="story">เส้นทาง</a>
+    <a href="#explore" data-jump="explore">ชมก่อนจอง</a>
+    <a href="#builder" data-jump="builder">จัดทัวร์เอง</a>
+    <a href="#services" data-jump="services">บริการ</a>
+  </nav>
+  <a class="btn btn-small" href="#builder" data-jump="builder">เริ่มจัดทัวร์</a>
+</header>
+
+<aside class="rail" aria-label="ลำดับการเดินทาง">
+  <ol id="rail">
+    <li data-t="0.03"><span>สุวรรณภูมิ</span></li>
+    <li data-t="0.13"><span>เทคออฟ</span></li>
+    <li data-t="0.30"><span>เส้นทางบิน</span></li>
+    <li data-t="0.50"><span>ลงจอดนาริตะ</span></li>
+    <li data-t="0.615"><span>พบไกด์</span></li>
+    <li data-t="0.76"><span>ที่เที่ยว</span></li>
+    <li data-t="0.95"><span>โรงแรม</span></li>
+  </ol>
+  <div class="rail-fill" id="railFill"></div>
+</aside>
+
+<main id="top">
+  <!-- ===== Scroll story: one continuous camera move ===== -->
+  <section id="story" class="story">
+    <div class="hero">
+      <p class="eyebrow">ทัวร์ญี่ปุ่น 7 วัน 6 คืน · ออกเดินทางทุกสัปดาห์</p>
+      <h1>ญี่ปุ่น<br>ตั้งแต่ประตูขึ้นเครื่อง<br><em>ถึงหน้าห้องพัก</em></h1>
+      <p class="lede">เลื่อนลงเพื่อเดินทางไปพร้อมกัน ทุกฉากต่อกันเป็นภาพเดียว ตั้งแต่สนามบินสุวรรณภูมิจนถึงห้องสวีทวิวภูเขาไฟฟูจิ</p>
+      <div class="hero-cta">
+        <a class="btn" href="#story" data-jump-t="0.1">เริ่มการเดินทาง</a>
+        <a class="btn btn-ghost" href="#explore" data-jump="explore">ดูโรงแรมและที่เที่ยวก่อน</a>
+      </div>
+      <p class="scroll-hint" aria-hidden="true"><span></span>เลื่อนลง</p>
+      <p class="jp-vertical" aria-hidden="true">成田へ、富士へ。</p>
+    </div>
+
+    <article class="chapter" style="--t:0.06" data-side="right">
+      <p class="step">ฉาก 1 · 06:40 น.</p>
+      <h2>เช็คอินที่สุวรรณภูมิ</h2>
+      <p>ไกด์ไทยรอพบที่เคาน์เตอร์กลุ่ม ช่วยเช็คอิน โหลดกระเป๋า และแจกซิมพร้อมใช้ก่อนขึ้นเครื่อง</p>
+      <dl class="facts"><div><dt>เที่ยวบิน</dt><dd>CV 101</dd></div><div><dt>ขึ้นเครื่อง</dt><dd>07:15</dd></div><div><dt>เกต</dt><dd>D4</dd></div></dl>
+    </article>
+
+    <article class="chapter" style="--t:0.135" data-side="left">
+      <p class="step">ฉาก 2 · 07:45 น.</p>
+      <h2>เทคออฟ</h2>
+      <p>เครื่องเร่งความเร็วบนรันเวย์ 01R และไต่ระดับเหนือเมฆ ที่นั่งแถวหน้าในกลุ่มเดียวกัน</p>
+      <dl class="facts"><div><dt>เครื่องบิน</dt><dd>Wide-body</dd></div><div><dt>ระดับบิน</dt><dd>37,000 ฟุต</dd></div></dl>
+    </article>
+
+    <article class="chapter" style="--t:0.3" data-side="right">
+      <p class="step">ฉาก 3 · ระหว่างบิน</p>
+      <h2>BKK → NRT</h2>
+      <p>บินตรงข้ามทะเลจีนใต้สู่ญี่ปุ่น มีอาหารร้อนสองมื้อ และเวลาไทยช้ากว่าญี่ปุ่น 2 ชั่วโมง</p>
+      <dl class="facts"><div><dt>ระยะทาง</dt><dd>4,600 กม.</dd></div><div><dt>เวลาบิน</dt><dd>~6 ชม.</dd></div><div><dt>ถึง</dt><dd>15:55 JST</dd></div></dl>
+    </article>
+
+    <article class="chapter" style="--t:0.5" data-side="left">
+      <p class="step">ฉาก 4 · 15:55 JST</p>
+      <h2>ลงจอดที่นาริตะ</h2>
+      <p>เรากรอก Visit Japan Web ให้ล่วงหน้า ผ่าน ตม. และศุลกากรด้วย QR เดียว</p>
+    </article>
+
+    <article class="chapter" style="--t:0.61" data-side="right">
+      <p class="step">ฉาก 5 · ประตูขาออก</p>
+      <h2>พบไกด์และรถทัวร์</h2>
+      <p>มองหาธงสีชมพู ไกด์พูดไทยพาขึ้นรถโค้ช มี WiFi และน้ำดื่มเย็นบนรถ</p>
+      <dl class="facts"><div><dt>รถ</dt><dd>โค้ช 40 ที่นั่ง</dd></div><div><dt>ไกด์</dt><dd>ไทย + ญี่ปุ่น</dd></div></dl>
+    </article>
+
+    <article class="chapter" style="--t:0.755" data-side="left">
+      <p class="step">ฉาก 6 · วันที่ 2–5</p>
+      <h2>ลอดอุโมงค์โทริอิ สู่เจดีย์และฟูจิ</h2>
+      <p>ผ่านซุ้มประตูสีชาดนับร้อย ชมเจดีย์ห้าชั้นที่มีภูเขาไฟฟูจิเป็นฉากหลัง ช่วงซากุระบานปลายมีนาคมถึงต้นเมษายน</p>
+      <a class="text-link" href="#explore" data-explore="pagoda">ดูฉากนี้แบบ 3D</a>
+    </article>
+
+    <article class="chapter" style="--t:0.93" data-side="right">
+      <p class="step">ฉาก 7 · เช็คอินโรงแรม</p>
+      <h2>Sakura Grand 5★</h2>
+      <p>ห้องสวีทชั้นบนสุด กระจกจากพื้นถึงเพดานหันหน้าเข้าหาฟูจิ ลองชมห้องก่อนจองได้ในส่วนถัดไป</p>
+      <a class="text-link" href="#explore" data-explore="suite">เข้าไปในห้องพัก</a>
+    </article>
+  </section>
+
+  <!-- ===== Explore: preview stays and places without the story ===== -->
+  <section id="explore" class="explore">
+    <div class="sticky">
+      <div class="panel explore-panel">
+        <p class="eyebrow">ชมก่อนจอง</p>
+        <h2>เลือกดูที่พักและที่เที่ยว<br>แบบ 3 มิติ</h2>
+        <p class="muted">กดรายการไหน กล้องจะบินไปที่นั่นทันที</p>
+        <div class="tab-group" role="tablist" aria-label="ที่พัก">
+          <p class="tab-label">ที่พัก</p>
+          <button role="tab" data-target="hotel" id="tab-hotel">Sakura Grand 5★</button>
+          <button role="tab" data-target="suite" id="tab-suite">ห้องสวีทวิวฟูจิ</button>
+          <button role="tab" data-target="ryokan" id="tab-ryokan">เรียวกัง ห้องทาทามิ</button>
+        </div>
+        <div class="tab-group" role="tablist" aria-label="ที่เที่ยว">
+          <p class="tab-label">ที่เที่ยว</p>
+          <button role="tab" data-target="fuji" id="tab-fuji">ภูเขาไฟฟูจิ</button>
+          <button role="tab" data-target="pagoda" id="tab-pagoda">เจดีย์ชูเรโตะ</button>
+          <button role="tab" data-target="torii" id="tab-torii">อุโมงค์โทริอิ</button>
+          <button role="tab" data-target="tokyo" id="tab-tokyo">โตเกียวยามค่ำ</button>
+        </div>
+        <div class="tab-group" role="group" aria-label="เวลาในฉาก">
+          <p class="tab-label">เวลาในฉาก</p>
+          <div class="seg seg-time" id="timeSeg">
+            <button type="button" data-time="auto" aria-pressed="true">ตามฉาก</button>
+            <button type="button" data-time="day" aria-pressed="false">กลางวัน</button>
+            <button type="button" data-time="sunset" aria-pressed="false">เย็น</button>
+            <button type="button" data-time="night" aria-pressed="false">กลางคืน</button>
+          </div>
+        </div>
+        <button class="btn btn-ghost free-btn" type="button" id="freeBtn" aria-pressed="false">หมุนดูรอบ ๆ แบบอิสระ</button>
+        <p class="fine" id="freeHint">คลิกที่โรงแรม รถไฟ รถบัส หรือเครื่องบินในฉาก เพื่อดูข้อมูล</p>
+      </div>
+      <div class="orbit" id="orbit" hidden></div>
+      <div class="side-col">
+        <div class="panel hud" id="hud" aria-live="off">
+          <div><span>เวลาญี่ปุ่น</span><b id="hudClock">--:--</b></div>
+          <div><span>ชินคันเซ็นขบวนถัดไป</span><b id="hudTrain">--</b></div>
+          <div><span>อากาศเกียวโต</span><b>16°C แดดอ่อน</b></div>
+          <div><span>ซากุระบาน</span><b>82%</b></div>
+        </div>
+        <div class="panel info-card" id="infoCard" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Custom tour builder ===== -->
+  <section id="builder" class="builder">
+    <div class="sticky">
+      <form class="panel builder-panel" id="builderForm" autocomplete="off">
+        <p class="eyebrow">จัดทัวร์เอง</p>
+        <h2>ออกแบบทริปของคุณ</h2>
+        <div class="row2">
+          <label>บินจาก<select id="dep"></select></label>
+          <label>ลงที่<select id="arr"></select></label>
+        </div>
+        <div class="row2">
+          <label>บินกลับจาก<select id="ret"></select></label>
+          <label>วันออกเดินทาง<input type="date" id="date"></label>
+        </div>
+        <fieldset>
+          <legend>สถานที่ที่อยากไป <small id="stopCount"></small></legend>
+          <div class="chips" id="places"></div>
+        </fieldset>
+        <div class="row2">
+          <label>จำนวนคืน <output id="nightsOut">6</output><input type="range" id="nights" min="3" max="12" value="6"></label>
+          <label>ผู้เดินทาง
+            <span class="stepper"><button type="button" data-step="-1" aria-label="ลดจำนวน">−</button><input id="pax" type="number" min="1" max="30" value="2" inputmode="numeric"><button type="button" data-step="1" aria-label="เพิ่มจำนวน">+</button></span>
+          </label>
+        </div>
+        <fieldset>
+          <legend>ที่พัก</legend>
+          <div class="cards" id="hotels"></div>
+        </fieldset>
+        <label>ประเภทห้อง<select id="room"></select></label>
+        <fieldset>
+          <legend>ประกันการเดินทาง</legend>
+          <div class="seg" id="insurance"></div>
+        </fieldset>
+        <fieldset>
+          <legend>บริการเสริม</legend>
+          <div class="checks" id="addons"></div>
+        </fieldset>
+      </form>
+      <div class="panel summary" id="summary" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ===== Services ===== -->
+  <section id="services" class="services">
+    <div class="wrap">
+      <p class="eyebrow">บริการครบวงจร</p>
+      <h2>เราดูแลทุกอย่าง ตั้งแต่ก่อนออกจากบ้าน</h2>
+      <div class="svc-grid">
+        <article class="svc"><span class="kanji">保</span><h3>ประกันการเดินทาง</h3><p>คุ้มครองค่ารักษาพยาบาล กระเป๋าหาย และเที่ยวบินล่าช้า เลือกแผนได้ตอนจัดทัวร์</p></article>
+        <article class="svc"><span class="kanji">証</span><h3>เอกสารและ Visit Japan Web</h3><p>คนไทยเที่ยวญี่ปุ่นไม่เกิน 15 วันไม่ต้องขอวีซ่า เรากรอกข้อมูลเข้าเมืองให้ล่วงหน้า</p></article>
+        <article class="svc"><span class="kanji">案</span><h3>ไกด์ไทย 24 ชั่วโมง</h3><p>แชตกับไกด์ได้ตลอดทริป มีสายด่วนฉุกเฉินภาษาไทย</p></article>
+        <article class="svc"><span class="kanji">車</span><h3>รถรับส่งและรถโค้ช</h3><p>รับที่สนามบิน ส่งถึงโรงแรม และเดินทางระหว่างเมืองด้วยรถส่วนตัว</p></article>
+        <article class="svc"><span class="kanji">通</span><h3>eSIM และ Pocket WiFi</h3><p>ใช้เน็ตได้ทันทีที่ลงเครื่อง รับเครื่องที่สนามบินไทย</p></article>
+        <article class="svc"><span class="kanji">鉄</span><h3>JR Pass และบัตร IC</h3><p>ซื้อพาสรถไฟและเติมเงินบัตร Suica ให้ก่อนเดินทาง</p></article>
+      </div>
+
+      <div class="split">
+        <div class="panel ins">
+          <h3>เปรียบเทียบแผนประกัน</h3>
+          <div class="table-scroll">
+            <table id="insTable">
+              <thead><tr><th scope="col">ความคุ้มครอง</th><th scope="col">Basic</th><th scope="col">Plus</th><th scope="col">Premium</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="fine">ตัวเลขเป็นตัวอย่างสำหรับเดโมเท่านั้น</p>
+        </div>
+
+        <div class="panel backoffice">
+          <div class="bo-head"><h3>สถานะทริปของคุณ</h3><span class="pill">เดโม</span></div>
+          <p class="mono">REF <span id="boRef">CV-JP-24817</span></p>
+          <ol class="timeline">
+            <li class="done"><b>จองแล้ว</b><span>ยืนยันที่นั่งและห้องพัก</span></li>
+            <li class="done"><b>ชำระมัดจำ</b><span>30% ผ่านพร้อมเพย์</span></li>
+            <li class="done"><b>ออกตั๋วเครื่องบิน</b><span>E-ticket ส่งทางอีเมล</span></li>
+            <li class="now"><b>อนุมัติกรมธรรม์</b><span>แผน Plus กำลังตรวจสอบ</span></li>
+            <li><b>พร้อมเดินทาง</b><span>รับเอกสารและซิมที่สนามบิน</span></li>
+          </ol>
+          <div class="chat">
+            <p class="bubble guide">สวัสดีค่ะ ไกด์มิกิจะรอที่ประตู B ขาออกนาริตะนะคะ</p>
+            <p class="bubble me">ขอบคุณครับ เจอกันครับ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer class="foot">
+      <p>Covaverse Japan Journeys · เว็บตัวอย่างสำหรับนำเสนอ ไม่มีการจองหรือชำระเงินจริง</p>
+      <p class="muted">โมเดล 3 มิติทั้งหมดสร้างด้วยโค้ด Three.js</p>
+    </footer>
+  </section>
+</main>
+
+<dialog id="bookDialog" class="dialog">
+  <form method="dialog">
+    <p class="eyebrow">เดโม</p>
+    <h2>ทริปของคุณพร้อมแล้ว</h2>
+    <div id="bookBody"></div>
+    <p class="fine">นี่คือเว็บตัวอย่าง ยังไม่มีการจองหรือตัดเงินจริง</p>
+    <button class="btn" value="close">ปิด</button>
+  </form>
+</dialog>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
