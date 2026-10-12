@@ -19,7 +19,7 @@ export function createLife(scene, w) {
   const tmp = V(0, 0, 0), tan = V(0, 0, 0);
 
   // ---------- Shinkansen sets running both ways ----------
-  const CARS = 8, CAR = 25 * S, NT = 10, TRAIN_V = 1.4; // units per second
+  const TS = S * 0.6, CARS = 8, CAR = 25 * TS, NT = 10, TRAIN_V = 1.1; // units per second
   const trains = [];
   for (let k = 0; k < NT; k++) {
     const g = new THREE.Group();
@@ -27,7 +27,7 @@ export function createLife(scene, w) {
     for (let i = 0; i < CARS; i++) {
       const end = i === 0 || i === CARS - 1;
       const c = createShinkansenCar(end);
-      c.scale.setScalar(S);
+      c.scale.setScalar(TS);
       const holder = new THREE.Group();
       if (i === CARS - 1) c.rotation.y = Math.PI;
       holder.add(c);
@@ -59,8 +59,8 @@ export function createLife(scene, w) {
   const carGeo = mergeGeometries([
     new THREE.BoxGeometry(1.8, 0.8, 4.4).translate(0, 0.65, 0),
     new THREE.BoxGeometry(1.6, 0.6, 2.4).translate(0, 1.35, 0.2),
-  ]).scale(S, S, S);
-  const NC = 700;
+  ]).scale(S * 0.55, S * 0.55, S * 0.55);
+  const NC = 900;
   const traffic = new THREE.InstancedMesh(carGeo, std('#ffffff', { roughness: 0.3, metalness: 0.5 }), NC);
   const palette = ['#e2522f', '#f2f2f2', '#2b3a67', '#f2c14e', '#1d1d22', '#7aa6d8', '#c0c4cc', '#f4f4f4', '#9a1f2c'];
   const tc = new THREE.Color();
@@ -80,7 +80,7 @@ export function createLife(scene, w) {
       road.at(c.d, dummy.position);
       road.tangent(c.d, tan, 0.1);
       const sx = -tan.z, sz = tan.x;
-      const lane = c.dir > 0 ? -0.03 : 0.03;
+      const lane = c.dir > 0 ? -0.018 : 0.018;
       dummy.position.x += sx * lane; dummy.position.z += sz * lane;
       dummy.position.y = ground(dummy.position.x, dummy.position.z) + 0.01;
       dummy.lookAt(tmp.copy(dummy.position).addScaledVector(tan, c.dir));
@@ -91,7 +91,7 @@ export function createLife(scene, w) {
   });
   ['#3d8fb0', '#f2b134', '#7a4fb5', '#3aa17e', '#d9534f', '#2b3a67'].forEach((liv, i) => {
     const c = createCoach(liv);
-    c.scale.setScalar(S);
+    c.scale.setScalar(S * 0.6);
     c.userData.info = 'bus';
     scene.add(c); pickables.push(c);
     const st = { d: (i / 6) * road.length, dir: i % 2 ? 1 : -1 };
@@ -99,7 +99,7 @@ export function createLife(scene, w) {
       st.d = (st.d + st.dir * 0.11 * dt + road.length) % road.length;
       road.at(st.d, c.position);
       road.tangent(st.d, tan, 0.1).multiplyScalar(st.dir);
-      c.position.x += -tan.z * -0.03; c.position.z += tan.x * -0.03;
+      c.position.x += -tan.z * -0.018 * st.dir; c.position.z += tan.x * -0.018 * st.dir;
       c.position.y = ground(c.position.x, c.position.z) + 0.01;
       c.lookAt(tmp.copy(c.position).sub(tan));
     });
@@ -146,7 +146,7 @@ export function createLife(scene, w) {
   };
   for (let i = 0; i < 2; i++) {
     const ship = createPirateShip();
-    ship.scale.setScalar(S * 0.9);
+    ship.scale.setScalar(S * 0.45);
     ship.userData.info = 'pirate';
     scene.add(ship); pickables.push(ship);
     updaters.push((t) => {
@@ -170,7 +170,7 @@ export function createLife(scene, w) {
     neck.position.set(0, 1.0, -1.2); neck.rotation.y = Math.PI / 2; b.add(neck);
     const beak = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.4, 6), std('#f29b38'));
     beak.position.set(0, 1.55, -1.75); beak.rotation.x = -Math.PI / 2; b.add(beak);
-    b.scale.setScalar(S * 3);
+    b.scale.setScalar(S * 1.4);
     b.userData.info = 'boat';
     scene.add(b); pickables.push(b);
     const cx = toX(kawa.lon) + 0.9 + (i % 3) * 0.35, cz = toZ(kawa.lat) - 0.25 - (i % 2) * 0.12;
@@ -184,7 +184,7 @@ export function createLife(scene, w) {
   // ---------- Nara deer ----------
   {
     const N = 160;
-    const deer = new THREE.InstancedMesh(createDeerGeometry().scale(S * 2.4, S * 2.4, S * 2.4), std('#9b6a3f', { roughness: 0.9 }), N);
+    const deer = new THREE.InstancedMesh(createDeerGeometry().scale(S * 1.1, S * 1.1, S * 1.1), std('#9b6a3f', { roughness: 0.9 }), N);
     const herd = [];
     const c = new THREE.Color();
     for (let i = 0; i < N; i++) {
@@ -216,7 +216,7 @@ export function createLife(scene, w) {
   {
     const spots = [[pagodaPos, 0.12, 0.3], [fushimi, 0.05, 0.25], [towerPos, 0.1, 0.4], [nara, 0.2, 0.6]];
     const NP = 160;
-    const geo = new THREE.CapsuleGeometry(0.28, 0.9, 3, 8).translate(0, 0.75, 0).scale(S * 1.4, S * 1.4, S * 1.4);
+    const geo = new THREE.CapsuleGeometry(0.28, 0.9, 3, 8).translate(0, 0.75, 0).scale(S * 0.6, S * 0.6, S * 0.6);
     const people = new THREE.InstancedMesh(geo, std('#ffffff'), NP);
     const kimono = ['#e66a8c', '#3d5aa8', '#f2b134', '#7a4fb5', '#3aa17e', '#e2522f', '#2b2b33', '#f4efe6'];
     const c = new THREE.Color();

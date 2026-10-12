@@ -206,10 +206,10 @@ export function createTerminal({ thai = false, label = 'BKK', towerX = 60 } = {}
   const frame = std('#e9edf2', { roughness: 0.4, metalness: 0.3 });
   g.add(box(90, 9, 24, glass, 0, 4.5, 0));
   // wave roof
-  const roofGeo = new THREE.CylinderGeometry(30, 30, 96, 48, 1, true, -0.55, 1.1);
+  const roofGeo = new THREE.CylinderGeometry(30, 30, 96, 48, 1, true, Math.PI / 2 - 0.55, 1.1);
   const roof = new THREE.Mesh(roofGeo, std(thai ? '#d9c08a' : '#f0f2f5', { side: THREE.DoubleSide, metalness: 0.4, roughness: 0.35 }));
   roof.rotation.z = Math.PI / 2; roof.rotation.y = 0; roof.position.set(0, -16.5, 0);
-  roof.scale.set(1, 1, 0.5);
+  roof.scale.set(1, 1, 0.92);
   g.add(roof);
   for (let x = -42; x <= 42; x += 12) g.add(box(0.6, 9, 0.6, frame, x, 4.5, 12.3));
   // jet bridges
@@ -268,15 +268,22 @@ export function createPerson(color = '#2b3a67', skin = '#f1c9a5') {
   const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.9, 4, 10), std(color));
   b.position.y = 0.95; g.add(b);
   const h = new THREE.Mesh(new THREE.SphereGeometry(0.24, 14, 12), std(skin));
-  h.position.y = 1.85; g.add(h);
+  h.position.y = 1.86; g.add(h);
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), std('#2a211c'));
+  hair.position.y = 1.88; hair.rotation.x = -0.25; g.add(hair);
+  for (const sd of [-1, 1]) { const a = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.62, 3, 6), std(color)); a.position.set(sd * 0.38, 1.12, 0); a.rotation.z = sd * 0.12; g.add(a); }
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   return g;
 }
 
 export function createGuide() {
   const g = createPerson('#e6688e');
-  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.1, 16), std('#fafafa'));
-  hat.position.y = 2.06; g.add(hat);
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.05, 18), std('#fafafa'));
+  hat.position.y = 2.02; g.add(hat);
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(0.23, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), std('#fafafa'));
+  crown.position.y = 2.03; g.add(crown);
+  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.5, 3, 6), std('#e6688e'));
+  arm.position.set(0.42, 1.5, 0); arm.rotation.z = -0.9; g.add(arm);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.4, 6), std('#c0c0c0', { metalness: 0.8 }));
   pole.position.set(0.45, 2.1, 0); g.add(pole);
   const flagGeo = new THREE.PlaneGeometry(0.9, 0.6, 10, 1);
@@ -524,7 +531,7 @@ export function createHotel() {
   // feature wall with wooden slats behind the bed
   for (let i = 0; i < 20; i++) s.add(box(0.25, R - 0.4, 0.2, wood, 2 + i * 0.5, R / 2, D / 2 - 0.25));
   // glass wall with mullions
-  const glass = new THREE.Mesh(new THREE.PlaneGeometry(W, R), new THREE.MeshPhysicalMaterial({ color: '#cfe6ff', transmission: 0.0, transparent: true, opacity: 0.08, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false }));
+  const glass = new THREE.Mesh(new THREE.PlaneGeometry(W, R), new THREE.MeshPhysicalMaterial({ color: '#cfe6ff', transmission: 0.0, transparent: true, opacity: 0.08, roughness: 0.3, metalness: 0.0, specularIntensity: 0.12, side: THREE.DoubleSide, depthWrite: false }));
   glass.position.set(0, R / 2, -D / 2); s.add(glass);
   for (let x = -W / 2; x <= W / 2; x += 6.5) s.add(box(0.15, R, 0.15, trim, x, R / 2, -D / 2));
   // bed
@@ -615,11 +622,22 @@ export function createRyokan() {
   andon.position.set(-2.8, base + 0.7, 5.5); g.add(andon);
   const pl = new THREE.PointLight('#ffc68a', 18, 20, 1.6); pl.position.set(0, base + 3, 0); g.add(pl);
   // hip roof
-  const roofGeo = new THREE.ConeGeometry(Math.hypot(W, D) / 2 + 3, 5, 4, 1, true);
-  roofGeo.rotateY(Math.PI / 4);
-  const roof = new THREE.Mesh(roofGeo, std('#30333b', { side: THREE.DoubleSide, roughness: 0.6 }));
-  roof.scale.set(W / D, 1, 1);
-  roof.position.y = base + H + 2.3; g.add(roof);
+  const roofMat = std('#474c56', { side: THREE.DoubleSide, roughness: 0.55 });
+  const hip = (w, d, h, y, x = 0, z = 0) => {
+    const geo = new THREE.ConeGeometry(Math.SQRT1_2 * Math.max(w, d), h, 4, 1, true).rotateY(Math.PI / 4);
+    const m = new THREE.Mesh(geo, roofMat);
+    m.scale.set(w / Math.max(w, d), 1, d / Math.max(w, d));
+    m.position.set(x, y + h / 2, z); g.add(m);
+    g.add(box(w * 0.98, 0.35, d * 0.98, darkWood, x, y + 0.1, z)); // fascia board
+  };
+  hip(W + 3.4, D + 3.4, 4.2, base + H);
+  // two-storey annex behind the guest room, with its own roof and lit shoji
+  const AW = 14, AD = D + 6, AH = 7.5, AX = -W / 2 - AW / 2 - 1.5;
+  g.add(box(AW, AH, AD, shojiMat, AX, base + AH / 2, 0));
+  for (const z of [-AD / 2, AD / 2]) for (const x of [AX - AW / 2, AX + AW / 2]) g.add(box(0.4, AH, 0.4, darkWood, x, base + AH / 2, z));
+  g.add(box(AW + 0.6, 0.4, AD + 0.6, darkWood, AX, base + AH * 0.5, 0)); // floor band
+  hip(AW + 3, AD + 3, 4.6, base + AH, AX, 0);
+  g.add(box(AW + 6, base, AD + 2, std('#8a8378'), AX, base / 2, 0));
   // private onsen on the deck
   const onsen = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 0.8, 24), std('#7d776c'));
   onsen.position.set(W / 2 + 5, 0.4, -3); g.add(onsen);

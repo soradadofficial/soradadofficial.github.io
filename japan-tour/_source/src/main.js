@@ -102,6 +102,23 @@ let exploreKey = 'hotel';
   exploreCur.pos.copy(e.pos); exploreCur.look.copy(e.look); copyEnv(exploreCur.env, e.env); exploreCur.petals = e.petals;
 }
 let exploreTween = null;
+const chapterEls = [...document.querySelectorAll('.chapter')];
+const heroEl = document.querySelector('.hero');
+function fadeChapters() {
+  const vh = window.innerHeight;
+  const hb = heroEl.getBoundingClientRect().bottom / vh;
+  heroEl.style.opacity = smooth((hb - 0.4) / 0.4).toFixed(3);
+  for (const el of chapterEls) {
+    const r = el.getBoundingClientRect();
+    if (r.bottom < -50 || r.top > vh + 50) { if (el.style.opacity !== '0') el.style.opacity = '0'; continue; }
+    const c = (r.top + r.height / 2) / vh;
+    const k = smooth(Math.min(1, Math.max(0, (c - 0.02) / 0.26))) * smooth(Math.min(1, Math.max(0, (0.98 - c) / 0.26)));
+    el.style.opacity = k.toFixed(3);
+    el.style.transform = `translateY(${((1 - k) * (c > 0.5 ? 18 : -18)).toFixed(1)}px)`;
+    el.style.pointerEvents = k > 0.3 ? '' : 'none';
+  }
+}
+
 function flyTo(key) {
   const to = world.EXPLORE[key];
   if (!to) return;
@@ -285,7 +302,8 @@ window.addEventListener('pointermove', (e) => { pointer.x = e.clientX / window.i
 const legPanel = $('#legPanel'), tripHud = $('#tripHud');
 let lastLeg = -1;
 function updateStoryHud(t, weight) {
-  const show = weight > 0.6 && t > 0.015 && t < 0.995;
+  const heroGone = heroEl.getBoundingClientRect().bottom < window.innerHeight * 0.18;
+  const show = weight > 0.6 && heroGone && t > 0.015 && t < 0.995;
   legPanel.classList.toggle('show', show);
   tripHud.classList.toggle('show', show);
   if (!show) return;
@@ -359,6 +377,7 @@ function frame() {
   look.addScaledVector(right, pointer.sx * lookAmp).addScaledVector(up, -pointer.sy * lookAmp * 0.5);
   pos.addScaledVector(right, pointer.sx * posAmp).addScaledVector(up, -pointer.sy * posAmp * 0.6);
 
+  { const gy = world.groundAt(pos.x, pos.z) + 0.03; if (pos.y < gy) pos.y = gy; }
   if (free) {
     controls.update();
     camPos.copy(camera.position); camLook.copy(controls.target);
@@ -384,6 +403,7 @@ function frame() {
     gtao.enabled = !aoOff && wb < 0.98 && d < 120;
   }
   updateStoryHud(storyT, storyWeight);
+  fadeChapters();
   bloom.strength = 0.45 + envMix.night * 0.55;
   scene.environmentIntensity = 0.12 + (1 - envMix.night) * 0.3;
   film.uniforms.time.value = time;

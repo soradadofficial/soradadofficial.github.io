@@ -178,26 +178,79 @@ export function createAirport({ x, z, y, bearing, len = 4, width = 0.9, side = 1
 // ---------- instanced city blocks ----------
 export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
   const total = list.reduce((s, c) => s + c.n, 0);
-  const tex = canvasTex(32, 64, (g, w, h) => {
-    g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
-    for (let y = 2; y < h - 2; y += 4) for (let x = 2; x < w - 2; x += 4) {
-      if (Math.random() < 0.55) { g.fillStyle = Math.random() < 0.2 ? '#bfe3ff' : '#ffd9a0'; g.globalAlpha = 0.45 + Math.random() * 0.55; g.fillRect(x, y, 2, 2); }
+  // facade tile: 4 x 4 windows; colour map (glass bands) + emissive map (lit windows at night)
+  const lit = [];
+  for (let k = 0; k < 16 * 4; k++) lit.push(Math.random());
+  const facade = canvasTex(64, 64, (g, w, h) => {
+    g.fillStyle = '#f4f1ea'; g.fillRect(0, 0, w, h);
+    for (let r = 0; r < 4; r++) {
+      g.fillStyle = '#d9d4ca'; g.fillRect(0, r * 16 + 13, w, 3);
+      for (let c = 0; c < 4; c++) { g.fillStyle = (r + c) % 3 ? '#5f7489' : '#6d8296'; g.fillRect(c * 16 + 3, r * 16 + 3, 10, 9); }
     }
   });
-  const mat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.55, metalness: 0.25, emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 0.04 });
-  glowMats.push({ mat, day: 0.04, night: 1.5 });
+  const glow = canvasTex(64, 64, (g, w, h) => {
+    g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      const v = lit[r * 4 + c];
+      if (v < 0.58) { g.fillStyle = v < 0.1 ? '#bfe3ff' : '#ffd9a0'; g.globalAlpha = 0.5 + v * 0.8; g.fillRect(c * 16 + 3, r * 16 + 3, 10, 9); }
+    }
+  });
+  const TILE = 0.045; // km per facade tile (4 floors)
+  const mat = new THREE.MeshStandardMaterial({ color: '#ffffff', map: facade, roughness: 0.5, metalness: 0.15, emissive: '#ffffff', emissiveMap: glow, emissiveIntensity: 0.04 });
+  mat.onBeforeCompile = (sh) => {
+    sh.vertexShader = sh.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
+      #ifdef USE_INSTANCING
+      vec3 isc = vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));
+      vec2 tsc = vec2(abs(normal.x) > 0.5 ? isc.z : isc.x, isc.y) / ${TILE.toFixed(4)};
+      if (abs(normal.y) > 0.5) tsc = vec2(0.0);
+      #if defined(USE_MAP)
+      vMapUv = uv * tsc;
+      #endif
+      #if defined(USE_EMISSIVEMAP)
+      vEmissiveMapUv = uv * tsc;
+      #endif
+      #endif`);
+  };
+  glowMats.push({ mat, day: 0.04, night: 1.6 });
   const geo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
-  // drop the bottom face's uv stretch issue: fine for boxes
   const mesh = new THREE.InstancedMesh(geo, mat, total);
-  const roofGeo = new THREE.BoxGeometry(1, 0.08, 1).translate(0, 0.04, 0);
-  const roofs = new THREE.InstancedMesh(roofGeo, std('#5c6170', { roughness: 0.6 }), total);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = V(1, 1, 1), p = V(0, 0, 0);
+  // roofs: flat slabs with rooftop housings for towers, gabled roofs for houses
+  const slabGeo = new THREE.BoxGeometry(1, 0.06, 1).translate(0, 0.03, 0);
+  const slabs = new THREE.InstancedMesh(slabGeo, std('#8d9097', { roughness: 0.7 }), total);
+  const boxGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+  const tops = new THREE.InstancedMesh(boxGeo, std('#b7b9bd', { roughness: 0.6 }), total);
+  const gable = new THREE.CylinderGeometry(0.5, 0.5, 1, 3, 1).rotateX(-Math.PI / 2);
+  {
+    // flatten the prism so its base sits at y = 0 and it spans -0.5..0.5 in x
+    const pos = gable.attributes.position;
+    for (let i = 0; i < pos.count; i++) { const y = pos.getY(i); pos.setY(i, (y + 0.25) / 0.75); pos.setX(i, pos.getX(i) / 0.866); }
+    gable.computeVertexNormals();
+  }
+  const roofMat = new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.75, flatShading: true });
+  const gables = new THREE.InstancedMesh(gable, roofMat, total);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = V(1, 1, 1), p = V(0, 0, 0), off = V(0, 0, 0);
   const col = new THREE.Color();
-  const tones = ['#e8e4dc', '#d4d8de', '#c9ced6', '#efe9df', '#b9c2cc', '#dcd3c4', '#a9b4c2', '#f2efe9'];
-  let i = 0;
+  const tones = ['#f1ede5', '#dfe3e8', '#d3d8de', '#efe7da', '#c9d1da', '#e6dccb', '#bcc6d1', '#f6f3ee', '#e9d9c6'];
+  const roofTones = ['#59606e', '#6e4a3d', '#3f4a5a', '#7f858d', '#4f5f6e', '#8a5a44', '#2f3c4c'];
+  // street grid for the larger cities
+  const streets = [];
+  let i = 0, nG = 0, nT = 0, nS = 0;
   for (const c of list) {
+    const rot = c.rot ?? 0, cr = Math.cos(rot), sr = Math.sin(rot);
+    const SP = c.r >= 4 ? 0.42 : c.r >= 2 ? 0.32 : 0;
+    if (SP) {
+      for (let u = -c.r; u <= c.r; u += SP) for (let v = -c.r; v < c.r; v += SP * 0.5) {
+        for (const dir of [0, 1]) {
+          const lu = dir ? v : u, lv = dir ? u : v;
+          if (lu * lu + lv * lv > c.r * c.r * 0.8) continue;
+          const x = c.x + lu * cr - lv * sr, z = c.z + lu * sr + lv * cr;
+          if (landAt(x, z) < 0.8 || (lakeAt && lakeAt(x, z))) continue;
+          streets.push({ x, z, ang: rot + (dir ? 0 : Math.PI / 2), len: SP * 0.5 });
+        }
+      }
+    }
     let placed = 0, guard = 0;
-    while (placed < c.n && guard++ < c.n * 12) {
+    while (placed < c.n && guard++ < c.n * 14) {
       const a = rnd() * Math.PI * 2, r = c.r * Math.sqrt(rnd());
       const x = c.x + Math.cos(a) * r * (c.sx ?? 1), z = c.z + Math.sin(a) * r * (c.sz ?? 1);
       if (landAt(x, z) < 0.8) continue;
@@ -206,22 +259,56 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
       const core = Math.exp(-(r * r) / (2 * (c.r * 0.35) ** 2));
       const tall = rnd() < 0.12 + core * 0.45;
       const big = c.maxH > 1;
-      const h = tall && big ? 0.25 + Math.pow(rnd(), 2.4) * c.maxH * (0.25 + core) : (big ? 0.1 + rnd() * 0.22 : 0.05 + rnd() * 0.08 + (tall ? c.maxH * rnd() * 0.5 : 0));
-      const w = tall && big ? 0.16 + rnd() * 0.26 : (big ? 0.1 + rnd() * 0.16 : 0.06 + rnd() * 0.08), d = w * (0.6 + rnd() * 0.8);
+      const h = tall && big ? 0.25 + Math.pow(rnd(), 2.4) * c.maxH * (0.25 + core) : (big ? 0.08 + rnd() * 0.2 : 0.035 + rnd() * 0.05 + (tall ? c.maxH * rnd() * 0.4 : 0));
+      const w = tall && big ? 0.12 + rnd() * 0.2 : (big ? 0.08 + rnd() * 0.12 : 0.04 + rnd() * 0.05), d = w * (0.6 + rnd() * 0.8);
+      if (SP) {
+        // keep buildings inside blocks, off the streets
+        const lu = (x - c.x) * cr + (z - c.z) * sr, lv = -(x - c.x) * sr + (z - c.z) * cr;
+        const fu = Math.abs(((lu % SP) + SP * 1.5) % SP - SP / 2), fv = Math.abs(((lv % SP) + SP * 1.5) % SP - SP / 2);
+        const half = Math.max(w, d) * 0.6 + 0.025;
+        if (SP / 2 - fu < half || SP / 2 - fv < half) continue;
+      }
       const y = heightAt(x, z) - 0.03;
-      q.setFromAxisAngle(V(0, 1, 0), (c.rot ?? 0) + (rnd() < 0.7 ? 0 : rnd() * 1.5));
+      const yaw = SP ? rot : (rot + (rnd() < 0.7 ? 0 : rnd() * 1.5));
+      q.setFromAxisAngle(V(0, 1, 0), yaw);
       m.compose(p.set(x, y, z), q, s.set(w, h + 0.03, d));
       mesh.setMatrixAt(i, m);
       mesh.setColorAt(i, col.set(tones[Math.floor(rnd() * tones.length)]));
-      m.compose(p.set(x, y + h + 0.03, z), q, s.set(w * 0.92, 1, d * 0.92));
-      roofs.setMatrixAt(i, m);
+      const house = !big && h < 0.1;
+      if (house) {
+        m.compose(p.set(x, y + h + 0.03, z), q, s.set(w * 1.08, Math.min(w, d) * 0.45, d * 1.08));
+        gables.setMatrixAt(nG, m);
+        gables.setColorAt(nG, col.set(roofTones[Math.floor(rnd() * roofTones.length)]));
+        nG++;
+      } else {
+        m.compose(p.set(x, y + h + 0.03, z), q, s.set(w * 1.02, 1, d * 1.02));
+        slabs.setMatrixAt(nS++, m);
+        if (rnd() < 0.7) {
+          off.set((rnd() - 0.5) * w * 0.4, 0, (rnd() - 0.5) * d * 0.4).applyQuaternion(q);
+          m.compose(p.set(x + off.x, y + h + 0.06, z + off.z), q, s.set(w * (0.25 + rnd() * 0.3), 0.01 + rnd() * 0.025, d * (0.25 + rnd() * 0.3)));
+          tops.setMatrixAt(nT++, m);
+        }
+      }
       i++; placed++;
     }
   }
-  mesh.count = roofs.count = i;
-  mesh.castShadow = mesh.receiveShadow = roofs.castShadow = true;
+  mesh.count = i; gables.count = nG; slabs.count = nS; tops.count = nT;
+  mesh.castShadow = mesh.receiveShadow = gables.castShadow = slabs.receiveShadow = true;
   const g = new THREE.Group();
-  g.add(mesh, roofs);
+  g.add(mesh, gables, slabs, tops);
+  if (streets.length) {
+    const sMat = new THREE.MeshStandardMaterial({ color: '#5a5d63', roughness: 0.9, emissive: '#ffb070', emissiveIntensity: 0 });
+    glowMats.push({ mat: sMat, day: 0, night: 0.35 });
+    const sGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const sm = new THREE.InstancedMesh(sGeo, sMat, streets.length);
+    streets.forEach((t, k) => {
+      q.setFromAxisAngle(V(0, 1, 0), t.ang);
+      m.compose(p.set(t.x, heightAt(t.x, t.z) + 0.012, t.z), q, s.set(0.022, 1, t.len + 0.022));
+      sm.setMatrixAt(k, m);
+    });
+    sm.receiveShadow = true;
+    g.add(sm);
+  }
   return g;
 }
 
@@ -345,4 +432,32 @@ export function setLinePoints(line, points) {
   line.geometry = new LineGeometry();
   line.geometry.setPositions(arr);
   line.userData.segments = points.length - 1;
+}
+
+// ---------- water with analytic ripples (world-space, fades with distance) ----------
+export const waterTime = { value: 0 };
+export function waterMaterial(color, { roughness = 0.12, metalness = 0.35, freq = 1, amp = 0.22 } = {}) {
+  const mat = new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uWTime = waterTime;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nuniform float uWTime;')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+      {
+        vec2 p = vWPos.xz * ${freq.toFixed(3)};
+        float t = uWTime;
+        vec2 g = vec2(0.0);
+        g += vec2(0.8, 0.6) * cos(dot(p, vec2(0.8, 0.6)) * 9.0 + t * 1.3) * 1.0;
+        g += vec2(-0.5, 0.86) * cos(dot(p, vec2(-0.5, 0.86)) * 15.0 + t * 1.9) * 0.7;
+        g += vec2(0.95, -0.3) * cos(dot(p, vec2(0.95, -0.3)) * 27.0 - t * 2.4) * 0.45;
+        g += vec2(0.2, 0.98) * cos(dot(p, vec2(0.2, 0.98)) * 46.0 + t * 3.1) * 0.3;
+        float fade = 1.0 / (1.0 + length(vWPos - cameraPosition) * 0.08);
+        vec3 nw = normalize(vec3(-g.x * ${amp.toFixed(3)} * fade, 1.0, -g.y * ${amp.toFixed(3)} * fade));
+        normal = normalize((viewMatrix * vec4(nw, 0.0)).xyz);
+      }`);
+  };
+  return mat;
 }

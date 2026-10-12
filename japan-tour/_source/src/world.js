@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createCloudField } from './clouds.js';
 import {
   createGuide, createPerson, createTorii, createPagoda, createSakuraTrees, createLanterns, createTower,
   createHotel, createRyokan, SUITE, updateGlow,
@@ -8,7 +9,7 @@ import { createSky, createClouds, createPetals, createTrail, ENV, lerpEnv, makeE
 import { VERT, MODEL_SCALE as S, toX, toZ, thaiXZ, FUJI, LAKES, buildTerrain, buildFuji, buildThailand, buildNear, lakeMeshes } from './geo.js';
 import { Path, monotone, linear } from './path.js';
 import {
-  ribbon, roadMaterial, viaduct, createAirport, createCities, createForest, createToriiTunnel, drapedDisc,
+  ribbon, roadMaterial, waterMaterial, waterTime, viaduct, createAirport, createCities, createForest, createToriiTunnel, drapedDisc,
   createLabel, routeLine, rnd,
 } from './scenery.js';
 import { createHoloMap } from './mapholo.js';
@@ -44,6 +45,8 @@ export function createWorld() {
     cell: 2,
     patches: [
       { lon0: 138.66, lon1: 138.88, lat0: 35.43, lat1: 35.56, k: 16, relief: 0.35 }, // Kawaguchiko + Chureito
+      { lon0: 139.55, lon1: 140.2, lat0: 35.25, lat1: 35.82, k: 8, relief: 0, coast: true }, // Tokyo bay coastline
+      { lon0: 135.12, lon1: 135.6, lat0: 34.38, lat1: 34.75, k: 8, relief: 0, coast: true }, // Osaka bay coastline
       { lon0: 138.95, lon1: 139.10, lat0: 35.16, lat1: 35.29, k: 16 }, // Hakone / Lake Ashi
       { lon0: 135.72, lon1: 135.86, lat0: 34.93, lat1: 35.01, k: 12 }, // Fushimi Inari hill
     ],
@@ -53,10 +56,10 @@ export function createWorld() {
   scene.add(T.mesh);
   const fujiMesh = buildFuji(T.baseAt);
   scene.add(fujiMesh);
-  scene.add(lakeMeshes());
+  scene.add(lakeMeshes(waterMaterial('#3f7fa6', { roughness: 0.1, metalness: 0.45, freq: 2.2, amp: 0.16 })));
   scene.add(buildThailand());
   scene.add(buildNear());
-  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000), new THREE.MeshStandardMaterial({ color: '#1f5677', roughness: 0.42, metalness: 0.12 }));
+  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000), waterMaterial('#1f5677', { roughness: 0.36, metalness: 0.15, freq: 0.35, amp: 0.12 }));
   ocean.rotation.x = -Math.PI / 2; ocean.position.set(-600, -0.1, 300);
   ocean.receiveShadow = true;
   scene.add(ocean);
@@ -224,8 +227,23 @@ export function createWorld() {
   ];
   const avoid = [
     { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: 5, tree: 1.15 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
-    { x: castlePos.x, z: castlePos.z, r: 1.1 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 },
+    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 },
   ];
+  // rivers through the cities (drawn as rippled water ribbons, kept clear of buildings)
+  const riverMat = waterMaterial('#3d7593', { roughness: 0.14, metalness: 0.35, freq: 3, amp: 0.1 });
+  for (const [hw, pts] of [
+    [0.06, [[139.81, 35.79], [139.80, 35.735], [139.795, 35.70], [139.79, 35.68], [139.775, 35.652]]],
+    [0.09, [[139.66, 35.81], [139.74, 35.79], [139.82, 35.765], [139.85, 35.71], [139.86, 35.645]]],
+    [0.08, [[139.40, 35.665], [139.52, 35.64], [139.64, 35.59], [139.72, 35.55], [139.79, 35.53]]],
+    [0.09, [[135.75, 34.91], [135.64, 34.83], [135.56, 34.74], [135.49, 34.71], [135.43, 34.685]]],
+    [0.04, [[135.776, 35.07], [135.771, 35.03], [135.772, 35.0], [135.766, 34.965]]],
+  ]) {
+    const rp = Path.fromControl(pts.map(([lo, la]) => V(toX(lo), 0, toZ(la))), 0.1, (x, z) => ground(x, z));
+    addClear(rp);
+    const rv = ribbon(rp, hw, (x, z) => ground(x, z) + 0.016, riverMat);
+    rv.receiveShadow = true;
+    scene.add(rv);
+  }
   const cities = createCities(cityList, { heightAt: ground, landAt: (x, z) => (nearRoute(x, z, 0.22) ? 0 : T.landAt(x, z)), avoid, lakeAt });
   scene.add(cities);
 
@@ -239,20 +257,21 @@ export function createWorld() {
     if (km > 2.3 || nearRoute(x, z, 0.13)) return;
     if (avoid.some((v) => (v.x - x) ** 2 + (v.z - z) ** 2 < (v.r * (v.tree ?? 0.6)) ** 2)) return;
     const r = rnd();
-    trees.push({ x, z, y: H(x, z), s: (0.08 + r * 0.1) * size, r, kind: km > 0.35 || r < 0.45 ? 0 : 1 });
+    trees.push({ x, z, y: H(x, z), s: (0.038 + r * 0.04) * size, r, kind: km > 0.35 || r < 0.45 ? 0 : 1 });
   };
   const scatter = (c, r, n, size) => { for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = r * Math.sqrt(rnd()); plant(c.x + Math.cos(a) * d, c.z + Math.sin(a) * d, size); } };
-  scatter(LL(139.03, 35.24), 9, 4200);
-  scatter(LL(138.8, 35.45), 15, 6000);
-  scatter(pagodaPos, 1.0, 500);
-  scatter(nrtC, 8, 1400);
-  scatter(LL(135.79, 34.966), 2.0, 1000);
-  scatter(LL(135.85, 34.686), 1.8, 700);
-  for (let d = 0; d < road.length; d += 0.35) {
+  scatter(LL(139.03, 35.24), 9, 9000);
+  scatter(LL(138.8, 35.45), 15, 13000);
+  scatter(pagodaPos, 1.0, 1300);
+  scatter(nrtC, 8, 3000);
+  scatter(LL(135.79, 34.966), 2.0, 2400);
+  scatter(LL(135.85, 34.686), 1.8, 1800);
+  for (let i = 0; i < 1400; i++) { const a = rnd() * 6.283, d = 0.95 + rnd() * 0.75; const x = castlePos.x + Math.cos(a) * d, z = castlePos.z + Math.sin(a) * d; if (!nearRoute(x, z, 0.1)) trees.push({ x, z, y: H(x, z), s: 0.035 + rnd() * 0.03, r: rnd(), kind: 1 }); }
+  for (let d = 0; d < road.length; d += 0.18) {
     const p = road.at(d), t = road.tangent(d);
-    for (const s of [-1, 1]) { const off = 0.25 + rnd() * 1.4; plant(p.x - t.z * off * s, p.z + t.x * off * s); }
+    for (const s of [-1, 1]) { const off = 0.2 + rnd() * 1.2; plant(p.x - t.z * off * s, p.z + t.x * off * s); }
   }
-  for (let i = 0; i < 900; i++) { const a = rnd() * 6.283, d = 2 + rnd() * 9; trees.push({ x: bx + Math.cos(a) * d, z: bz + Math.sin(a) * d * 0.7 + 3, y: 0.05, s: 0.12 + rnd() * 0.1, r: rnd(), kind: 1 }); }
+  for (let i = 0; i < 2400; i++) { const a = rnd() * 6.283, d = 2 + rnd() * 9; trees.push({ x: bx + Math.cos(a) * d, z: bz + Math.sin(a) * d * 0.7 + 3, y: 0.05, s: 0.05 + rnd() * 0.045, r: rnd(), kind: 1 }); }
   const forest = createForest(trees.filter((t) => !(Math.abs(t.x - bx) < 4 && Math.abs(t.z - bz) < 4.5 && t.y < 0.1)));
   scene.add(forest);
 
@@ -304,7 +323,7 @@ export function createWorld() {
     const terrace = new THREE.Mesh(new THREE.BoxGeometry(22, 4, 22).translate(0, -1.6, 0), std('#8e877b', { roughness: 1 }));
     terrace.receiveShadow = true;
     pagoda.add(terrace, p);
-    pagoda.scale.setScalar(S * 2.2);
+    pagoda.scale.setScalar(S * 1.4);
     pagoda.position.copy(pagodaPos);
     pagoda.rotation.y = 0.35;
   }
@@ -312,7 +331,7 @@ export function createWorld() {
 
   // Sakura Grand hotel
   const hotel = createHotel();
-  const HS = S * 1.25;
+  const HS = S * 0.85;
   hotel.scale.setScalar(HS);
   scaleLights(hotel, HS);
   hotel.position.copy(hotelPos);
@@ -326,7 +345,7 @@ export function createWorld() {
   castle.position.copy(castlePos).add(V(0, 0.02, 0));
   castle.rotation.y = 0.2;
   scene.add(castle);
-  scene.add(drapedDisc(castlePos.x, castlePos.z, 0.75, ground, std('#7fa860', { roughness: 1 }), 0.004));
+  scene.add(drapedDisc(castlePos.x, castlePos.z, 1.75, ground, std('#7fa860', { roughness: 1 }), 0.004));
   {
     const moat = new THREE.Mesh(new THREE.RingGeometry(0.75, 0.9, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: '#3f7a8f', roughness: 0.1, metalness: 0.4 }));
     moat.position.set(castlePos.x, ground(castlePos.x, castlePos.z) + 0.006, castlePos.z);
@@ -354,17 +373,17 @@ export function createWorld() {
   scene.add(drapedDisc(towerPos.x, towerPos.z, 0.5, ground, std('#7fa860', { roughness: 1 }), 0.004));
 
   // sakura and lanterns (models built in metres, so place in a scaled group)
-  const SK = S * 1.5;
+  const SK = S * 0.6;
   const sak = [];
   const ring = (c, r0, r1, n) => { for (let i = 0; i < n; i++) { const a = rnd() * 6.283, d = r0 + rnd() * (r1 - r0); const x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d; if (!lakeAt(x, z, 1.05) && !nearRoute(x, z, 0.08)) sak.push(V(x / SK, H(x, z) / SK - 0.3, z / SK)); } };
-  ring(pagodaPos, 0.25, 0.9, 70);
-  ring(hotelPos, 0.5, 1.0, 26);
-  ring(toriiPos, 0.15, 0.6, 24);
-  ring(fushimi, 0.25, 0.7, 26);
-  ring(castlePos, 0.35, 0.72, 40);
-  ring(naraLawn.clone().add(V(0.5, 0, -0.4)), 0.1, 0.45, 18);
-  ring(towerPos, 0.15, 0.48, 18);
-  ring(LL(138.755, 35.508), 0.5, 2.6, 60);
+  ring(pagodaPos, 0.2, 0.9, 200);
+  ring(hotelPos, 0.45, 1.0, 50);
+  ring(toriiPos, 0.12, 0.6, 60);
+  ring(fushimi, 0.25, 0.7, 70);
+  ring(castlePos, 0.3, 0.72, 120);
+  ring(naraLawn.clone().add(V(0.5, 0, -0.4)), 0.1, 0.45, 50);
+  ring(towerPos, 0.12, 0.48, 50);
+  ring(LL(138.755, 35.508), 0.5, 2.6, 180);
   const sakura = createSakuraTrees(sak);
   sakura.scale.setScalar(SK);
   scene.add(sakura);
@@ -376,7 +395,7 @@ export function createWorld() {
   scene.add(lanterns);
 
   // guide and group at the Narita curb, coach waiting
-  const PS = S * 1.4;
+  const PS = S * 0.6;
   const guidePos = nw(0.52, 3.68);
   onGround(guidePos);
   const guide = createGuide(); guide.scale.setScalar(PS); guide.position.copy(guidePos); scene.add(guide);
@@ -384,25 +403,41 @@ export function createWorld() {
   ['#4b6cb7', '#f2b134', '#7a4fb5', '#3aa17e', '#d9534f', '#2b3a67', '#e2799b', '#3d8fb0'].forEach((c, i) => {
     const p = createPerson(c);
     p.scale.setScalar(PS);
-    p.position.copy(nw(0.6 + (i % 4) * 0.04, 3.6 - Math.floor(i / 4) * 0.045));
+    p.position.copy(nw(0.565 + (i % 4) * 0.02, 3.645 - Math.floor(i / 4) * 0.022));
     onGround(p.position);
     p.lookAt(guidePos.x, p.position.y, guidePos.z);
     tourists.add(p);
   });
   scene.add(tourists);
   const bus = createCoach('#e6688e');
-  bus.scale.setScalar(S);
+  bus.scale.setScalar(S * 0.6);
   scene.add(bus);
 
   // ---------- atmosphere ----------
-  const regions = [{ count: 50, min: [bx - 70, 5, bz - 90], max: [bx + 120, 12, bz + 40], size: [3, 9] }];
-  for (let k = 0; k <= 16; k++) {
-    const p = flight.at(FD.climb3 + (FD.J2 - FD.climb3) * k / 16);
-    regions.push({ count: 16, min: [p.x - 60, 7, p.z - 60], max: [p.x + 60, 17, p.z + 60], size: [8, 20] });
+  const seaSegs = [];
+  {
+    const K = 14, d0 = FD.climb3 + 20, d1 = FD.J1 + 10;
+    for (let k = 0; k < K; k++) {
+      const a = flight.at(d0 + (d1 - d0) * k / K), b = flight.at(d0 + (d1 - d0) * (k + 1) / K);
+      const halfL = a.distanceTo(b) * 0.6, halfW = 75;
+      const u = k / (K - 1);
+      const dens = THREE.MathUtils.smoothstep(u, 0, 0.12) * (1 - 0.75 * THREE.MathUtils.smoothstep(u, 0.7, 1));
+      seaSegs.push({ center: a.clone().lerp(b, 0.5), dir: b.clone().sub(a), halfL, halfW, y: 24, thick: 2.2, size: [6, 15], count: Math.round(halfL * halfW * 4 / 55 * dens), opacity: 0.92 });
+    }
   }
-  regions.push({ count: 40, min: [-350, 48, -500], max: [450, 62, 250], size: [25, 60], opacity: 0.35 });
-  regions.push({ count: 14, min: [60, 22, -40], max: [180, 27, 60], size: [5, 10], opacity: 0.6 });
-  const clouds = createClouds(regions);
+  const cumulus = [
+    { count: 26, min: [bx - 70, 5, bz - 90], max: [bx + 120, 9, bz + 40], size: [2.5, 5], puffs: [10, 18] },
+    { count: 46, min: [-330, 9, -480], max: [430, 13, 230], size: [3, 6], puffs: [10, 18], opacity: 0.95 },
+  ];
+  for (let k = 1; k < 12; k += 2) {
+    const p = flight.at(FD.climb3 + (FD.J1 - FD.climb3) * k / 12);
+    cumulus.push({ count: 3, min: [p.x - 80, 22, p.z - 80], max: [p.x + 80, 23, p.z + 80], size: [6, 10], puffs: [14, 22] });
+  }
+  const clouds = createCloudField({
+    cumulus, sea: seaSegs,
+    cirrus: [{ count: 16, min: [-420, 72, -620], max: [520, 92, 320], size: [70, 150], opacity: 0.2 },
+      { count: 14, min: [bx - 100, 66, Math.min(bz, -200) - 200], max: [300, 80, Math.max(bz, 0) + 100], size: [80, 160], opacity: 0.2 }],
+  }, (x, z) => Math.max(0, H(x, z)));
   scene.add(clouds);
   const petals = createPetals(650); scene.add(petals);
 
@@ -427,7 +462,7 @@ export function createWorld() {
   const flightProg = routeLine(flightPts, '#ffd27a', 4, 1);
   const busLinePts = busPath.slice(0, busPath.length, 3000).map((p) => p.clone().add(V(0, 0.025, 0)));
   const busAll = routeLine(busLinePts, '#ffffff', 1.5, 0.35);
-  const busProg = routeLine(busLinePts, '#7dffb0', 4, 1);
+  const busProg = routeLine(busLinePts, '#7dffb0', 3, 0.85);
   scene.add(flightAll, flightProg, busAll, busProg);
   // precompute distance at each line point for fast lookup
   const cumOf = (pts) => { const c = [0]; for (let i = 1; i < pts.length; i++) c.push(c[i - 1] + pts[i].distanceTo(pts[i - 1])); return c; };
@@ -493,9 +528,9 @@ export function createWorld() {
   const pagodaEye = pagodaPos.clone().addScaledVector(pf, -1.6).add(V(-pf.z * 0.5, 0.3, pf.x * 0.5));
   const pagodaLook = pagodaPos.clone().add(V(0, 0.5, 0)).lerp(fujiTop.clone().add(V(0, -3.5, 0)), 0.05);
   const fujiLook = fujiTop.clone().add(V(0, -3.5, 0));
-  const suiteEye = hotel.localToWorld(V(-2.5, SUITE.y + 1.5, -3));
+  const suiteEye = hotel.localToWorld(V(-2.5, SUITE.y + 0.9, -5.5));
   const suiteLook = suiteEye.clone().lerp(fujiTop.clone().add(V(0, -4.5, 0)), 0.4);
-  const hotelEye = hotel.localToWorld(V(-62, 40, -128));
+  const hotelEye = hotel.localToWorld(V(-50, 62, -100));
   const hotelLook = hotel.localToWorld(V(0, 34, 0));
   const ryEye = ryokan.localToWorld(V(-7.6, 3.1, -1.5));
   const ryLook = ryokan.localToWorld(V(60, -6, -8));
@@ -503,8 +538,8 @@ export function createWorld() {
   const toriiEye = V(toriiPos.x, toriiPos.y, toriiPos.z).addScaledVector(toLake, 2.1).add(V(-toLake.z * 0.7, 0.45, toLake.x * 0.7));
   const fushiEye = fushiPath.at(0.02).add(V(0, 0.065, 0));
   const fushiLook = fushiPath.at(0.32).add(V(0, 0.05, 0));
-  const nrtGateEye = nw(1.6, 0.85, 0.55), nrtGateLook = nw(0.4, 2.0, 0.12);
-  const guideEye = nw(0.9, 4.0, 0.16), guideLook = guidePos.clone().add(V(-0.05, 0.03, 0));
+  const nrtGateEye = nw(1.5, 1.0, 1.7), nrtGateLook = nw(0.4, 2.0, 0.12);
+  const guideEye = nw(0.7, 3.84, 0.07), guideLook = guidePos.clone().add(V(-0.05, 0.03, 0));
   const KEYS = [
     { t: 0.0, pos: A(bw(-4.6, -2.4, 1.3)), look: A(bw(-1.0, 1.1, 0.1)) },
     { t: 0.045, pos: PR(1.7, 0.32, -1.25), look: PR(-0.3, 0.06, 0) },
@@ -519,18 +554,19 @@ export function createWorld() {
     { t: 0.527, pos: PR(1.9, 0.33, 1.35), look: PR(-0.6, 0.02, 0) },
     { t: 0.556, pos: A(nrtGateEye), look: A(nrtGateLook) },
     { t: 0.588, pos: A(guideEye), look: A(guideLook) },
-    { t: 0.615, pos: BR(0.6, 0.22, 0.38), look: BR(-0.8, 0.03, 0) },
+    { t: 0.603, pos: BR(1.7, 1.15, 1.3), look: BR(-0.6, 0.04, 0) },
+    { t: 0.622, pos: BR(1.1, 0.5, 0.6), look: BR(-1.3, 0.04, 0) },
     { t: 0.645, pos: BR(1.9, 1.3, -0.5), look: BR(-3, 0, 0) },
     { t: 0.675, pos: A(towerPos.clone().add(V(6.5, 3.6, 8))), look: A(towerPos.clone().add(V(0, 3.2, 0))) },
-    { t: 0.705, pos: A(towerPos.clone().add(V(-4.6, 2.2, -2.6))), look: A(towerPos.clone().add(V(0, 4.2, 0))) },
-    { t: 0.737, pos: BR(1.3, 0.55, 0.85), look: BR(-3, 0.1, 0) },
+    { t: 0.705, pos: A(towerPos.clone().add(V(-7.5, 6.8, 4.5))), look: A(towerPos.clone().add(V(0, 2.2, 0))) },
+    { t: 0.737, pos: BR(-2.6, 2.2, 1.6), look: BR(0, 0.1, 0) },
     { t: 0.765, pos: A(ashiTop.clone().add(V(7, 8, 10))), look: A(ashiTop.clone().add(V(0, 0, -1))) },
     { t: 0.795, pos: A(toriiEye), look: A(V(toriiPos.x, toriiPos.y + 0.12, toriiPos.z).addScaledVector(toLake, -0.2)) },
-    { t: 0.818, pos: A(ryokan.localToWorld(V(30, 24, 22))), look: A(ryokan.localToWorld(V(0, 2, 0))) },
-    { t: 0.85, pos: BR(1.4, 0.6, -0.9), look: mixF(BR(-3, 0, 0), A(fujiLook), 0.6) },
+    { t: 0.818, pos: A(ryokan.localToWorld(V(70, 52, 55))), look: A(ryokan.localToWorld(V(0, 0, 0))) },
+    { t: 0.85, pos: BR(2.2, 1.8, -1.4), look: mixF(BR(-3, 0, 0), A(fujiLook), 0.6) },
     { t: 0.878, pos: A(pagodaEye), look: A(pagodaLook) },
-    { t: 0.905, pos: A(LL(138.765, 35.545, 0).setY(H(toX(138.765), toZ(35.545)) + 1.6)), look: A(fujiLook) },
-    { t: 0.935, pos: BR(0.9, 0.38, 0.6), look: A(hotelLook) },
+    { t: 0.905, pos: A(LL(138.80, 35.545, 0).setY(H(toX(138.80), toZ(35.545)) + 1.6)), look: A(fujiLook) },
+    { t: 0.935, pos: BR(1.5, 1.1, 0.9), look: A(hotelLook) },
     { t: 0.965, pos: A(hotel.localToWorld(V(-30, 40, -55))), look: A(hotel.localToWorld(V(0, 16, 0))) },
     { t: 1.0, pos: A(suiteEye), look: A(suiteLook) },
   ];
@@ -543,6 +579,12 @@ export function createWorld() {
       .multiplyScalar(0.5);
   };
   // Positions far apart (flight overview) use a log-space blend so the pull-out stays smooth
+  const hb = new THREE.Box3().setFromObject(hotel), pb = new THREE.Box3().setFromObject(pagoda);
+  const obstacles = [
+    { c: towerPos, r: 2.4, top: towerPos.y + 7.2 },
+    { c: hotel.position, r: Math.max(hb.max.x - hb.min.x, hb.max.z - hb.min.z) * 0.62, top: hb.max.y + 0.15, until: 0.972 },
+    { c: pagodaPos, r: Math.max(pb.max.x - pb.min.x, pb.max.z - pb.min.z) * 0.55, top: pb.max.y + 0.1 },
+  ];
   function storyPose(t, out) {
     setActors(t);
     let i = 0;
@@ -568,6 +610,12 @@ export function createWorld() {
     }
     const gy = ground(out.pos.x, out.pos.z) + 0.035;
     if (out.pos.y < gy) out.pos.y = gy;
+    // keep the camera out of tall landmarks
+    for (const o of obstacles) {
+      if (out.pos.y > o.top || (o.until && t > o.until)) continue;
+      const dx = out.pos.x - o.c.x, dz = out.pos.z - o.c.z, d = Math.hypot(dx, dz);
+      if (d < o.r) { const k = o.r / Math.max(1e-4, d); out.pos.x = o.c.x + dx * k; out.pos.z = o.c.z + dz * k; }
+    }
     return out;
   }
   let actorsT = -1;
@@ -584,7 +632,7 @@ export function createWorld() {
   const actors = { planeD: 0, busD: 0 };
 
   // story time of day
-  const ENV_KEYS = [[0, ENV.dawn], [0.1, ENV.day], [0.45, ENV.day], [0.55, ENV.golden], [0.7, ENV.sunset], [0.722, ENV.day], [0.8, ENV.day], [0.86, ENV.golden], [0.915, ENV.sunset], [0.95, ENV.dusk], [1.0, ENV.night]];
+  const ENV_KEYS = [[0, ENV.dawn], [0.1, ENV.day], [0.45, ENV.day], [0.55, ENV.golden], [0.7, ENV.sunset], [0.711, ENV.dusk], [0.718, ENV.night], [0.727, ENV.dawn], [0.745, ENV.day], [0.8, ENV.day], [0.86, ENV.golden], [0.915, ENV.sunset], [0.95, ENV.dusk], [1.0, ENV.dusk]];
   function storyEnv(t, out) {
     let i = 0;
     while (i < ENV_KEYS.length - 2 && t > ENV_KEYS[i + 1][0]) i++;
@@ -630,7 +678,7 @@ export function createWorld() {
       remain = `${Math.max(0, leg.d1 - dd).toFixed(1)} กม.`;
     } else {
       alt = leg === LEGS[0] ? '2 ม.' : `${Math.round(nrtY / VERT * 1000)} ม.`;
-      speed = '0 กม./ชม.'; remain = '—';
+      speed = '0 กม./ชม.'; remain = leg === LEGS[0] ? '4,600 กม.' : '63 กม.';
     }
     return { index: li, count: LEGS.length, leg, alt, altLabel, speed, remain, time, zone: thai ? 'เวลาไทย' : 'เวลาญี่ปุ่น', day };
   }
@@ -664,6 +712,7 @@ export function createWorld() {
   let petalDensity = 0;
   const white = new THREE.Color('#ffffff');
   function update({ dt, time, storyT, camera, look, envState, petalsTarget, storyWeight = 1, builderWeight = 0 }) {
+    waterTime.value = time;
     setActors(storyT);
     sky.position.copy(camera.position);
     sky.material.uniforms.time.value = time;
@@ -695,7 +744,8 @@ export function createWorld() {
     sc.updateProjectionMatrix();
     sun.shadow.normalBias = ext * 0.004;
     sun.castShadow = scale < 70;
-    clouds.userData.setTint(e.cloud);
+    clouds.userData.setEnv(e);
+    clouds.userData.update(camera.position);
     trail.material.uniforms.strength.value = 1 - e.night * 0.6;
     updateGlow(e.night);
     for (const a of [bkk, nrt, kix]) a.userData.lights.color.setScalar(0.5 + e.night * 2.2);
@@ -745,9 +795,9 @@ export function createWorld() {
     }
   }
 
-  if (location.search.includes('debug')) window.__world = { V, pagoda, scene, fujiMesh, terrain: T.mesh, hotel, hotelEye, hotelLook, suiteEye, toriiPos, ashiC, pagodaPos, fujiTop, H, KEYS };
+  if (location.search.includes('debug')) window.__world = { V, Raycaster: THREE.Raycaster, pagoda, scene, fujiMesh, terrain: T.mesh, hotel, hotelEye, hotelLook, suiteEye, toriiPos, ashiC, pagodaPos, fujiTop, H, KEYS };
   return {
-    scene, plane, life, update, storyPose, storyEnv, storyInfo, EXPLORE, BUILDER, holo, makeEnv: makeEnvState,
+    scene, plane, life, update, storyPose, storyEnv, storyInfo, groundAt: ground, EXPLORE, BUILDER, holo, makeEnv: makeEnvState,
     japanZone: (p) => p.x > -400 && p.z < 400 && p.y < 40,
   };
 }

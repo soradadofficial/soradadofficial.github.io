@@ -53,6 +53,7 @@ export function createAirliner() {
   const purple = std('#5b2d8e', { roughness: 0.4 });
   const grey = std('#c9ced6', { metalness: 0.6, roughness: 0.3 });
   const dark = std('#1d2433', { roughness: 0.3 });
+  const nacMat = std('#c9ced6', { metalness: 0.6, roughness: 0.3, side: THREE.DoubleSide });
   // swept wings with winglets
   const wing = new THREE.Shape();
   wing.moveTo(0, 0); wing.lineTo(-8.5, 17); wing.lineTo(-10.3, 17); wing.lineTo(-7.5, 0); wing.closePath();
@@ -60,20 +61,22 @@ export function createAirliner() {
   for (const s of [-1, 1]) {
     const w = new THREE.Mesh(wingGeo, white);
     w.rotation.x = s * -Math.PI / 2;
-    w.position.set(4, -1.0 + (s > 0 ? 0.5 : 0), 0);
+    w.position.set(4, s > 0 ? -1.3 : -0.8, 0);
     w.rotateZ(s * 0.04);
     g.add(w);
     const winglet = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.4, 0.2), purple);
     winglet.position.set(-5.6, 0.3, s * 17.2); winglet.rotation.z = 0.35; g.add(winglet);
     // engine on pylon
-    const nac = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 0.95, 4.6, 24, 1, true), grey);
+    const nac = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 0.95, 4.6, 24, 1, true), nacMat);
     nac.rotation.z = Math.PI / 2; nac.position.set(2.6, -2.3, s * 6.4); g.add(nac);
     const fan = new THREE.Mesh(new THREE.CircleGeometry(1.1, 24), dark);
     fan.rotation.y = Math.PI / 2; fan.position.set(4.85, -2.3, s * 6.4); g.add(fan);
     const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 16), grey);
     spinner.rotation.z = -Math.PI / 2; spinner.position.set(5.1, -2.3, s * 6.4); g.add(spinner);
-    const pylon = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 0.4), white);
-    pylon.position.set(2.2, -1.5, s * 6.4); g.add(pylon);
+    const pylon = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.9, 0.4), white);
+    pylon.position.set(2.0, -1.45, s * 6.4); g.add(pylon);
+    const exhaust = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.2, 16), dark);
+    exhaust.rotation.z = Math.PI / 2; exhaust.position.set(-0.1, -2.3, s * 6.4); g.add(exhaust);
     const nav = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: s > 0 ? '#3dff7a' : '#ff3048' }));
     nav.position.set(-6, -0.5, s * 17.3); nav.userData.blink = true; g.add(nav);
   }
@@ -89,7 +92,7 @@ export function createAirliner() {
   const stab = new THREE.Shape();
   stab.moveTo(0, 0); stab.lineTo(-3.4, 6.5); stab.lineTo(-5, 6.5); stab.lineTo(-4.6, 0); stab.closePath();
   const stabGeo = new THREE.ExtrudeGeometry(stab, { depth: 0.25, bevelEnabled: false });
-  for (const s of [-1, 1]) { const st = new THREE.Mesh(stabGeo, white); st.rotation.x = s * -Math.PI / 2; st.position.set(-14, 0.8, 0); g.add(st); }
+  for (const s of [-1, 1]) { const st = new THREE.Mesh(stabGeo, white); st.rotation.x = s * -Math.PI / 2; st.position.set(-14, s > 0 ? 0.8 : 1.05, 0); g.add(st); }
   const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshBasicMaterial({ color: '#ff4040' }));
   beacon.position.set(0, 2.15, 0); beacon.userData.blink = true; g.add(beacon);
   const strobe = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), new THREE.MeshBasicMaterial({ color: '#fff7d6' }));
@@ -125,15 +128,24 @@ export function createCoach(livery = '#e6688e') {
   const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.35, metalness: 0.15 });
   const glass = new THREE.MeshStandardMaterial({ color: '#16202e', emissive: '#ffd59a', emissiveIntensity: 0, roughness: 0.15, metalness: 0.5 });
   glowMats.push({ mat: glass, day: 0, night: 0.7 });
-  const body = new THREE.Mesh(new RoundedBoxGeometry(2.5, 3.2, 12, 4, 0.35), [std('#f7f4ee'), std('#f7f4ee'), std('#f7f4ee'), std('#d0ccc4'), glass, glass]);
+  const white = std('#f7f4ee', { roughness: 0.4 });
+  const body = new THREE.Mesh(new RoundedBoxGeometry(2.5, 3.2, 12, 4, 0.35), [white, white, white, std('#3a3d42'), white, white]);
   body.position.y = 2.0;
   g.add(body);
+  // windscreen (upper front), destination board, bumper; small rear window
+  const ws = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.55), glass); ws.position.set(0, 2.55, -6.005); ws.rotation.y = Math.PI; g.add(ws);
+  const dest = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.28), new THREE.MeshBasicMaterial({ color: '#ffb347' })); dest.position.set(0, 3.45, -6.006); dest.rotation.y = Math.PI; g.add(dest);
+  const bump = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.35, 0.12), std('#2a2d33')); bump.position.set(0, 0.62, -6.02); g.add(bump);
+  const rw = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.9), glass); rw.position.set(0, 2.85, 6.005); g.add(rw);
+  const bumpR = bump.clone(); bumpR.position.z = 6.02; g.add(bumpR);
   for (const s of [-1, 1]) {
     const side = new THREE.Mesh(new THREE.PlaneGeometry(11.6, 2.9), mat);
     side.position.set(s * 1.26, 2.0, 0); side.rotation.y = s * Math.PI / 2;
     g.add(side);
     const mirror = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.5, 0.25), std('#1b1b1f'));
-    mirror.position.set(s * 1.45, 3.0, -5.9); g.add(mirror);
+    mirror.position.set(s * 1.5, 2.8, -6.15); g.add(mirror);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.06, 0.06), std('#1b1b1f'));
+    arm.position.set(s * 1.36, 3.05, -6.1); g.add(arm);
   }
   const tire = std('#141414', { roughness: 0.9 }), rim = std('#c9ced6', { metalness: 0.7, roughness: 0.3 });
   for (const z of [-3.9, 3.3, 4.6]) for (const x of [-1.15, 1.15]) {
@@ -164,25 +176,45 @@ export function createShinkansenCar(isEnd = false) {
   const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.3, metalness: 0.25 });
   const win = new THREE.MeshStandardMaterial({ color: '#1a2230', emissive: '#ffe2b0', emissiveIntensity: 0.05 });
   glowMats.push({ mat: win, day: 0.05, night: 1.3 });
-  const body = new THREE.Mesh(new RoundedBoxGeometry(3.4, 3.6, isEnd ? L - 9 : L - 0.6, 4, 0.6), mat);
+  const plain = new THREE.MeshStandardMaterial({ color: '#f2f4f7', roughness: 0.3, metalness: 0.25 });
+  const body = new THREE.Mesh(new RoundedBoxGeometry(3.4, 3.6, isEnd ? L - 9 : L - 0.6, 4, 0.6), [mat, mat, plain, std('#4a4f57'), plain, plain]);
   body.position.set(0, 2.2, isEnd ? 4.5 : 0);
   g.add(body);
   if (isEnd) {
-    // duckbill nose
-    const prof = [];
-    for (let i = 0; i <= 24; i++) { const t = i / 24; prof.push(new THREE.Vector2(Math.max(0.05, 1.75 * Math.pow(1 - t, 0.75)), t * 9.5)); }
-    const nose = new THREE.Mesh(new THREE.LatheGeometry(prof, 28), std('#f7f8fa', { roughness: 0.25, metalness: 0.3 }));
-    nose.scale.set(1, 1, 0.62);
-    nose.rotation.x = -Math.PI / 2;
-    nose.position.set(0, 1.6, -L / 2 + 9.2);
+    // N700-style nose: a half ellipsoid that starts at the full body section and
+    // drops into a low, flattened beak; the cab glass follows the upper slope.
+    const NL = 8.4, z0 = -2.75;
+    const ng = new THREE.SphereGeometry(1, 40, 24);
+    const np = ng.attributes.position;
+    for (let i = 0; i < np.count; i++) {
+      let x = np.getX(i), y = np.getY(i), z = np.getZ(i);
+      if (z > 0) z = 0;
+      const t = -z; // 0 at the body joint, 1 at the tip
+      // rounded-square section at the joint (matches the body), oval toward the tip
+      const rad = Math.hypot(x, y);
+      if (rad > 1e-5) {
+        const e = 0.45 + 0.55 * Math.min(1, t / 0.55), cx = x / rad, cy = y / rad;
+        x = rad * Math.sign(cx) * Math.pow(Math.abs(cx), e); y = rad * Math.sign(cy) * Math.pow(Math.abs(cy), e);
+      }
+      x *= 1.7 * (1 - 0.08 * t);
+      y = y * 1.8 * (1 - 0.5 * t) - 0.9 * t;
+      np.setXYZ(i, x, y, z0 + z * NL);
+    }
+    ng.computeVertexNormals();
+    const nose = new THREE.Mesh(ng, std('#f7f8fa', { roughness: 0.25, metalness: 0.3 }));
+    nose.position.y = 2.2;
     g.add(nose);
-    const cab = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), win);
-    cab.scale.set(1.2, 0.6, 2.2); cab.position.set(0, 3.2, -L / 2 + 8.4); g.add(cab);
+    const cab = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), win);
+    cab.scale.set(0.95, 0.26, 1.5); cab.position.set(0, 3.32, z0 - 2.5); cab.rotation.x = -0.28; g.add(cab);
     const light = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: '#fff4d2' }));
-    light.position.set(0, 1.2, -L / 2 - 0.2); g.add(light);
+    for (const x of [-0.85, 0.85]) { const l = light.clone(); l.scale.set(1, 0.6, 1.4); l.position.set(x, 1.55, z0 - 0.75 * NL); g.add(l); }
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(3.46, 0.32, 8.2), std('#1f4aa8'));
+    stripe.position.set(0, 1.62, -L / 2 + 13); g.add(stripe);
   }
-  const panto = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.2, 2.4), std('#5a5f68', { metalness: 0.6 }));
-  panto.position.set(0, 4.4, 2); panto.rotation.x = 0.4; g.add(panto);
+  const pm = std('#5a5f68', { metalness: 0.6 });
+  const pBase = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.22, 1.4), pm); pBase.position.set(0, 4.08, 2); g.add(pBase);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.7), pm); arm.position.set(0, 4.5, 1.8); arm.rotation.x = -0.5; g.add(arm);
+  const shoe = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.06, 0.12), pm); shoe.position.set(0, 4.88, 1.08); g.add(shoe);
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   g.userData.length = L;
   return g;
@@ -256,10 +288,12 @@ export function createPirateShip() {
 // ---------- Nara deer ----------
 export function createDeerGeometry() {
   const parts = [];
-  const b = new THREE.CapsuleGeometry(0.28, 0.9, 3, 8); b.rotateZ(Math.PI / 2); b.translate(0, 1.0, 0); parts.push(b);
-  const n = new THREE.CylinderGeometry(0.1, 0.14, 0.6, 6); n.rotateZ(-0.6); n.translate(0.6, 1.35, 0); parts.push(n);
-  const h = new THREE.SphereGeometry(0.17, 8, 6); h.scale(1.4, 1, 1); h.translate(0.8, 1.62, 0); parts.push(h);
-  for (const [x, z] of [[0.45, 0.15], [0.45, -0.15], [-0.45, 0.15], [-0.45, -0.15]]) { const l = new THREE.CylinderGeometry(0.05, 0.04, 0.8, 5); l.translate(x, 0.4, z); parts.push(l); }
+  const b = new THREE.CapsuleGeometry(0.26, 0.8, 3, 10); b.rotateZ(Math.PI / 2); b.translate(0, 0.86, 0); parts.push(b);
+  const n = new THREE.CylinderGeometry(0.085, 0.13, 0.46, 7); n.rotateZ(-0.55); n.translate(0.56, 1.11, 0); parts.push(n);
+  const h = new THREE.SphereGeometry(0.12, 10, 8); h.scale(1.55, 0.95, 0.9); h.translate(0.74, 1.31, 0); parts.push(h);
+  for (const z of [-0.07, 0.07]) { const e = new THREE.ConeGeometry(0.04, 0.13, 5); e.rotateX(z > 0 ? 0.9 : -0.9); e.translate(0.66, 1.43, z * 1.4); parts.push(e); }
+  const tail = new THREE.ConeGeometry(0.05, 0.14, 5); tail.rotateZ(-2.2); tail.translate(-0.68, 0.96, 0); parts.push(tail);
+  for (const [x, z] of [[0.4, 0.12], [0.4, -0.12], [-0.4, 0.12], [-0.4, -0.12]]) { const l = new THREE.CylinderGeometry(0.045, 0.035, 0.72, 6); l.translate(x, 0.36, z); parts.push(l); }
   return mergeAll(parts);
 }
 function mergeAll(geos) {

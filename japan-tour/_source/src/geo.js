@@ -100,6 +100,7 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
     return a;
   };
   const near = blur(mask, Math.max(1, Math.round(4 / cell)));
+  const mask1 = blur(mask, 1);
   const inland = blur(mask, Math.max(2, Math.round(28 / cell)));
 
   const base = new Float32Array(N);    // without Fuji (the Fuji mesh drapes on it)
@@ -143,6 +144,13 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
   };
   const sample = (arr, x, z) => sampleGrid(arr, x0, z0, cell, cols, rows, x, z);
   const coarseBase = (x, z) => sample(base, x, z);
+  const bilinear = (arr, x, z) => {
+    const fx = Math.min(cols - 1.001, Math.max(0, (x - x0) / cell)), fz = Math.min(rows - 1.001, Math.max(0, (z - z0) / cell));
+    const i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j;
+    const a = arr[j * cols + i], b = arr[j * cols + i + 1], c = arr[(j + 1) * cols + i], d = arr[(j + 1) * cols + i + 1];
+    const u = tx * tx * (3 - 2 * tx), v = tz * tz * (3 - 2 * tz);
+    return (a * (1 - u) + b * u) * (1 - v) + (c * (1 - u) + d * u) * v;
+  };
 
   // ---------- colours ----------
   const C = (h) => new THREE.Color(h);
@@ -173,9 +181,15 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
     for (let j = 0; j < prows; j++) for (let i = 0; i < pcols; i++) {
       const x = px0 + i * pc, z = pz0 + j * pc, q = j * pcols + i;
       let h = coarseBase(x, z);
-      const m = sample(mask, x, z);
+      let m = sample(mask, x, z);
       const edge = Math.min(x - px0, px1 - x, z - pz0, pz1 - z);
       const fade = THREE.MathUtils.smoothstep(edge, 0, 1.6);
+      if (P.coast) {
+        const mb = bilinear(mask1, x, z);
+        const land = THREE.MathUtils.smoothstep(mb, 0.3, 0.62);
+        const hc = rawH(x, z, bilinear(inland, x, z), bilinear(near, x, z)) * land * VERT - (1 - land) * 1.2;
+        h += (hc - h) * fade; m += (mb - m) * fade;
+      }
       // local relief
       h += (fbm(x / 1.4, z / 1.4, 4) * 0.09 + ridged(x / 3.2, z / 3.2, 3) * 0.05 - 0.04) * VERT * fade * (P.relief ?? 1) * THREE.MathUtils.smoothstep(m, 0.6, 0.9);
       const lake = inLake(x, z);
@@ -188,15 +202,15 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
       pm[q] = m;
       pkm[q] = h / VERT;
     }
-    patchData.push({ px0, pz0, px1, pz1, pc, pcols, prows, ph, pkm, pm, i0, i1, j0, j1 });
+    patchData.push({ px0, pz0, px1, pz1, pc, pcols, prows, ph, pkm, pm, i0, i1, j0, j1, coast: !!P.coast });
   }
   const inPatch = (x, z) => { for (const P of patchData) if (x >= P.px0 && x <= P.px1 && z >= P.pz0 && z <= P.pz1) return P; return null; };
 
   const fcx = toX(FUJI.lon), fcz = toZ(FUJI.lat);
   const baseAt = (x, z) => { const P = inPatch(x, z); return P ? sampleGrid(P.ph, P.px0, P.pz0, P.pc, P.pcols, P.prows, x, z) : coarseBase(x, z); };
-  const fujiAt = (x, z) => { const r = Math.hypot(x - fcx, z - fcz); return r < FUJI.R ? fujiProfile(r) * VERT - (r < 0.4 ? 0.12 * VERT * (1 - r / 0.4) : 0) : 0; };
+  const fujiAt = (x, z) => { const r = Math.hypot(x - fcx, z - fcz); return r < FUJI.R ? fujiKm(r, Math.atan2(z - fcz, x - fcx)) * VERT : 0; };
   const heightAt = (x, z) => baseAt(x, z) + fujiAt(x, z);
-  const landAt = (x, z) => sample(mask, x, z);
+  const landAt = (x, z) => { const P = inPatch(x, z); return P && P.coast ? bilinear(mask1, x, z) : bilinear(mask, x, z); };
   const kmAt = (x, z) => baseAt(x, z) / VERT + fujiAt(x, z) / VERT;
 
   // coarse mesh
@@ -283,9 +297,14 @@ function detailTexture() {
 export const urbanW = (x, z) => Math.max(gauss(x, z, 139.72, 35.69, 13), gauss(x, z, 139.62, 35.47, 6), gauss(x, z, 135.5, 34.69, 8), gauss(x, z, 136.9, 35.17, 6), gauss(x, z, 135.77, 35.01, 3));
 
 // Detailed Fuji cone draped on the base terrain
+export function fujiKm(rr, ang) {
+  if (rr >= FUJI.R) return 0;
+  const gully = Math.sin(ang * 21) * 0.5 + Math.sin(ang * 47 + 1) * 0.3;
+  return fujiProfile(rr) * (1 - 0.03 * gully * (rr / FUJI.R)) - (rr < 0.4 ? 0.12 * (1 - rr / 0.4) : 0);
+}
 export function buildFuji(baseAt) {
   const cx = toX(FUJI.lon), cz = toZ(FUJI.lat);
-  const RS = 96, RR = 70;
+  const RS = 192, RR = 80;
   const verts = [], cols = [], idx = [];
   const snow = new THREE.Color('#f5f8ff'), rock = new THREE.Color('#4a3c37'), forest = new THREE.Color('#355c3a'), darkF = new THREE.Color('#2a4a30'), col = new THREE.Color();
   for (let r = 0; r <= RR; r++) {
@@ -294,8 +313,8 @@ export function buildFuji(baseAt) {
       const ang = a / RS * Math.PI * 2;
       const gully = Math.sin(ang * 21) * 0.5 + Math.sin(ang * 47 + 1) * 0.3;
       const x = cx + Math.cos(ang) * rr, z = cz + Math.sin(ang) * rr;
-      const km = fujiProfile(rr) * (1 - 0.03 * gully * (rr / FUJI.R)) - (rr < 0.4 ? 0.12 * (1 - rr / 0.4) : 0);
-      const y = baseAt(x, z) + km * VERT + 0.06;
+      const km = fujiKm(rr, ang);
+      const y = baseAt(x, z) + km * VERT - 0.025;
       verts.push(x, y, z);
       const total = km + 0.9;
       const snowLine = 2.75 + gully * 0.18;
@@ -345,9 +364,9 @@ export function buildNear() {
   return m;
 }
 
-export function lakeMeshes(heightAt) {
+export function lakeMeshes(waterMat) {
   const g = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: '#3f7fa6', roughness: 0.08, metalness: 0.5 });
+  const mat = waterMat || new THREE.MeshStandardMaterial({ color: '#3f7fa6', roughness: 0.08, metalness: 0.5 });
   for (const L of LAKES) {
     const geo = new THREE.CircleGeometry(1, 48);
     geo.rotateX(-Math.PI / 2);
