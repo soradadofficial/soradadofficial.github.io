@@ -211,7 +211,7 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
       #endif
       #endif`);
   };
-  glowMats.push({ mat, day: 0.04, night: 1.6 });
+  glowMats.push({ mat, day: 0.04, night: 0.95 });
   const geo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
   const mesh = new THREE.InstancedMesh(geo, mat, total);
   // roofs: flat slabs with rooftop housings for towers, gabled roofs for houses

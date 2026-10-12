@@ -134,7 +134,7 @@ export function createWorld() {
   const planeDist = monotone([
     [0, FD.start], [0.06, FD.start], [0.125, FD.lift], [0.2, FD.climb3], [0.415, FD.J1], [0.44, FD.J1b], [0.465, FD.J2], [0.505, FD.thr], [0.522, FD.roll2 - 1.2], [0.536, FD.roll2], [0.552, FD.gate], [1, FD.gate],
   ]);
-  const trail = createTrail(140, 0.05); scene.add(trail);
+  const trail = createTrail(340, 0.05); scene.add(trail);
 
   // ---------- tour road ----------
   // Real road geometry (OpenStreetMap, baked by scripts/build-routes.mjs), resampled to an
@@ -553,8 +553,8 @@ export function createWorld() {
     lastYaw = yaw;
     // contrail at altitude
     if (p.y > 20) {
-      const pts = [];
-      for (let i = 0; i < 140; i++) { const q = flight.at(d - 0.6 - i * 0.12); if (q.y < 20) break; pts.push(q.clone().add(V(0, -0.02, 0))); }
+      const pts = []; // dense enough to read as one streak
+      for (let i = 0; i < 340; i++) { const q = flight.at(d - 0.6 - i * 0.05); if (q.y < 20) break; pts.push(q.clone().add(V(0, -0.02, 0))); }
       trail.userData.setPoints(pts);
     } else trail.userData.setPoints([]);
     return p;

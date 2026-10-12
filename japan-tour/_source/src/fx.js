@@ -191,8 +191,8 @@ export function createTrail(max = 160, size = 1) {
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     uniforms: { color: { value: new THREE.Color('#ffffff') }, strength: { value: 1 }, size: { value: size } },
-    vertexShader: LD.vp + `uniform float size; attribute float alpha; varying float vA; void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0); vA = alpha * smoothstep(0.6, 3.0, -mv.z); gl_Position = projectionMatrix*mv; gl_PointSize = min(28.0, (6.0 + 10.0*alpha) * size * (900.0 / -mv.z));` + LD.v + `}`,
-    fragmentShader: LD.fp + `uniform vec3 color; uniform float strength; varying float vA; void main(){ vec2 c = gl_PointCoord-0.5; float d = 1.0 - smoothstep(0.0,0.5,length(c)); gl_FragColor = vec4(color, d*vA*0.55*strength);` + LD.f + `}`,
+    vertexShader: LD.vp + `uniform float size; attribute float alpha; varying float vA; void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0); vA = alpha * smoothstep(0.6, 3.0, -mv.z); gl_Position = projectionMatrix*mv; gl_PointSize = min(28.0, (9.0 + 5.0*alpha) * size * (900.0 / -mv.z));` + LD.v + `}`,
+    fragmentShader: LD.fp + `uniform vec3 color; uniform float strength; varying float vA; void main(){ vec2 c = gl_PointCoord-0.5; float d = 1.0 - smoothstep(0.0,0.5,length(c)); gl_FragColor = vec4(color, d*vA*0.28*strength);` + LD.f + `}`,
   });
   const pts = new THREE.Points(geo, mat);
   pts.frustumCulled = false;
