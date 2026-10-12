@@ -1,4 +1,4 @@
-# Covaverse Japan Journeys
+# Tour Test · Japan Journeys
 
 เว็บตัวอย่างทัวร์ญี่ปุ่นแบบ 3 มิติ สร้างด้วย Three.js เป็นหน้าเดโมสำหรับนำเสนอ ไม่มีการจองหรือชำระเงินจริง
 
