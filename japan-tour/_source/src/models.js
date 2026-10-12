@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { bakeInto } from './models2.js';
 
 // Materials whose glow follows the time of day: { mat, day, night }
 export const glowMats = [];
@@ -602,8 +603,7 @@ export function createHotel() {
   g.add(box(W + 5, 0.8, D + 3, std('#2d3038'), 0, H + R + 0.7, 0));
   const crown = box(W + 5.4, 0.25, D + 3.4, glow('#ff9ab8', 0.3, 2.2), 0, H + R + 1.2, 0);
   g.add(crown);
-  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-  return g;
+  return bakeInto(g, (o) => o.material.transparent); // glass and sign keep their own draw order
 }
 
 // ---------- Ryokan with an open washitsu room (open side faces +x) ----------
@@ -673,8 +673,7 @@ export function createRyokan() {
   const water = new THREE.Mesh(new THREE.CircleGeometry(2.1, 24), new THREE.MeshStandardMaterial({ color: '#6fb6c9', roughness: 0.05, metalness: 0.3, emissive: '#3a8aa0', emissiveIntensity: 0.3 }));
   water.rotation.x = -Math.PI / 2; water.position.set(W / 2 + 5, 0.82, -3); g.add(water);
   g.userData.onsen = water.position.clone();
-  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  return g;
+  return bakeInto(g);
 }
 
 export { textTexture };

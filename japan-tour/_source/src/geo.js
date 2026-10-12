@@ -236,19 +236,34 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
     colors[k * 3] = col.r; colors[k * 3 + 1] = col.g; colors[k * 3 + 2] = col.b;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  if (patchData.length) {
-    const idx = geo.index.array, out = [];
-    for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) {
-      if (patchData.some((P) => i >= P.i0 && i < P.i1 && j >= P.j0 && j < P.j1)) continue;
-      const q = (j * (cols - 1) + i) * 6;
-      for (let t = 0; t < 6; t++) out.push(idx[q + t]);
-    }
-    geo.setIndex(out);
-  }
   geo.computeVertexNormals();
   detail.repeat.set((x1 - x0) / 1.6, (z1 - z0) / 1.6);
-  const mesh = new THREE.Mesh(geo, terrainMat);
-  mesh.receiveShadow = true;
+  // Split the national grid into chunks that share the vertex buffers, so everything
+  // outside the view is culled instead of drawing 1.3 M triangles every pass.
+  const mesh = new THREE.Group();
+  {
+    const idx = geo.index.array, CH = 96;
+    for (let cj = 0; cj < rows - 1; cj += CH) for (let ci = 0; ci < cols - 1; ci += CH) {
+      const out = []; let lo = Infinity, hi = -Infinity;
+      const i1 = Math.min(cols - 1, ci + CH), j1 = Math.min(rows - 1, cj + CH);
+      for (let j = cj; j < j1; j++) for (let i = ci; i < i1; i++) {
+        if (patchData.some((P) => i >= P.i0 && i < P.i1 && j >= P.j0 && j < P.j1)) continue;
+        const q = (j * (cols - 1) + i) * 6, y = base[j * cols + i];
+        if (y < lo) lo = y; if (y > hi) hi = y;
+        for (let t = 0; t < 6; t++) out.push(idx[q + t]);
+      }
+      if (!out.length) continue;
+      const cg = new THREE.BufferGeometry();
+      for (const k of ['position', 'normal', 'uv', 'color']) cg.setAttribute(k, geo.attributes[k]);
+      cg.setIndex(out);
+      const bx0 = x0 + ci * cell, bx1 = x0 + i1 * cell, bz0 = z0 + cj * cell, bz1 = z0 + j1 * cell;
+      cg.boundingBox = new THREE.Box3(new THREE.Vector3(bx0, lo - 1, bz0), new THREE.Vector3(bx1, hi + 1, bz1));
+      cg.boundingSphere = cg.boundingBox.getBoundingSphere(new THREE.Sphere());
+      const cm = new THREE.Mesh(cg, terrainMat);
+      cm.receiveShadow = true;
+      mesh.add(cm);
+    }
+  }
   for (const P of patchData) {
     const pg = new THREE.PlaneGeometry(P.px1 - P.px0, P.pz1 - P.pz0, P.pcols - 1, P.prows - 1);
     pg.rotateX(-Math.PI / 2);

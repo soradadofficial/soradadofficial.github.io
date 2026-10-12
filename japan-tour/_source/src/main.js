@@ -33,7 +33,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const clock = new THREE.Clock();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.002, 40000);
-if (location.search.includes('debug')) window.__cam = camera;
+if (location.search.includes('debug')) { window.__cam = camera; window.__r = renderer; renderer.info.autoReset = false; }
 await loadDem();
 const world = createWorld();
 const { scene } = world;

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { createAirliner, createCoach, createShinkansenCar, createPirateShip, createDeerGeometry } from './models2.js';
+import { createAirliner, createCoach, createShinkansenCar, createPirateShip, createDeerGeometry, bakeParts } from './models2.js';
 import { MODEL_SCALE as S, toX, toZ } from './geo.js';
 import { Path } from './path.js';
 
@@ -21,39 +21,38 @@ export function createLife(scene, w) {
 
   // ---------- Shinkansen sets running both ways ----------
   const TS = S * 0.6, CARS = 8, CAR = 25 * TS, NT = 10, TRAIN_V = 1.1; // units per second
+  // one instanced batch per material for middle cars and for end cars
+  const batch = (end) => bakeParts(createShinkansenCar(end)).map(({ geometry, material }) => {
+    const im = new THREE.InstancedMesh(geometry.scale(TS, TS, TS), material, NT * CARS);
+    im.castShadow = true; im.frustumCulled = false; im.userData.info = 'train';
+    scene.add(im); pickables.push(im);
+    return im;
+  });
+  const mids = batch(false), ends = batch(true);
   const trains = [];
-  for (let k = 0; k < NT; k++) {
-    const g = new THREE.Group();
-    const cars = [];
-    for (let i = 0; i < CARS; i++) {
-      const end = i === 0 || i === CARS - 1;
-      const c = createShinkansenCar(end);
-      c.scale.setScalar(TS);
-      const holder = new THREE.Group();
-      if (i === CARS - 1) c.rotation.y = Math.PI;
-      holder.add(c);
-      g.add(holder); cars.push(holder);
-    }
-    g.userData.info = 'train';
-    scene.add(g); pickables.push(g);
-    trains.push({ g, cars, dir: k % 2 ? -1 : 1, off: (k / NT) * rail.length * 2 });
-  }
+  for (let k = 0; k < NT; k++) trains.push({ dir: k % 2 ? -1 : 1, off: (k / NT) * rail.length * 2 });
   const span = rail.length + CARS * CAR + 2;
+  const car = new THREE.Object3D();
   updaters.push((t) => {
+    let nm = 0, ne = 0;
     for (const tr of trains) {
       const s = (tr.off + t * TRAIN_V) % span;
-      tr.cars.forEach((c, i) => {
+      for (let i = 0; i < CARS; i++) {
         const along = s - i * CAR;
         const d = tr.dir > 0 ? along : rail.length - along;
-        const vis = d > 0 && d < rail.length;
-        c.visible = vis;
-        if (!vis) return;
-        rail.at(d, c.position);
-        c.position.y += 0.002;
+        if (d <= 0 || d >= rail.length) continue;
+        rail.at(d, car.position);
+        car.position.y += 0.002;
         rail.tangent(d, tan, 0.2).multiplyScalar(tr.dir);
-        c.lookAt(tmp.copy(c.position).sub(tan));
-      });
+        car.lookAt(tmp.copy(car.position).sub(tan));
+        const end = i === 0 || i === CARS - 1;
+        if (i === CARS - 1) car.rotateY(Math.PI); // tail car faces backwards
+        car.updateMatrix();
+        if (end) { for (const im of ends) im.setMatrixAt(ne, car.matrix); ne++; } else { for (const im of mids) im.setMatrixAt(nm, car.matrix); nm++; }
+      }
     }
+    for (const im of mids) { im.count = nm; im.instanceMatrix.needsUpdate = true; }
+    for (const im of ends) { im.count = ne; im.instanceMatrix.needsUpdate = true; }
   });
 
   // ---------- traffic (instanced cars) and a few more coaches on the road ----------

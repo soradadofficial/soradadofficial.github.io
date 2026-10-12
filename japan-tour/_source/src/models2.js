@@ -2,6 +2,48 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { glowMats } from './models.js';
 import { LD } from './fx.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+
+// Merge every static mesh under `root` into one geometry per material (in root space) and
+// remove the originals: a 50-part model becomes a handful of draw calls.
+export function bakeParts(root, skip = () => false) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), m = new THREE.Matrix4(), by = new Map(), done = [];
+  root.traverse((o) => {
+    if (!o.isMesh || o.isInstancedMesh || skip(o)) return;
+    m.multiplyMatrices(inv, o.matrixWorld);
+    const multi = Array.isArray(o.material);
+    for (const gr of multi ? o.geometry.groups : [null]) {
+      let g = o.geometry.clone();
+      if (!g.index) g.setIndex(Array.from({ length: g.attributes.position.count }, (_, i) => i));
+      if (gr) g.setIndex(Array.from(g.index.array.slice(gr.start, gr.start + gr.count)));
+      g.clearGroups();
+      g = g.toNonIndexed();
+      for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal' && k !== 'uv') g.deleteAttribute(k);
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+      if (!g.attributes.normal) g.computeVertexNormals();
+      g.applyMatrix4(m);
+      if (m.determinant() < 0) for (const a of Object.values(g.attributes)) { // mirrored part: restore the winding
+        const n = a.itemSize, arr = a.array;
+        for (let i = 0; i < arr.length; i += n * 3) for (let k = 0; k < n; k++) { const t = arr[i + n + k]; arr[i + n + k] = arr[i + 2 * n + k]; arr[i + 2 * n + k] = t; }
+      }
+      const mat = multi ? o.material[gr.materialIndex] : o.material;
+      if (!by.has(mat)) by.set(mat, []);
+      by.get(mat).push(g);
+    }
+    done.push(o);
+  });
+  for (const o of done) o.parent.remove(o);
+  return [...by].map(([material, list]) => ({ material, geometry: mergeGeometries(list) }));
+}
+export function bakeInto(root, skip) {
+  for (const { geometry, material } of bakeParts(root, skip)) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = mesh.receiveShadow = true;
+    root.add(mesh);
+  }
+  return root;
+}
 
 // Higher-detail models, all built in metres.
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.1, ...o });
@@ -107,10 +149,12 @@ export function createAirliner() {
       w.rotation.x = Math.PI / 2; w.position.set(x, -3.5, z + dz); gear.add(w);
     }
   }
-  g.add(gear);
   g.userData.gear = gear;
   g.userData.groundOffset = 4.05; // metres from origin to tyre bottom
-  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  bakeInto(g, (o) => o.userData.blink);
+  bakeInto(gear);
+  g.add(gear);
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; } });
   return g;
 }
 
@@ -158,8 +202,7 @@ export function createCoach(livery = '#e6688e') {
   for (const x of [-0.8, 0.8]) { const h = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), head); h.position.set(x, 0.95, -6.02); g.add(h); }
   const tail = new THREE.MeshBasicMaterial({ color: '#ff2d3c' });
   for (const x of [-0.95, 0.95]) { const h = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.05), tail); h.position.set(x, 1.1, 6.02); g.add(h); }
-  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-  return g;
+  return bakeInto(g);
 }
 
 // ---------- Shinkansen car (N700-style long nose) ----------
@@ -292,8 +335,7 @@ export function createCastle() {
     const fish = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.6, 6), gold);
     fish.position.set(s * 5, y + 3.3, 0); fish.rotation.z = s * 0.6; g.add(fish);
   }
-  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  return g;
+  return bakeInto(g);
 }
 
 // ---------- Hakone sightseeing "pirate ship" ----------
@@ -329,8 +371,7 @@ export function createPirateShip() {
     const flag = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.4), std('#d2283c', { side: THREE.DoubleSide }));
     flag.position.set(x - 1.2, 4.5 + h + 0.6, 0); flag.rotation.y = Math.PI / 2; g.add(flag);
   }
-  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-  return g;
+  return bakeInto(g);
 }
 
 // ---------- Nara deer ----------

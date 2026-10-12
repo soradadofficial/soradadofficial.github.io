@@ -52,7 +52,7 @@ export function createWorld() {
     ],
   });
   const H = T.heightAt;
-  T.mesh.traverse((o) => { o.castShadow = true; });
+  T.mesh.traverse((o) => { if (o.isMesh && o.geometry.type === 'PlaneGeometry') o.castShadow = true; }); // detailed patches only
   scene.add(T.mesh);
   const fujiMesh = buildFuji(T.baseAt);
   scene.add(fujiMesh);
@@ -768,6 +768,7 @@ export function createWorld() {
   function update({ dt, time, storyT, camera, look, envState, petalsTarget, storyWeight = 1, builderWeight = 0 }) {
     waterTime.value = time;
     setActors(storyT);
+    forest.visible = camera.position.y < 120; // trees are sub-pixel from cruise altitude
     sky.position.copy(camera.position);
     sky.material.uniforms.time.value = time;
     guide.userData.update(time);

@@ -313,31 +313,39 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
 }
 
 // ---------- instanced forests ----------
-export function createForest(spots) {
-  const n = spots.length;
+export function createForest(spots, cell = 16) {
+  // open cones and a faceted crown: half the triangles of the old trees
   const coneGeo = mergeGeometries([
-    new THREE.ConeGeometry(0.42, 0.75, 7).translate(0, 0.62, 0),
-    new THREE.ConeGeometry(0.33, 0.55, 7).translate(0, 0.95, 0),
+    new THREE.ConeGeometry(0.42, 0.75, 7, 1, true).translate(0, 0.62, 0),
+    new THREE.ConeGeometry(0.33, 0.55, 7, 1, true).translate(0, 0.95, 0),
   ]);
-  const blobGeo = new THREE.IcosahedronGeometry(0.5, 1).scale(1, 0.85, 1).translate(0, 0.62, 0);
-  const trunkGeo = new THREE.CylinderGeometry(0.06, 0.09, 0.4, 5).translate(0, 0.2, 0);
-  const conif = spots.filter((s) => s.kind === 0), broad = spots.filter((s) => s.kind === 1);
-  const mk = (geo, list, color, flat = true) => {
-    const im = new THREE.InstancedMesh(geo, std(color, { flatShading: flat, roughness: 0.95 }), Math.max(1, list.length));
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = V(1, 1, 1), p = V(0, 0, 0), c = new THREE.Color(), base = new THREE.Color(color);
+  const blobGeo = new THREE.DodecahedronGeometry(0.5, 0).scale(1, 0.85, 1).translate(0, 0.62, 0);
+  const trunkGeo = new THREE.CylinderGeometry(0.06, 0.09, 0.4, 5, 1, true).translate(0, 0.2, 0);
+  const mats = { conif: std('#2f5a35', { flatShading: true, roughness: 0.95, side: THREE.DoubleSide }), broad: std('#4f7d3a', { flatShading: true, roughness: 0.95 }), trunk: std('#4a3426', { roughness: 0.95 }) };
+  const base = { conif: new THREE.Color('#2f5a35'), broad: new THREE.Color('#4f7d3a'), trunk: new THREE.Color('#4a3426') };
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = V(1, 1, 1), p = V(0, 0, 0), c = new THREE.Color();
+  const mk = (geo, list, key) => {
+    const im = new THREE.InstancedMesh(geo, mats[key], list.length);
     list.forEach((t, i) => {
       q.setFromAxisAngle(V(0, 1, 0), t.r * 6.28);
-      m.compose(p.set(t.x, t.y - 0.01, t.z), q, s.set(t.s, t.s * (0.9 + t.r * 0.4), t.s));
+      m.compose(p.set(t.x, t.y - 0.01, t.z), q, sc.set(t.s, t.s * (0.9 + t.r * 0.4), t.s));
       im.setMatrixAt(i, m);
-      im.setColorAt(i, c.copy(base).offsetHSL((t.r - 0.5) * 0.04, (t.r - 0.5) * 0.15, (t.r - 0.5) * 0.12));
+      im.setColorAt(i, c.copy(base[key]).offsetHSL((t.r - 0.5) * 0.04, (t.r - 0.5) * 0.15, (t.r - 0.5) * 0.12));
     });
-    im.count = list.length;
-    im.castShadow = true; im.receiveShadow = true;
+    im.castShadow = key !== 'trunk'; im.receiveShadow = true;
+    im.computeBoundingSphere(); // per-area batches are culled when off screen
     return im;
   };
+  const buckets = new Map();
+  for (const t of spots) { const k = Math.floor(t.x / cell) + ',' + Math.floor(t.z / cell); if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(t); }
   const g = new THREE.Group();
-  g.add(mk(coneGeo, conif, '#2f5a35'), mk(blobGeo, broad, '#4f7d3a'), mk(trunkGeo, spots, '#4a3426', false));
-  g.userData.count = n;
+  for (const list of buckets.values()) {
+    const conif = list.filter((t) => t.kind === 0), broad = list.filter((t) => t.kind === 1);
+    if (conif.length) g.add(mk(coneGeo, conif, 'conif'));
+    if (broad.length) g.add(mk(blobGeo, broad, 'broad'));
+    g.add(mk(trunkGeo, list, 'trunk'));
+  }
+  g.userData.count = spots.length;
   return g;
 }
 
