@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=Noto+Serif+Thai:wght@500;700;800&family=Shippori+Mincho:wght@600;800&display=swap">
-  <script type="module" crossorigin src="./assets/index-p-jYZnwH.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-CVpoTFnR.css">
+  <script type="module" crossorigin src="./assets/index-D5DV71VI.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BMhI8q5Z.css">
 </head>
 <body>
 <canvas id="gl" aria-hidden="true"></canvas>
@@ -29,15 +29,25 @@
 <aside class="rail" aria-label="ลำดับการเดินทาง">
   <ol id="rail">
     <li data-t="0.03"><span>สุวรรณภูมิ</span></li>
-    <li data-t="0.13"><span>เทคออฟ</span></li>
+    <li data-t="0.12"><span>เทคออฟ</span></li>
     <li data-t="0.30"><span>เส้นทางบิน</span></li>
     <li data-t="0.50"><span>ลงจอดนาริตะ</span></li>
-    <li data-t="0.615"><span>พบไกด์</span></li>
-    <li data-t="0.76"><span>ที่เที่ยว</span></li>
-    <li data-t="0.95"><span>โรงแรม</span></li>
+    <li data-t="0.588"><span>พบไกด์</span></li>
+    <li data-t="0.675"><span>โตเกียว</span></li>
+    <li data-t="0.79"><span>ฮาโกเน่</span></li>
+    <li data-t="0.878"><span>ชูเรโตะ · ฟูจิ</span></li>
+    <li data-t="0.97"><span>โรงแรม</span></li>
   </ol>
   <div class="rail-fill" id="railFill"></div>
 </aside>
+
+<aside class="leg-panel panel" id="legPanel" aria-live="polite"></aside>
+<div class="trip-hud panel" id="tripHud" aria-hidden="true">
+  <div><span id="hudAltL">ความสูง</span><b id="hudAlt">--</b></div>
+  <div><span>ความเร็ว</span><b id="hudSpeed">--</b></div>
+  <div><span>ระยะที่เหลือ</span><b id="hudRemain">--</b></div>
+  <div><span id="hudZone">เวลาท้องถิ่น</span><b id="hudTime">--:--</b></div>
+</div>
 
 <main id="top">
   <!-- ===== Scroll story: one continuous camera move ===== -->
@@ -47,58 +57,72 @@
       <h1>ญี่ปุ่น<br>ตั้งแต่ประตูขึ้นเครื่อง<br><em>ถึงหน้าห้องพัก</em></h1>
       <p class="lede">เลื่อนลงเพื่อเดินทางไปพร้อมกัน ทุกฉากต่อกันเป็นภาพเดียว ตั้งแต่สนามบินสุวรรณภูมิจนถึงห้องสวีทวิวภูเขาไฟฟูจิ</p>
       <div class="hero-cta">
-        <a class="btn" href="#story" data-jump-t="0.1">เริ่มการเดินทาง</a>
+        <a class="btn" href="#story" data-jump-t="0.12">เริ่มการเดินทาง</a>
         <a class="btn btn-ghost" href="#explore" data-jump="explore">ดูโรงแรมและที่เที่ยวก่อน</a>
       </div>
       <p class="scroll-hint" aria-hidden="true"><span></span>เลื่อนลง</p>
       <p class="jp-vertical" aria-hidden="true">成田へ、富士へ。</p>
     </div>
 
-    <article class="chapter" style="--t:0.06" data-side="right">
+    <article class="chapter" style="--t:0.035" data-side="right">
       <p class="step">ฉาก 1 · 06:40 น.</p>
       <h2>เช็คอินที่สุวรรณภูมิ</h2>
       <p>ไกด์ไทยรอพบที่เคาน์เตอร์กลุ่ม ช่วยเช็คอิน โหลดกระเป๋า และแจกซิมพร้อมใช้ก่อนขึ้นเครื่อง</p>
       <dl class="facts"><div><dt>เที่ยวบิน</dt><dd>CV 101</dd></div><div><dt>ขึ้นเครื่อง</dt><dd>07:15</dd></div><div><dt>เกต</dt><dd>D4</dd></div></dl>
     </article>
 
-    <article class="chapter" style="--t:0.135" data-side="left">
+    <article class="chapter" style="--t:0.12" data-side="right">
       <p class="step">ฉาก 2 · 07:45 น.</p>
       <h2>เทคออฟ</h2>
-      <p>เครื่องเร่งความเร็วบนรันเวย์ 01R และไต่ระดับเหนือเมฆ ที่นั่งแถวหน้าในกลุ่มเดียวกัน</p>
+      <p>เครื่องเร่งความเร็วบนรันเวย์ 01R แล้วเลี้ยวขวาไต่ระดับขึ้นเหนือเมฆ มุ่งหน้าตะวันออกเฉียงเหนือ</p>
       <dl class="facts"><div><dt>เครื่องบิน</dt><dd>Wide-body</dd></div><div><dt>ระดับบิน</dt><dd>37,000 ฟุต</dd></div></dl>
     </article>
 
     <article class="chapter" style="--t:0.3" data-side="right">
       <p class="step">ฉาก 3 · ระหว่างบิน</p>
       <h2>BKK → NRT</h2>
-      <p>บินตรงข้ามทะเลจีนใต้สู่ญี่ปุ่น มีอาหารร้อนสองมื้อ และเวลาไทยช้ากว่าญี่ปุ่น 2 ชั่วโมง</p>
+      <p>บินตรงข้ามทะเลจีนใต้และแปซิฟิกสู่ญี่ปุ่น มีอาหารร้อนสองมื้อ เวลาไทยช้ากว่าญี่ปุ่น 2 ชั่วโมง (ช่วงบินในฉากนี้ย่อระยะให้สั้นลง)</p>
       <dl class="facts"><div><dt>ระยะทาง</dt><dd>4,600 กม.</dd></div><div><dt>เวลาบิน</dt><dd>~6 ชม.</dd></div><div><dt>ถึง</dt><dd>15:55 JST</dd></div></dl>
     </article>
 
-    <article class="chapter" style="--t:0.5" data-side="left">
+    <article class="chapter" style="--t:0.49" data-side="right">
       <p class="step">ฉาก 4 · 15:55 JST</p>
       <h2>ลงจอดที่นาริตะ</h2>
-      <p>เรากรอก Visit Japan Web ให้ล่วงหน้า ผ่าน ตม. และศุลกากรด้วย QR เดียว</p>
+      <p>เครื่องร่อนลงจากทิศใต้ตรงแนวรันเวย์ 34L เรากรอก Visit Japan Web ให้ล่วงหน้า ผ่าน ตม. และศุลกากรด้วย QR เดียว</p>
     </article>
 
-    <article class="chapter" style="--t:0.61" data-side="right">
+    <article class="chapter" style="--t:0.585" data-side="right">
       <p class="step">ฉาก 5 · ประตูขาออก</p>
       <h2>พบไกด์และรถทัวร์</h2>
       <p>มองหาธงสีชมพู ไกด์พูดไทยพาขึ้นรถโค้ช มี WiFi และน้ำดื่มเย็นบนรถ</p>
       <dl class="facts"><div><dt>รถ</dt><dd>โค้ช 40 ที่นั่ง</dd></div><div><dt>ไกด์</dt><dd>ไทย + ญี่ปุ่น</dd></div></dl>
     </article>
 
-    <article class="chapter" style="--t:0.755" data-side="left">
-      <p class="step">ฉาก 6 · วันที่ 2–5</p>
-      <h2>ลอดอุโมงค์โทริอิ สู่เจดีย์และฟูจิ</h2>
-      <p>ผ่านซุ้มประตูสีชาดนับร้อย ชมเจดีย์ห้าชั้นที่มีภูเขาไฟฟูจิเป็นฉากหลัง ช่วงซากุระบานปลายมีนาคมถึงต้นเมษายน</p>
+    <article class="chapter" style="--t:0.67" data-side="right">
+      <p class="step">ฉาก 6 · วันที่ 1 · 18:00 น.</p>
+      <h2>โตเกียวยามเย็น</h2>
+      <p>ขับเข้าเมืองตามทางด่วน แวะชมโตเกียวทาวเวอร์ตอนแสงทอง ก่อนเข้าที่พักย่านชิบะ</p>
+      <a class="text-link" href="#explore" data-explore="tokyo">ดูโตเกียวยามค่ำแบบ 3D</a>
+    </article>
+
+    <article class="chapter" style="--t:0.78" data-side="right">
+      <p class="step">ฉาก 7 · วันที่ 2</p>
+      <h2>ฮาโกเน่ ทะเลสาบอาชิ</h2>
+      <p>ล่องเรือโจรสลัดผ่านโทริอิกลางน้ำของศาลเจ้าฮาโกเน่ แล้วพักเรียวกังห้องทาทามิพร้อมออนเซ็นส่วนตัว</p>
+      <a class="text-link" href="#explore" data-explore="ryokan">ดูห้องเรียวกัง</a>
+    </article>
+
+    <article class="chapter" style="--t:0.87" data-side="right">
+      <p class="step">ฉาก 8 · วันที่ 2 · บ่าย</p>
+      <h2>เจดีย์ชูเรโตะกับฟูจิ</h2>
+      <p>เดินขึ้นบันได 398 ขั้นสู่เจดีย์ห้าชั้น มุมที่มีภูเขาไฟฟูจิเป็นฉากหลัง ช่วงซากุระบานปลายมีนาคมถึงต้นเมษายน</p>
       <a class="text-link" href="#explore" data-explore="pagoda">ดูฉากนี้แบบ 3D</a>
     </article>
 
-    <article class="chapter" style="--t:0.93" data-side="right">
-      <p class="step">ฉาก 7 · เช็คอินโรงแรม</p>
+    <article class="chapter" style="--t:0.955" data-side="right">
+      <p class="step">ฉาก 9 · เช็คอินโรงแรม</p>
       <h2>Sakura Grand 5★</h2>
-      <p>ห้องสวีทชั้นบนสุด กระจกจากพื้นถึงเพดานหันหน้าเข้าหาฟูจิ ลองชมห้องก่อนจองได้ในส่วนถัดไป</p>
+      <p>ริมฝั่งเหนือของทะเลสาบคาวากุจิโกะ ห้องสวีทชั้นบนสุด กระจกจากพื้นถึงเพดานหันหน้าเข้าหาฟูจิ</p>
       <a class="text-link" href="#explore" data-explore="suite">เข้าไปในห้องพัก</a>
     </article>
   </section>
@@ -122,6 +146,8 @@
           <button role="tab" data-target="pagoda" id="tab-pagoda">เจดีย์ชูเรโตะ</button>
           <button role="tab" data-target="torii" id="tab-torii">อุโมงค์โทริอิ</button>
           <button role="tab" data-target="tokyo" id="tab-tokyo">โตเกียวยามค่ำ</button>
+          <button role="tab" data-target="castle" id="tab-castle">ปราสาทโอซาก้า</button>
+          <button role="tab" data-target="nara" id="tab-nara">สวนกวางนารา</button>
         </div>
         <div class="tab-group" role="group" aria-label="เวลาในฉาก">
           <p class="tab-label">เวลาในฉาก</p>
@@ -140,7 +166,7 @@
         <div class="panel hud" id="hud" aria-live="off">
           <div><span>เวลาญี่ปุ่น</span><b id="hudClock">--:--</b></div>
           <div><span>ชินคันเซ็นขบวนถัดไป</span><b id="hudTrain">--</b></div>
-          <div><span>อากาศเกียวโต</span><b>16°C แดดอ่อน</b></div>
+          <div><span>อากาศฟูจิ</span><b>12°C แดดอ่อน</b></div>
           <div><span>ซากุระบาน</span><b>82%</b></div>
         </div>
         <div class="panel info-card" id="infoCard" aria-live="polite"></div>

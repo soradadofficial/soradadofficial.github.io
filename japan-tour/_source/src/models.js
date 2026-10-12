@@ -426,7 +426,7 @@ export function createLanterns(points) {
     new THREE.ConeGeometry(0.6, 0.45, 4).rotateY(Math.PI / 4).translate(0, 2.15, 0),
   ]);
   const posts = new THREE.InstancedMesh(postGeo, std('#8f8a80'), points.length);
-  const lampMat = glow('#ffb45c', 0.1, 3.2);
+  const lampMat = glow('#ffb45c', 0.1, 1.5);
   const lamps = new THREE.InstancedMesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), lampMat, points.length);
   const m = new THREE.Matrix4();
   points.forEach((p, i) => {

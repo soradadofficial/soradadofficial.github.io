@@ -5,11 +5,13 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createWorld } from './world.js';
 import { FilmShader, lerpEnv, copyEnv, ENV } from './fx.js';
 import { initBuilder, fillInsuranceTable } from './builder.js';
+import { lineMats } from './scenery.js';
 
 const $ = (s) => document.querySelector(s);
 const clamp01 = (x) => Math.min(1, Math.max(0, x));
@@ -20,7 +22,7 @@ const instant = location.search.includes('instant'); // for screenshot tests
 
 // ---------- Renderer & post FX ----------
 const canvas = $('#gl');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, isSmall() ? 1.5 : 1.75));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -29,7 +31,8 @@ renderer.shadowMap.enabled = !isSmall();
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const clock = new THREE.Clock();
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.3, 9000);
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.002, 40000);
+if (location.search.includes('debug')) window.__cam = camera;
 const world = createWorld();
 const { scene } = world;
 {
@@ -40,6 +43,38 @@ const { scene } = world;
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
+// Ambient occlusion (desktop only). GTAO assumes a linear depth buffer, so its depth
+// reads are converted from the logarithmic buffer back to perspective depth.
+const useAO = !isSmall() && !location.search.includes('noao');
+let gtao = null;
+const aoForced = location.search.includes('ao=1');
+let aoOff = false, aoFrames = 0, aoStart = performance.now() + 2500;
+if (useAO) {
+  gtao = new GTAOPass(scene, camera, window.innerWidth, window.innerHeight);
+  const fs = gtao.gtaoMaterial.fragmentShader
+    .replace('vec3 getViewPosition(', `float logToPersp(float d) {
+        float w = exp2(d * log2(cameraFar + 1.0)) - 1.0;
+        float vz = -max(w, cameraNear);
+        return ((cameraNear + vz) * cameraFar) / ((cameraFar - cameraNear) * vz);
+      }
+      vec3 getViewPosition(`)
+    .replace('return textureLod(tDepth, uv.xy, 0.0).DEPTH_SWIZZLING;', 'return logToPersp(textureLod(tDepth, uv.xy, 0.0).DEPTH_SWIZZLING);')
+    .replace('return texelFetch(tDepth, uv.xy, 0).DEPTH_SWIZZLING;', 'return logToPersp(texelFetch(tDepth, uv.xy, 0).DEPTH_SWIZZLING);');
+  gtao.gtaoMaterial.fragmentShader = fs;
+  gtao.gtaoMaterial.needsUpdate = true;
+  // only opaque meshes go into the AO normal/depth pass
+  gtao.overrideVisibility = function () {
+    const cache = this._visibilityCache;
+    this.scene.traverse((o) => {
+      cache.set(o, o.visible);
+      const m = o.material;
+      if (o.isPoints || o.isLine || o.isSprite || o.isLine2 || (m && !Array.isArray(m) && (m.transparent || m.isShaderMaterial))) o.visible = false;
+    });
+  };
+  gtao.blendIntensity = 0.9;
+  gtao.updateGtaoMaterial({ radius: 0.5, distanceExponent: 1.5, thickness: 1, scale: 1.2, samples: 12 });
+  composer.addPass(gtao);
+}
 const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.65, 0.82);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
@@ -78,12 +113,12 @@ function flyTo(key) {
   const fromPetals = exploreCur.petals;
   const dist = fromPos.distanceTo(to.pos);
   const mid = fromPos.clone().lerp(to.pos, 0.5);
-  mid.y = Math.max(fromPos.y, to.pos.y) + Math.min(120, dist * 0.28 + 8);
+  mid.y = Math.max(fromPos.y, to.pos.y) + Math.min(90, dist * 0.3 + 0.3);
   const q = new THREE.QuadraticBezierCurve3(fromPos, mid, to.pos.clone());
   exploreTween?.kill();
   const o = { k: 0 };
   exploreTween = gsap.to(o, {
-    k: 1, duration: reduceMotion || instant ? 0.01 : 1.6 + Math.min(1.6, dist / 250), ease: 'power2.inOut',
+    k: 1, duration: reduceMotion || instant ? 0.01 : 1.6 + Math.min(1.8, dist / 120), ease: 'power2.inOut',
     onUpdate: () => {
       exploreCur.pos.copy(q.getPoint(o.k));
       // look leads the move slightly so the camera turns before it arrives
@@ -108,6 +143,9 @@ const INFO = {
   plane: { jp: '航空機', title: 'เที่ยวบิน BKK ↔ ญี่ปุ่น', text: 'บินตรงทุกวัน เลือกลงได้ทั้งนาริตะ ฮาเนดะ คันไซ ชูบุ ฟุกุโอกะ และชิโตเสะ', list: ['กระเป๋าโหลด 30 กก.', 'เลือกที่นั่งกลุ่มฟรี', 'อาหารร้อนบนเครื่อง'], price: 'เริ่ม ฿14,900 ไป-กลับ', action: {}, cta: 'จัดเที่ยวบิน' },
   boat: { jp: 'スワンボート', title: 'เรือหงส์ริมทะเลสาบ', text: 'ปั่นเรือหงส์ชมภูเขาไฟฟูจิสะท้อนผิวน้ำ ทะเลสาบคาวากุจิโกะ', list: ['30 นาที ต่อรอบ', 'นั่งได้ 2–3 คน', 'เปิด 9:00–17:00'], price: '฿450 / ลำ', action: { place: 'fuji' }, cta: 'เพิ่มเข้าทริป' },
   guide: { jp: 'ガイド', title: 'ไกด์มิกิ', text: 'ไกด์คนไทยที่อยู่ญี่ปุ่นมา 8 ปี ถือธงสีชมพูรอรับที่สนามบินและดูแลตลอดทริป', list: ['พูดไทย ญี่ปุ่น อังกฤษ', 'แชตได้ 24 ชั่วโมง', 'แนะนำร้านอาหารท้องถิ่น'], price: 'รวมในแพ็กเกจ', action: {}, cta: 'จัดทัวร์กับไกด์มิกิ' },
+  castle: { jp: '大阪城', title: 'ปราสาทโอซาก้า', text: 'ปราสาทหลังคาเขียวขอบทองกลางสวนนิชิโนะมารุ ล้อมด้วยคูน้ำและกำแพงหิน ชมซากุระกว่า 600 ต้นช่วงต้นเมษายน', list: ['พิพิธภัณฑ์ 8 ชั้นในตัวปราสาท', 'ล่องเรือโกซะบุเนะรอบคูน้ำ', 'ต่อด้วยโดทงโบริยามค่ำ'], price: 'ค่าเข้าชม ฿1,300 / ท่าน', action: { place: 'osaka' }, cta: 'เพิ่มเข้าทริป' },
+  nara: { jp: '奈良公園', title: 'สวนกวางนารา', text: 'กวางกว่า 1,000 ตัวเดินเล่นอิสระรอบวัดโทไดจิ วิหารไม้ที่ประดิษฐานพระใหญ่ ซื้อขนมเซมเบ้ให้กวางได้', list: ['วัดโทไดจิและพระใหญ่', 'ขนมกวาง 200 เยน', 'ห่างเกียวโต 45 นาที'], price: 'ค่าเข้าชม ฿900 / ท่าน', action: { place: 'nara' }, cta: 'เพิ่มเข้าทริป' },
+  pirate: { jp: '箱根海賊船', title: 'เรือโจรสลัดทะเลสาบอาชิ', text: 'ล่องทะเลสาบอาชิด้วยเรือสไตล์โจรสลัด ผ่านโทริอิกลางน้ำของศาลเจ้าฮาโกเน่ วันฟ้าใสเห็นฟูจิด้านหลัง', list: ['ล่อง 25 นาที', 'รวมใน Hakone Free Pass', 'ต่อกระเช้าโอวาคุดานิ'], price: 'รวมในทริปฮาโกเน่', action: { place: 'hakone' }, cta: 'เพิ่มเข้าทริป' },
   tokyo: { jp: '東京', title: 'โตเกียวยามค่ำคืน', text: 'โตเกียวทาวเวอร์สีส้มกับแสงไฟเมือง ต่อด้วยทางม้าลายชิบูย่าและวัดเซนโซจิในอาซากุสะ', list: ['จุดชมวิวชิบูย่าสกาย', 'ตลาดปลาสึกิจิ', 'ช้อปปิ้งกินซ่าและฮาราจูกุ'], price: 'ค่าเข้าชม ฿1,200 / ท่าน', action: { place: 'tokyo' }, cta: 'เพิ่มเข้าทริป' },
 };
 let builder;
@@ -155,8 +193,8 @@ const controls = new OrbitControls(camera, orbitEl);
 controls.enabled = false;
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minDistance = 3;
-controls.maxDistance = 420;
+controls.minDistance = 0.05;
+controls.maxDistance = 220;
 controls.maxPolarAngle = Math.PI * 0.49;
 let free = false;
 function setFree(on) {
@@ -243,6 +281,34 @@ railItems.forEach((li) => li.addEventListener('click', () => scrollToY(M.storyTo
 const pointer = { x: 0, y: 0, sx: 0, sy: 0 };
 window.addEventListener('pointermove', (e) => { pointer.x = e.clientX / window.innerWidth * 2 - 1; pointer.y = e.clientY / window.innerHeight * 2 - 1; });
 
+// ---------- Story leg panel + flight/bus HUD ----------
+const legPanel = $('#legPanel'), tripHud = $('#tripHud');
+let lastLeg = -1;
+function updateStoryHud(t, weight) {
+  const show = weight > 0.6 && t > 0.015 && t < 0.995;
+  legPanel.classList.toggle('show', show);
+  tripHud.classList.toggle('show', show);
+  if (!show) return;
+  const i = world.storyInfo(t);
+  if (i.index !== lastLeg) {
+    lastLeg = i.index;
+    const L = i.leg;
+    legPanel.innerHTML = `
+      <p class="leg-step">ช่วงที่ ${i.index + 1} / ${i.count}</p>
+      <h3>${L.title}</h3>
+      <p class="leg-sub">${L.sub}</p>
+      <dl class="leg-stats">${L.stats.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+      <ol class="leg-dots">${Array.from({ length: i.count }, (_, k) => `<li class="${k < i.index ? 'done' : k === i.index ? 'now' : ''}"></li>`).join('')}</ol>`;
+    legPanel.classList.remove('swap'); void legPanel.offsetWidth; legPanel.classList.add('swap');
+  }
+  $('#hudAltL').textContent = i.altLabel;
+  $('#hudAlt').textContent = i.alt;
+  $('#hudSpeed').textContent = i.speed;
+  $('#hudRemain').textContent = i.remain;
+  $('#hudTime').textContent = i.time;
+  $('#hudZone').textContent = `${i.zone} · วันที่ ${i.day}`;
+}
+
 // ---------- Main loop ----------
 let smoothScroll = window.scrollY;
 const storyPose = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
@@ -272,9 +338,9 @@ function frame() {
 
   const B = world.BUILDER;
   const narrow = camera.aspect < 0.9;
-  const bPos = narrow ? world.holo.position.clone().add(new THREE.Vector3(4, 640, 120)) : B.pos;
-  const bLook = narrow ? world.holo.position.clone().add(new THREE.Vector3(4, 0, -70)) : B.look;
-  const drift = new THREE.Vector3(Math.sin(time * 0.12) * 8, 0, Math.cos(time * 0.1) * 6);
+  const bPos = narrow ? B.posNarrow : B.pos;
+  const bLook = narrow ? B.lookNarrow : B.look;
+  const drift = new THREE.Vector3(Math.sin(time * 0.12) * 18, 0, Math.cos(time * 0.1) * 14);
 
   pos.copy(storyPose.pos).lerp(exploreCur.pos, we).lerp(bPos.clone().add(drift), wb);
   look.copy(storyPose.look).lerp(exploreCur.look, we).lerp(bLook, wb);
@@ -288,9 +354,10 @@ function frame() {
   const right = dir.clone().cross(THREE.Object3D.DEFAULT_UP).normalize();
   const up = right.clone().cross(dir).normalize();
   const inRoom = we > 0.5 && wb < 0.5 && (exploreKey === 'suite' || exploreKey === 'ryokan');
-  const amp = inRoom ? 2.2 : 1.2;
-  look.addScaledVector(right, pointer.sx * amp * (inRoom ? 4 : 2)).addScaledVector(up, -pointer.sy * amp * (inRoom ? 2 : 1));
-  pos.addScaledVector(right, pointer.sx * amp * 0.4).addScaledVector(up, -pointer.sy * amp * 0.25);
+  const D = pos.distanceTo(look);
+  const lookAmp = Math.min(D, 40) * (inRoom ? 0.12 : 0.05), posAmp = inRoom ? 0.004 : D * 0.012;
+  look.addScaledVector(right, pointer.sx * lookAmp).addScaledVector(up, -pointer.sy * lookAmp * 0.5);
+  pos.addScaledVector(right, pointer.sx * posAmp).addScaledVector(up, -pointer.sy * posAmp * 0.6);
 
   if (free) {
     controls.update();
@@ -305,9 +372,18 @@ function frame() {
   camera.fov = narrow ? 62 : 50;
   camera.updateProjectionMatrix();
 
-  const petalsStory = world.japanZone(camera.position) ? 1 : 0;
+  const petalsStory = world.japanZone(camera.position) && storyT > 0.55 ? 1 : 0;
   const petalsTarget = (petalsStory * (1 - we) + exploreCur.petals * we) * (1 - wb);
-  world.update({ dt, time, storyT, camera, envState: envMix, petalsTarget });
+  const storyWeight = (1 - we) * (1 - wb);
+  world.update({ dt, time, storyT, camera, look: camLook, envState: envMix, petalsTarget, storyWeight, builderWeight: wb });
+  if (gtao) {
+    // drop AO if this device can't hold ~24 fps with it (unless ?ao forces it)
+    if (!aoForced && !aoOff) { aoFrames++; const el = performance.now() - aoStart; if (el > 3500) { if (aoFrames / (el / 1000) < 24) aoOff = true; aoStart = performance.now(); aoFrames = 0; } }
+    const d = camera.position.distanceTo(camLook);
+    gtao.updateGtaoMaterial({ radius: THREE.MathUtils.clamp(d * 0.05, 0.01, 30), thickness: THREE.MathUtils.clamp(d * 0.08, 0.02, 60) });
+    gtao.enabled = !aoOff && wb < 0.98 && d < 120;
+  }
+  updateStoryHud(storyT, storyWeight);
   bloom.strength = 0.45 + envMix.night * 0.55;
   scene.environmentIntensity = 0.12 + (1 - envMix.night) * 0.3;
   film.uniforms.time.value = time;
@@ -331,6 +407,7 @@ function resize() {
   camera.updateProjectionMatrix();
   renderer.setSize(w, h);
   composer.setSize(w, h);
+  for (const m of lineMats) m.resolution.set(w, h);
   measure();
 }
 window.addEventListener('resize', resize);

@@ -5,9 +5,18 @@ const C = (h) => new THREE.Color(h);
 export const ENV = {
   dawn:   { top: C('#2a3768'), bottom: C('#f4b08c'), fog: C('#d9a596'), sun: C('#ffc89a'), sunI: 1.6, hemi: 0.75, night: 0.15, cloud: C('#ffd9c8'), sunDir: new THREE.Vector3(1, 0.18, -0.6) },
   day:    { top: C('#2f6fbf'), bottom: C('#bfe0f5'), fog: C('#bcd9ee'), sun: C('#fff6e8'), sunI: 2.4, hemi: 1.0, night: 0.0, cloud: C('#ffffff'), sunDir: new THREE.Vector3(0.4, 0.8, -0.4) },
-  sunset: { top: C('#33296a'), bottom: C('#ff9663'), fog: C('#d98b78'), sun: C('#ffae70'), sunI: 1.8, hemi: 0.7, night: 0.2, cloud: C('#ffc2a1'), sunDir: new THREE.Vector3(-0.5, 0.14, -1) },
-  dusk:   { top: C('#18204a'), bottom: C('#b87189'), fog: C('#5e4a6e'), sun: C('#ff9b8a'), sunI: 0.8, hemi: 0.45, night: 0.6, cloud: C('#c08aa0'), sunDir: new THREE.Vector3(-0.6, 0.05, -1) },
+  sunset: { top: C('#33296a'), bottom: C('#ff9663'), fog: C('#d98b78'), sun: C('#ffae70'), sunI: 2.0, hemi: 0.7, night: 0.2, cloud: C('#ffc2a1'), sunDir: new THREE.Vector3(-1, 0.16, 0.25) },
+  golden: { top: C('#3f6aa8'), bottom: C('#ffd6a0'), fog: C('#e9cfa8'), sun: C('#ffcf8a'), sunI: 2.7, hemi: 0.85, night: 0.0, cloud: C('#fff1dc'), sunDir: new THREE.Vector3(-0.75, 0.32, 0.35) },
+  dusk:   { top: C('#18204a'), bottom: C('#b87189'), fog: C('#5e4a6e'), sun: C('#ff9b8a'), sunI: 0.8, hemi: 0.45, night: 0.6, cloud: C('#c08aa0'), sunDir: new THREE.Vector3(-1, 0.06, 0.2) },
   night:  { top: C('#03061a'), bottom: C('#1c2752'), fog: C('#141b3a'), sun: C('#9fb4ff'), sunI: 0.35, hemi: 0.28, night: 1.0, cloud: C('#3a4470'), sunDir: new THREE.Vector3(0.3, 0.6, 0.4) },
+};
+
+// Log-depth chunks for custom ShaderMaterials (the renderer uses a logarithmic depth buffer)
+export const LD = {
+  vp: '#include <common>\n#include <logdepthbuf_pars_vertex>\n',
+  v: '\n#include <logdepthbuf_vertex>\n',
+  fp: '#include <logdepthbuf_pars_fragment>\n',
+  f: '\n#include <logdepthbuf_fragment>\n',
 };
 
 export function makeEnvState() {
@@ -144,7 +153,7 @@ export function createPetals(count = 700) {
   const tones = ['#ffd1df', '#ffb7cc', '#ffe6ee', '#f7a6c0'];
   for (let i = 0; i < count; i++) mesh.setColorAt(i, color.set(tones[i % tones.length]));
   let anchor = new THREE.Vector3();
-  mesh.userData.update = (dt, time, camPos, density) => {
+  mesh.userData.update = (dt, time, camPos, density, scale = 1) => {
     mesh.visible = density > 0.01;
     mat.opacity = 0.95 * Math.min(1, density);
     if (!mesh.visible) return;
@@ -160,9 +169,9 @@ export function createPetals(count = 700) {
       }
       if (d.p.y < -R / 2) d.p.y += R;
       d.r.x += dt * d.v; d.r.y += dt * 0.7;
-      dummy.position.set(anchor.x + d.p.x, anchor.y + d.p.y, anchor.z + d.p.z);
+      dummy.position.set(anchor.x + d.p.x * scale, anchor.y + d.p.y * scale, anchor.z + d.p.z * scale);
       dummy.rotation.copy(d.r);
-      const sc = d.s * (i / count < density ? 1 : 0);
+      const sc = d.s * scale * (i / count < density ? 1 : 0);
       dummy.scale.setScalar(sc);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
@@ -173,7 +182,7 @@ export function createPetals(count = 700) {
 }
 
 // ---------- Contrail behind the plane ----------
-export function createTrail(max = 160) {
+export function createTrail(max = 160, size = 1) {
   const positions = new Float32Array(max * 3);
   const alphas = new Float32Array(max);
   const geo = new THREE.BufferGeometry();
@@ -181,9 +190,9 @@ export function createTrail(max = 160) {
   geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
   const mat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    uniforms: { color: { value: new THREE.Color('#ffffff') }, strength: { value: 1 } },
-    vertexShader: `attribute float alpha; varying float vA; void main(){ vA = alpha; vec4 mv = modelViewMatrix*vec4(position,1.0); gl_Position = projectionMatrix*mv; gl_PointSize = (6.0 + 10.0*alpha) * (300.0 / -mv.z); }`,
-    fragmentShader: `uniform vec3 color; uniform float strength; varying float vA; void main(){ vec2 c = gl_PointCoord-0.5; float d = 1.0 - smoothstep(0.0,0.5,length(c)); gl_FragColor = vec4(color, d*vA*0.55*strength); }`,
+    uniforms: { color: { value: new THREE.Color('#ffffff') }, strength: { value: 1 }, size: { value: size } },
+    vertexShader: LD.vp + `uniform float size; attribute float alpha; varying float vA; void main(){ vA = alpha; vec4 mv = modelViewMatrix*vec4(position,1.0); gl_Position = projectionMatrix*mv; gl_PointSize = (6.0 + 10.0*alpha) * size * (900.0 / -mv.z);` + LD.v + `}`,
+    fragmentShader: LD.fp + `uniform vec3 color; uniform float strength; varying float vA; void main(){ vec2 c = gl_PointCoord-0.5; float d = 1.0 - smoothstep(0.0,0.5,length(c)); gl_FragColor = vec4(color, d*vA*0.55*strength);` + LD.f + `}`,
   });
   const pts = new THREE.Points(geo, mat);
   pts.frustumCulled = false;
@@ -212,10 +221,10 @@ export function createTrail(max = 160) {
 
 // ---------- Vignette + grain + subtle chromatic shift ----------
 export const FilmShader = {
-  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, vignette: { value: 0.9 }, grain: { value: 0.04 } },
+  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, vignette: { value: 0.9 }, grain: { value: 0.035 }, grade: { value: 1 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float time; uniform float vignette; uniform float grain;
+    uniform sampler2D tDiffuse; uniform float time; uniform float vignette; uniform float grain; uniform float grade;
     varying vec2 vUv;
     float rand(vec2 co){ return fract(sin(dot(co, vec2(12.9898,78.233)))*43758.5453); }
     void main(){
@@ -227,6 +236,12 @@ export const FilmShader = {
       col.r = texture2D(tDiffuse, uv + off).r;
       col.g = texture2D(tDiffuse, uv).g;
       col.b = texture2D(tDiffuse, uv - off).b;
+      // warm grade: cool lifted shadows, warm highlights
+      float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      vec3 graded = col + vec3(-0.006, 0.004, 0.022) * (1.0 - smoothstep(0.0, 0.35, l));
+      graded = mix(graded, graded * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 1.0, l));
+      graded = mix(vec3(l), graded, 1.06);
+      col = mix(col, graded, grade);
       col *= mix(1.0, smoothstep(0.85, 0.15, r2*1.6), vignette);
       col += (rand(uv*vec2(1000.0) + time) - 0.5) * grain;
       gl_FragColor = vec4(col, 1.0);
