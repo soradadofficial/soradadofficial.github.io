@@ -158,7 +158,15 @@ export function createWorld() {
   const legNames = Object.keys(ROUTES.road), legEnd = {};
   const roadLL = [];
   legNames.forEach((name) => { roadLL.push(...ROUTES.road[name].map(([lo, la]) => LL(lo, la))); legEnd[name.split('-')[1]] = roadLL[roadLL.length - 1]; });
-  const road = polyPath([curb.clone().setY(0), ...roadLL, kix.userData.toWorld(0, -3.9).setY(0)], 0.18);
+  const offAirports = roadLL.filter((q) => Math.hypot(q.x - nrtC.x, q.z - nrtC.z) > 7 && Math.hypot(q.x - kixC.x, q.z - kixC.z) > 7);
+  // access road from behind a terminal round the end of its runway toward `far`, never across the airfield
+  const access = (apt, far, side, len) => {
+    const f = apt.worldToLocal(far.clone()), sx = Math.sign(f.x) || 1, w = (lx, lz) => apt.userData.toWorld(lx, lz).setY(0);
+    const pts = [w(0.4, side * 3.9), w(0.4, side * 5.2)];
+    if (f.z * side < 3.5) { pts.push(w(sx * (len / 2 + 1.6), side * 4.8), w(sx * (len / 2 + 2.2), side * 1.2)); if (f.z * side < 0) pts.push(w(sx * (len / 2 + 1.6), -side * 2.4)); }
+    return pts;
+  };
+  const road = polyPath([...access(nrt, offAirports[0], 1, NRT_LEN), ...offAirports, ...access(kix, offAirports[offAirports.length - 1], -1, 3.5).reverse()], 0.18);
   const roadMat = roadMaterial();
   scene.add(ribbon(road, 0.07, deckY, roadMat, { uvLen: 0.6 }));
   addClear(road);
@@ -193,13 +201,16 @@ export function createWorld() {
   ];
   const railRaw = Path.fromControl(STN.map(([, a, b]) => LL(a, b)), 0.25, (x, z) => H(x, z));
   {
-    const ys = railRaw.pts.map((p) => p.y), n = ys.length, K = 14;
+    // the real line tunnels through the mountains: follow the valley floors (lower envelope)
+    // and let the terrain hide the deck where it runs under a ridge
+    const gs = railRaw.pts.map((p) => p.y), n = gs.length, K = 14;
+    const ys = gs.map((_, i) => { let m = Infinity; for (let j = Math.max(0, i - 24); j <= Math.min(n - 1, i + 24); j++) m = Math.min(m, gs[j]); return m; });
     railRaw.pts.forEach((p, i) => {
       let s = 0, c = 0;
       for (let j = Math.max(0, i - K); j <= Math.min(n - 1, i + K); j++) { s += ys[j]; c++; }
       let y = Math.max(s / c, 0.05) + 0.16;
-      const g = ys[i];
-      if (g > y - 0.08 && g < y + 0.35) y = g + 0.08;
+      const g = gs[i];
+      if (g > y - 0.08 && g < y + 0.2) y = g + 0.08;
       p.y = y;
     });
   }
@@ -221,13 +232,33 @@ export function createWorld() {
   const castlePos = onGround(LL(135.526, 34.687));
   const fushimi = onGround(LL(135.772, 34.967));
   const pagodaPos = onGround(LL(138.801, 35.501));
+  // Chureito viewpoint: up the hillside beside the pagoda, Fuji behind it
+  const pf = fujiTop.clone().sub(pagodaPos).setY(0).normalize();
+  // The hill climbs steeply behind the pagoda, so search the arc behind it for the spot
+  // closest to the pagoda's own level: from there both the tower and the summit fit the frame.
+  const pagodaEye = pagodaPos.clone();
+  {
+    let best = Infinity;
+    for (let a = -1.2; a <= 1.2; a += 0.1) for (const r of [1.0, 1.25, 1.5]) {
+      const dx = -pf.x * Math.cos(a) + pf.z * Math.sin(a), dz = -pf.z * Math.cos(a) - pf.x * Math.sin(a);
+      const x = pagodaPos.x + dx * r, z = pagodaPos.z + dz * r, y = ground(x, z) + 0.14;
+      let clear = true; // nothing between the eye and the pagoda's base and top
+      for (let k = 1; k < 10 && clear; k++) { const u = k / 10, gx = x + (pagodaPos.x - x) * u, gz = z + (pagodaPos.z - z) * u; clear = ground(gx, gz) + 0.04 < y + (pagodaPos.y + 0.1 - y) * u; }
+      const cost = Math.abs(y - pagodaPos.y - 0.3) + Math.abs(a) * 0.12 + (clear ? 0 : 10);
+      if (cost < best) { best = cost; pagodaEye.set(x, y, z); }
+    }
+  }
   const ashiC = LL(139.0, 35.215, lakeY('ashi'));
   const ashiShore = (() => { // walk in from the east bank until the real water starts
     const dir = LL(139.025, 35.205).sub(V(ashiC.x, 0, ashiC.z)); let k = dir.length(); dir.normalize();
     while (k > 0 && !lakeAt(ashiC.x + dir.x * k, ashiC.z + dir.z * k)) k -= 0.02;
-    return (off) => V(ashiC.x + dir.x * (k + off), 0, ashiC.z + dir.z * (k + off));
+    return (off, along = 0) => V(ashiC.x + dir.x * (k + off) - dir.z * along, 0, ashiC.z + dir.z * (k + off) + dir.x * along);
   })();
-  const ryokanPos = onGround(ashiShore(0.3));
+  let ryokanPos = onGround(ashiShore(0.3));
+  for (const along of [0.5, -0.5, 0.7, -0.7, 0.35, -0.35]) { // first dry spot beside the torii with dry ground all round
+    const q = ashiShore(0.4, along);
+    if ([[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]].every(([ax, az]) => !lakeAt(q.x + ax, q.z + az))) { ryokanPos = onGround(q); break; }
+  }
 
   const cityList = [
     { x: toX(139.73), z: toZ(35.68), r: 15, n: 2600, maxH: 2.2 },
@@ -247,7 +278,7 @@ export function createWorld() {
   ];
   const avoid = [
     { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: 5, tree: 1.15 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
-    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 },
+    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
   ];
   // rivers through the cities (drawn as rippled water ribbons, kept clear of buildings)
   const riverMat = waterMaterial('#3d7593', { roughness: 0.14, metalness: 0.35, freq: 3, amp: 0.1 });
@@ -547,10 +578,7 @@ export function createWorld() {
   const ashiTop = V(ashiC.x, ashiC.y, ashiC.z);
   const routeMid = V((bx + nrtC.x) / 2, 0, (bz + nrtC.z) / 2);
   const toFuji = (from) => fujiTop.clone().add(V(0, 3, 0)).sub(from).setY(0).normalize();
-  const pf = toFuji(pagodaPos);
-  const pagodaEye = pagodaPos.clone().addScaledVector(pf, -0.8).add(V(-pf.z * 0.22, 0, pf.x * 0.22));
-  pagodaEye.y = Math.max(ground(pagodaEye.x, pagodaEye.z) + 0.1, pagodaPos.y + 0.36);
-  const pagodaLook = pagodaPos.clone().add(V(0, 0.5, 0)).lerp(fujiTop.clone().add(V(0, -3.5, 0)), 0.05);
+  const pagodaLook = pagodaPos.clone().add(V(0, 0.62, 0)); // aim at the pagoda's upper tiers; Fuji rises behind
   const fujiLook = fujiTop.clone().add(V(0, -3.5, 0));
   const suiteEye = hotel.localToWorld(V(-2.5, SUITE.y + 0.9, -5.5));
   const suiteLook = suiteEye.clone().lerp(fujiTop.clone().add(V(0, -4.5, 0)), 0.4);
@@ -559,11 +587,12 @@ export function createWorld() {
   const ryEye = ryokan.localToWorld(V(-7.6, 3.1, -1.5));
   const ryLook = ryokan.localToWorld(V(60, -6, -8));
   const toLake = V(ashiC.x - toriiPos.x, 0, ashiC.z - toriiPos.z).normalize();
-  const toriiEye = V(toriiPos.x, toriiPos.y, toriiPos.z).addScaledVector(toLake, 2.1).add(V(-toLake.z * 0.7, 0.45, toLake.x * 0.7));
+  const toriiEye = V(toriiPos.x, toriiPos.y, toriiPos.z).addScaledVector(toLake, 0.85).add(V(-toLake.z * 0.25, 0.22, toLake.x * 0.25)); // out on the water, clear of the lakeside road
   const fushiEye = fushiPath.at(0.02).add(V(0, 0.065, 0));
   const fushiLook = fushiPath.at(0.32).add(V(0, 0.05, 0));
   const nrtGateEye = nw(1.5, 1.0, 1.7), nrtGateLook = nw(0.4, 2.0, 0.12);
-  const guideEye = nw(0.7, 3.84, 0.07), guideLook = guidePos.clone().add(V(-0.05, 0.03, 0));
+  const guideEye = nw(0.6, 3.8, 0), guideLook = guidePos.clone().add(V(0, 0.016, 0));
+  guideEye.y = guidePos.y + 0.045;
   const KEYS = [
     { t: 0.0, pos: A(bw(-4.6, -2.4, 1.3)), look: A(bw(-1.0, 1.1, 0.1)) },
     { t: 0.045, pos: PR(1.7, 0.32, -1.25), look: PR(-0.3, 0.06, 0) },
@@ -577,9 +606,10 @@ export function createWorld() {
     { t: 0.5, pos: A(nw(-NRT_LEN / 2 + 0.3, -1.25, 0.55)), look: PR(0, 0, 0) },
     { t: 0.527, pos: PR(1.9, 0.33, 1.35), look: PR(-0.6, 0.02, 0) },
     { t: 0.556, pos: A(nrtGateEye), look: A(nrtGateLook) },
+    { t: 0.572, pos: A(nw(1.1, 3.0, 1.7)), look: A(guideLook) }, // over the terminal roof, not through it
     { t: 0.588, pos: A(guideEye), look: A(guideLook) },
-    { t: 0.603, pos: BR(1.7, 1.15, 1.3), look: BR(-0.6, 0.04, 0) },
-    { t: 0.622, pos: BR(1.1, 0.5, 0.6), look: BR(-1.3, 0.04, 0) },
+    { t: 0.603, pos: BR(0.5, 0.2, 0.32), look: BR(-0.4, 0.03, 0) },
+    { t: 0.622, pos: BR(0.7, 0.26, -0.4), look: BR(-1.3, 0.04, 0) },
     { t: 0.645, pos: BR(1.9, 1.3, -0.5), look: BR(-3, 0, 0) },
     { t: 0.675, pos: A(towerPos.clone().add(V(6.5, 3.6, 8))), look: A(towerPos.clone().add(V(0, 3.2, 0))) },
     { t: 0.705, pos: A(towerPos.clone().add(V(-7.5, 6.8, 4.5))), look: A(towerPos.clone().add(V(0, 2.2, 0))) },

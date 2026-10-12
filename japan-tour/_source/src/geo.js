@@ -173,7 +173,7 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
   const colorFor = (x, z, km, m, out) => {
     const n = fbm(x / 9, z / 9, 3);
     if (m < 0.35) out.copy(seabed).lerp(sand, Math.max(0, (m - 0.15) * 3));
-    else if (km < 0.03) out.copy(sand).lerp(field, THREE.MathUtils.smoothstep(km, 0.0, 0.03));
+    else if (km < 0.03) out.copy(sand).lerp(field, Math.max(THREE.MathUtils.smoothstep(km, 0.0, 0.004), THREE.MathUtils.smoothstep(m, 0.5, 0.9)));
     else if (km < 0.35) out.copy(field).lerp(lowGreen, 0.5 + n * 0.5);
     else if (km < 1.2) out.copy(lowGreen).lerp(forest, THREE.MathUtils.smoothstep(km, 0.35, 1.0)).lerp(darkForest, Math.max(0, n) * 0.6);
     else if (km < 2.2) out.copy(forest).lerp(rock, THREE.MathUtils.smoothstep(km, 1.4, 2.2));
@@ -308,7 +308,7 @@ export const urbanW = (x, z) => Math.max(gauss(x, z, 139.72, 35.69, 13), gauss(x
 // Fuji is part of the real terrain; this unseen cone only catches clicks on the mountain
 export function buildFuji(baseAt) {
   const cx = toX(FUJI.lon), cz = toZ(FUJI.lat), top = baseAt(cx, cz), h = top - baseAt(cx + 12, cz);
-  const m = new THREE.Mesh(new THREE.ConeGeometry(12, h, 24).translate(0, -h / 2, 0), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
+  const m = new THREE.Mesh(new THREE.ConeGeometry(12, h, 24).translate(0, -h / 2, 0), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, transparent: true }));
   m.position.set(cx, top, cz);
   return m;
 }

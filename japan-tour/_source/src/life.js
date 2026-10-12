@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createAirliner, createCoach, createShinkansenCar, createPirateShip, createDeerGeometry } from './models2.js';
 import { MODEL_SCALE as S, toX, toZ } from './geo.js';
+import { Path } from './path.js';
 
 // Ambient motion that keeps the map alive: Shinkansen on the real Tokaido line,
 // traffic and coaches on the tour road, planes around the airports, boats on the
@@ -13,7 +14,7 @@ let seed = 777;
 const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
 export function createLife(scene, w) {
-  const { ground, road, rail, lakeY, LAKES, nara, fushimi, towerPos, pagodaPos } = w;
+  const { ground, road, rail, lakeY, lakeAt, LAKES, nara, fushimi, towerPos, pagodaPos } = w;
   const pickables = [];
   const updaters = [];
   const tmp = V(0, 0, 0), tan = V(0, 0, 0);
@@ -142,18 +143,31 @@ export function createLife(scene, w) {
     const a = u * ashi.a, b = v * ashi.b;
     return V(toX(ashi.lon) + a * c + b * s, lakeY('ashi'), toZ(ashi.lat) - a * s + b * c);
   };
+  // sailing lane down the middle of the real lake: the centre of the widest stretch of water at each station
+  const laneP = [];
+  for (let v = -1.3; v <= 1.3; v += 0.04) {
+    let best = [], run = [];
+    for (let u = -1.6; u <= 1.6; u += 0.05) {
+      const q = ashiPt(u, v);
+      if (lakeAt(q.x, q.z)) run.push(q); else { if (run.length > best.length) best = run; run = []; }
+    }
+    if (run.length > best.length) best = run;
+    if (best.length >= 4) laneP.push(best[best.length >> 1]);
+  }
+  const lane = new Path(laneP);
   for (let i = 0; i < 2; i++) {
     const ship = createPirateShip();
     ship.scale.setScalar(S * 0.45);
     ship.userData.info = 'pirate';
     scene.add(ship); pickables.push(ship);
     updaters.push((t) => {
-      const ph = t * 0.012 + i * 0.5;
-      const v = Math.sin(ph * Math.PI * 2) * 0.72;
-      const p = ashiPt(i ? 0.2 : -0.18, v);
-      const q = ashiPt(i ? 0.2 : -0.18, Math.sin((ph + 0.001) * Math.PI * 2) * 0.72);
-      ship.position.copy(p).add(V(0, -0.02 + Math.sin(t * 1.3 + i) * 0.003, 0));
-      ship.rotation.y = Math.atan2(-(q.z - p.z), q.x - p.x);
+      const ph = (t * 0.012 + i * 0.5) * Math.PI * 2;
+      const d = lane.length * (0.5 + 0.42 * Math.sin(ph));
+      lane.at(d, ship.position);
+      lane.tangent(d, tan, 0.3).multiplyScalar(Math.cos(ph) >= 0 ? 1 : -1);
+      ship.position.x += -tan.z * 0.07; ship.position.z += tan.x * 0.07; // keep right
+      ship.position.y = lakeY('ashi') - 0.02 + Math.sin(t * 1.3 + i) * 0.003;
+      ship.rotation.y = Math.atan2(-tan.z, tan.x);
       ship.rotation.z = Math.sin(t * 0.9 + i) * 0.02;
     });
   }
@@ -171,7 +185,12 @@ export function createLife(scene, w) {
     b.scale.setScalar(S * 1.4);
     b.userData.info = 'boat';
     scene.add(b); pickables.push(b);
-    const cx = toX(kawa.lon) + 0.9 + (i % 3) * 0.35, cz = toZ(kawa.lat) - 0.25 - (i % 2) * 0.12;
+    // nearest open water to the boat's berth on the real lake
+    let cx = toX(kawa.lon) + 0.9 + (i % 3) * 0.35, cz = toZ(kawa.lat) - 0.25 - (i % 2) * 0.12;
+    search: for (let rad = 0; rad < 4; rad += 0.1) for (let a = 0; a < 6.28; a += 0.4) {
+      const x = cx + Math.cos(a) * rad, z = cz + Math.sin(a) * rad;
+      if ([[0, 0], [0.3, 0], [-0.3, 0], [0, 0.3], [0, -0.3]].every(([ax, az]) => lakeAt(x + ax, z + az))) { cx = x; cz = z; break search; }
+    }
     updaters.push((t) => {
       const a = t * (0.05 + i * 0.01) + i * 1.3, r = 0.08 + i * 0.03;
       b.position.set(cx + Math.cos(a) * r, lakeY('kawaguchiko') - 0.004, cz + Math.sin(a) * r);

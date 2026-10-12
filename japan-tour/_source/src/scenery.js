@@ -28,12 +28,12 @@ function canvasTex(w, h, draw) {
 export function ribbon(path, halfW, yFn, mat, { stride = 1, uvLen = 1 } = {}) {
   const verts = [], uvs = [], idx = [];
   const n = path.pts.length;
-  const t = new THREE.Vector3();
+  const t = new THREE.Vector3(), last = new THREE.Vector3(1, 0, 0);
   let k = 0;
   for (let i = 0; i < n; i += stride) {
     const p = path.pts[i];
     const a = path.pts[Math.max(0, i - 1)], b = path.pts[Math.min(n - 1, i + 1)];
-    t.subVectors(b, a).setY(0).normalize();
+    if (t.subVectors(b, a).setY(0).lengthSq() > 1e-10) { t.normalize(); last.copy(t); } else t.copy(last); // U-turns: keep the previous heading
     const sx = -t.z * halfW, sz = t.x * halfW;
     const yl = yFn(p.x + sx, p.z + sz, p), yr = yFn(p.x - sx, p.z - sz, p);
     verts.push(p.x + sx, yl, p.z + sz, p.x - sx, yr, p.z - sz);
