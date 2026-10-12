@@ -14,6 +14,7 @@ import {
 } from './scenery.js';
 import { createHoloMap } from './mapholo.js';
 import { createLife } from './life.js';
+import ROUTES from './routes.json';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const LL = (lon, lat, y = 0) => V(toX(lon), y, toZ(lat));
@@ -44,10 +45,9 @@ export function createWorld() {
   const T = buildTerrain({
     cell: 2,
     patches: [
-      { lon0: 138.66, lon1: 138.88, lat0: 35.43, lat1: 35.56, k: 16, relief: 0.35 }, // Kawaguchiko + Chureito
+      { lon0: 138.52, lon1: 139.12, lat0: 35.14, lat1: 35.58, k: 10 }, // Fuji, the lakes and Hakone
       { lon0: 139.55, lon1: 140.2, lat0: 35.25, lat1: 35.82, k: 8, relief: 0, coast: true }, // Tokyo bay coastline
       { lon0: 135.12, lon1: 135.6, lat0: 34.38, lat1: 34.75, k: 8, relief: 0, coast: true }, // Osaka bay coastline
-      { lon0: 138.95, lon1: 139.10, lat0: 35.16, lat1: 35.29, k: 16 }, // Hakone / Lake Ashi
       { lon0: 135.72, lon1: 135.86, lat0: 34.93, lat1: 35.01, k: 12 }, // Fushimi Inari hill
     ],
   });
@@ -68,7 +68,7 @@ export function createWorld() {
     for (const L of LAKES) {
       const dx = x - toX(L.lon), dz = z - toZ(L.lat), c = Math.cos(L.rot), s = Math.sin(L.rot);
       const u = (dx * c - dz * s) / L.a, v = (dx * s + dz * c) / L.b;
-      if (u * u + v * v < lim) return L;
+      if (u * u + v * v < 1.6 && T.kmAt(x, z) < L.level - 0.015) return L; // real shoreline: the lake bed is cut below water level
     }
     return null;
   };
@@ -137,22 +137,33 @@ export function createWorld() {
   const trail = createTrail(140, 0.05); scene.add(trail);
 
   // ---------- tour road ----------
-  const curb = nw(0.4, 3.85);
-  const ROAD_WP = [
-    [curb.x, curb.z], [140.2, 35.72], [139.95, 35.68], [139.75, 35.68], [139.62, 35.55], [139.45, 35.45], [139.25, 35.33], [139.1, 35.26], [138.95, 35.30],
-    [138.93, 35.40], [138.86, 35.47], [138.77, 35.50], [138.62, 35.25], [138.40, 35.05], [138.0, 34.82], [137.7, 34.75], [137.40, 34.80], [137.10, 35.02],
-    [136.906, 35.181], [136.6, 35.3], [136.3, 35.25], [136.0, 35.05], [135.85, 34.98], [135.772, 34.967], [135.80, 34.85], [135.84, 34.685], [135.7, 34.67],
-    [135.526, 34.687], [135.40, 34.55], [135.24, 34.43],
-  ].map(([a, b], i) => (i === 0 ? V(a, 0, b) : LL(a, b)));
-  ROAD_WP[ROAD_WP.length - 1] = kix.userData.toWorld(0, -3.9);
-  ROAD_WP[23] = LL(135.765, 34.962); // stop just west of the shrine gate
+  // Real road geometry (OpenStreetMap, baked by scripts/build-routes.mjs), resampled to an
+  // even spacing. The vertical profile is the ground, eased so the deck does not jitter.
   const roadY = (x, z) => Math.max(H(x, z), 0.03) + 0.014;
-  const road = Path.fromControl(ROAD_WP, 0.18, (x, z) => roadY(x, z));
+  const polyPath = (pts, step) => {
+    for (let k = 0; k < 2; k++) { // Chaikin: round the corners left by simplification
+      const o = [pts[0]];
+      for (let i = 0; i < pts.length - 1; i++) o.push(pts[i].clone().lerp(pts[i + 1], 0.25), pts[i].clone().lerp(pts[i + 1], 0.75));
+      o.push(pts[pts.length - 1]); pts = o;
+    }
+    const coarse = new Path(pts), out = [];
+    for (let d = 0; d < coarse.length; d += step) out.push(coarse.at(d));
+    out.push(pts[pts.length - 1].clone());
+    const g = out.map((q) => roadY(q.x, q.z)), n = g.length, K = 3;
+    out.forEach((q, i) => { let a = 0, c = 0; for (let j = Math.max(0, i - K); j <= Math.min(n - 1, i + K); j++) { a += g[j]; c++; } q.y = Math.max(a / c, g[i] - 0.004); });
+    return new Path(out);
+  };
+  const deckY = (x, z, q) => Math.max(q.y, H(x, z) + 0.006);
+  const curb = nw(0.4, 3.85);
+  const legNames = Object.keys(ROUTES.road), legEnd = {};
+  const roadLL = [];
+  legNames.forEach((name) => { roadLL.push(...ROUTES.road[name].map(([lo, la]) => LL(lo, la))); legEnd[name.split('-')[1]] = roadLL[roadLL.length - 1]; });
+  const road = polyPath([curb.clone().setY(0), ...roadLL, kix.userData.toWorld(0, -3.9).setY(0)], 0.18);
   const roadMat = roadMaterial();
-  scene.add(ribbon(road, 0.07, roadY, roadMat, { uvLen: 0.6 }));
+  scene.add(ribbon(road, 0.07, deckY, roadMat, { uvLen: 0.6 }));
   addClear(road);
-  const RD = (i) => road.closest(ROAD_WP[i]);
-  const RDT = { nrt: 0, tokyo: RD(3), hakone: RD(7), kawa: RD(11), nagoya: RD(18), fushimi: RD(23), nara: RD(25), osaka: RD(27), kix: road.length };
+  const RD = (k) => road.closest(legEnd[k]);
+  const RDT = { nrt: 0, tokyo: RD('tokyo'), hakone: RD('hakone'), kawa: RD('kawa'), nagoya: RD('nagoya'), fushimi: RD('fushimi'), nara: RD('nara'), osaka: RD('osaka'), kix: road.length };
 
   // hotel on the north shore of Kawaguchiko, suite glass facing Fuji
   const hotelPos = LL(138.77, 35.52);
@@ -160,10 +171,14 @@ export function createWorld() {
   hotelPos.z -= 0.45;
   onGround(hotelPos);
   const fujiTop = V(toX(FUJI.lon), 0, toZ(FUJI.lat)); fujiTop.y = H(fujiTop.x, fujiTop.z);
-  // spur from the Kawaguchiko junction round the east end of the lake to the hotel
-  const spurWP = [LL(138.77, 35.50), LL(138.792, 35.496), LL(138.815, 35.507), LL(138.812, 35.524), V(hotelPos.x + 1.6, 0, hotelPos.z - 0.9), V(hotelPos.x + 0.2, 0, hotelPos.z - 0.75)];
-  const spur = Path.fromControl(spurWP, 0.12, roadY);
-  scene.add(ribbon(spur, 0.06, roadY, roadMat, { uvLen: 0.6 }));
+  // spur from Kawaguchiko round the lake to the hotel forecourt
+  const spurLL = ROUTES.spur.map(([lo, la]) => LL(lo, la));
+  {
+    const end = spurLL[spurLL.length - 1], to = V(hotelPos.x - end.x, 0, hotelPos.z - end.z), far = to.length();
+    if (far > 0.3) spurLL.push(end.clone().addScaledVector(to, 1 - 0.25 / far));
+  }
+  const spur = polyPath(spurLL, 0.12);
+  scene.add(ribbon(spur, 0.06, deckY, roadMat, { uvLen: 0.6 }));
   addClear(spur);
   // bus story route = road to Kawaguchiko + spur
   const busPts = road.slice(0, RDT.kawa).concat(spur.pts.slice(1));
@@ -206,8 +221,13 @@ export function createWorld() {
   const castlePos = onGround(LL(135.526, 34.687));
   const fushimi = onGround(LL(135.772, 34.967));
   const pagodaPos = onGround(LL(138.801, 35.501));
-  const ryokanPos = onGround(LL(139.03, 35.235));
   const ashiC = LL(139.0, 35.215, lakeY('ashi'));
+  const ashiShore = (() => { // walk in from the east bank until the real water starts
+    const dir = LL(139.025, 35.205).sub(V(ashiC.x, 0, ashiC.z)); let k = dir.length(); dir.normalize();
+    while (k > 0 && !lakeAt(ashiC.x + dir.x * k, ashiC.z + dir.z * k)) k -= 0.02;
+    return (off) => V(ashiC.x + dir.x * (k + off), 0, ashiC.z + dir.z * (k + off));
+  })();
+  const ryokanPos = onGround(ashiShore(0.3));
 
   const cityList = [
     { x: toX(139.73), z: toZ(35.68), r: 15, n: 2600, maxH: 2.2 },
@@ -253,7 +273,6 @@ export function createWorld() {
     if (T.landAt(x, z) < 0.85 || lakeAt(x, z, 1.2) || T.urbanAt(x, z) > 0.32) return;
     const km = T.kmAt(x, z) + (Math.hypot(x - fujiTop.x, z - fujiTop.z) < FUJI.R ? 0 : 0);
     const fr = Math.hypot(x - fujiTop.x, z - fujiTop.z);
-    if (fr < 9) return; // above the tree line on Fuji
     if (km > 2.3 || nearRoute(x, z, 0.13)) return;
     if (avoid.some((v) => (v.x - x) ** 2 + (v.z - z) ** 2 < (v.r * (v.tree ?? 0.6)) ** 2)) return;
     const r = rnd();
@@ -513,7 +532,7 @@ export function createWorld() {
     const p = busPath.at(d), tan = busPath.tangent(d, tmpT, 0.12);
     const side = V(-tan.z, 0, tan.x).normalize();
     bus.position.copy(p).addScaledVector(side, -0.03);
-    bus.position.y = roadY(bus.position.x, bus.position.z) - 0.004;
+    bus.position.y = p.y - 0.004;
     bus.lookAt(tmpV.copy(bus.position).sub(V(tan.x, tan.y * 0.6, tan.z)));
     return { p: bus.position.clone(), f: V(tan.x, 0, tan.z).normalize() };
   }
@@ -529,7 +548,8 @@ export function createWorld() {
   const routeMid = V((bx + nrtC.x) / 2, 0, (bz + nrtC.z) / 2);
   const toFuji = (from) => fujiTop.clone().add(V(0, 3, 0)).sub(from).setY(0).normalize();
   const pf = toFuji(pagodaPos);
-  const pagodaEye = pagodaPos.clone().addScaledVector(pf, -1.6).add(V(-pf.z * 0.5, 0.3, pf.x * 0.5));
+  const pagodaEye = pagodaPos.clone().addScaledVector(pf, -0.8).add(V(-pf.z * 0.22, 0, pf.x * 0.22));
+  pagodaEye.y = Math.max(ground(pagodaEye.x, pagodaEye.z) + 0.1, pagodaPos.y + 0.36);
   const pagodaLook = pagodaPos.clone().add(V(0, 0.5, 0)).lerp(fujiTop.clone().add(V(0, -3.5, 0)), 0.05);
   const fujiLook = fujiTop.clone().add(V(0, -3.5, 0));
   const suiteEye = hotel.localToWorld(V(-2.5, SUITE.y + 0.9, -5.5));

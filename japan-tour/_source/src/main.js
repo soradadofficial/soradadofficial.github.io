@@ -9,6 +9,7 @@ import { GTAOPass } from 'three/examples/jsm/postprocessing/GTAOPass.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createWorld } from './world.js';
+import { loadDem } from './geo.js';
 import { FilmShader, lerpEnv, copyEnv, ENV } from './fx.js';
 import { initBuilder, fillInsuranceTable } from './builder.js';
 import { lineMats } from './scenery.js';
@@ -33,6 +34,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const clock = new THREE.Clock();
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.002, 40000);
 if (location.search.includes('debug')) window.__cam = camera;
+await loadDem();
 const world = createWorld();
 const { scene } = world;
 {

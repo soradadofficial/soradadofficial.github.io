@@ -237,7 +237,7 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
   let i = 0, nG = 0, nT = 0, nS = 0;
   for (const c of list) {
     const rot = c.rot ?? 0, cr = Math.cos(rot), sr = Math.sin(rot);
-    const SP = c.r >= 4 ? 0.42 : c.r >= 2 ? 0.32 : 0;
+    const SP = c.r >= 4 ? 0.8 : c.r >= 2 ? 0.5 : 0;
     if (SP) {
       for (let u = -c.r; u <= c.r; u += SP) for (let v = -c.r; v < c.r; v += SP * 0.5) {
         for (const dir of [0, 1]) {
@@ -259,8 +259,8 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
       const core = Math.exp(-(r * r) / (2 * (c.r * 0.35) ** 2));
       const tall = rnd() < 0.12 + core * 0.45;
       const big = c.maxH > 1;
-      const h = tall && big ? 0.25 + Math.pow(rnd(), 2.4) * c.maxH * (0.25 + core) : (big ? 0.08 + rnd() * 0.2 : 0.035 + rnd() * 0.05 + (tall ? c.maxH * rnd() * 0.4 : 0));
-      const w = tall && big ? 0.12 + rnd() * 0.2 : (big ? 0.08 + rnd() * 0.12 : 0.04 + rnd() * 0.05), d = w * (0.6 + rnd() * 0.8);
+      const w = tall && big ? 0.26 + rnd() * 0.3 : (big ? 0.16 + rnd() * 0.26 : 0.06 + rnd() * 0.08), d = w * (0.7 + rnd() * 0.5);
+      const h = tall && big ? Math.min(0.3 + Math.pow(rnd(), 2.4) * c.maxH * (0.25 + core), Math.min(w, d) * 6) : (big ? 0.08 + rnd() * 0.26 : 0.035 + rnd() * 0.05 + (tall ? c.maxH * rnd() * 0.4 : 0));
       if (SP) {
         // keep buildings inside blocks, off the streets
         const lu = (x - c.x) * cr + (z - c.z) * sr, lv = -(x - c.x) * sr + (z - c.z) * cr;
@@ -303,7 +303,7 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
     const sm = new THREE.InstancedMesh(sGeo, sMat, streets.length);
     streets.forEach((t, k) => {
       q.setFromAxisAngle(V(0, 1, 0), t.ang);
-      m.compose(p.set(t.x, heightAt(t.x, t.z) + 0.012, t.z), q, s.set(0.022, 1, t.len + 0.022));
+      m.compose(p.set(t.x, heightAt(t.x, t.z) + 0.012, t.z), q, s.set(0.05, 1, t.len + 0.05));
       sm.setMatrixAt(k, m);
     });
     sm.receiveShadow = true;

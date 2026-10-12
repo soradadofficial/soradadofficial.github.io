@@ -81,8 +81,7 @@ export function createLife(scene, w) {
       road.tangent(c.d, tan, 0.1);
       const sx = -tan.z, sz = tan.x;
       const lane = c.dir > 0 ? -0.018 : 0.018;
-      dummy.position.x += sx * lane; dummy.position.z += sz * lane;
-      dummy.position.y = ground(dummy.position.x, dummy.position.z) + 0.01;
+      dummy.position.x += sx * lane; dummy.position.z += sz * lane; // y stays on the road deck
       dummy.lookAt(tmp.copy(dummy.position).addScaledVector(tan, c.dir));
       dummy.updateMatrix();
       traffic.setMatrixAt(i, dummy.matrix);
@@ -99,8 +98,7 @@ export function createLife(scene, w) {
       st.d = (st.d + st.dir * 0.11 * dt + road.length) % road.length;
       road.at(st.d, c.position);
       road.tangent(st.d, tan, 0.1).multiplyScalar(st.dir);
-      c.position.x += -tan.z * -0.018 * st.dir; c.position.z += tan.x * -0.018 * st.dir;
-      c.position.y = ground(c.position.x, c.position.z) + 0.01;
+      c.position.x += -tan.z * -0.018 * st.dir; c.position.z += tan.x * -0.018 * st.dir; // y stays on the road deck
       c.lookAt(tmp.copy(c.position).sub(tan));
     });
   });

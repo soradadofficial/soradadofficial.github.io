@@ -1,10 +1,14 @@
 import * as THREE from 'three';
 import GEO from './geo-data.json';
+import META from './dem/meta.json';
+import demJapan from './dem/japan.png';
+import demFuji from './dem/fuji.png';
+import demKyoto from './dem/kyoto.png';
 
 // One world unit = 1 km on the ground. Heights are exaggerated by VERT so the
 // mountains read at map scale. Man-made models use MODEL_SCALE (1 m -> 0.02 units),
 // a miniature-diorama exaggeration so trains, buses and buildings stay visible.
-export const VERT = 5;
+export const VERT = 3;
 export const MODEL_SCALE = 0.02;
 const LON0 = 137.5, LAT0 = 35.5;
 const KX = 111.32 * Math.cos(LAT0 * Math.PI / 180), KZ = 110.95;
@@ -18,6 +22,35 @@ export const toLat = (z) => -z / KZ + LAT0;
 // stays short ("skip between countries").
 export const THAI_SHIFT = { x: 1700, z: -1250 };
 export const thaiXZ = (lon, lat) => [toX(lon) + THAI_SHIFT.x, toZ(lat) + THAI_SHIFT.z];
+
+// ---------- real elevation (baked by scripts/build-dem.mjs from AWS Terrain Tiles) ----------
+const DEM = {};
+export async function loadDem() {
+  await Promise.all(Object.entries({ japan: demJapan, fuji: demFuji, kyoto: demKyoto }).map(async ([name, url]) => {
+    const img = new Image(); img.src = url; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data, km = new Float32Array(c.width * c.height);
+    for (let i = 0; i < km.length; i++) km[i] = (d[i * 4] * 256 + d[i * 4 + 1]) / 1000;
+    DEM[name] = { ...META[name], km };
+  }));
+}
+function demGrid(G, fx, fy) {
+  fx = Math.min(G.cols - 1.001, Math.max(0, fx)); fy = Math.min(G.rows - 1.001, Math.max(0, fy));
+  const i = Math.floor(fx), j = Math.floor(fy), tx = fx - i, ty = fy - j, k = j * G.cols + i;
+  return (G.km[k] * (1 - tx) + G.km[k + 1] * tx) * (1 - ty) + (G.km[k + G.cols] * (1 - tx) + G.km[k + G.cols + 1] * tx) * ty;
+}
+// real height in km at a world position: detailed regions feathered into the national grid
+export function demKm(x, z) {
+  const lon = toLon(x), lat = toLat(z), J = DEM.japan;
+  let h = demGrid(J, (lon - J.lon0) / J.step, (J.lat1 - lat) / J.step);
+  for (const G of [DEM.fuji, DEM.kyoto]) {
+    const fx = (lon - G.lon0) / G.step, fy = (G.lat1 - lat) / G.step;
+    const edge = Math.min(fx, G.cols - 1 - fx, fy, G.rows - 1 - fy) * G.step;
+    if (edge > 0) h += (demGrid(G, fx, fy) - h) * THREE.MathUtils.smoothstep(edge, 0, 0.02);
+  }
+  return h;
+}
 
 // ---------- tiny 2D simplex noise ----------
 const grad = [[1, 1], [-1, 1], [1, -1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]];
@@ -48,16 +81,11 @@ const ridged = (x, y, oct = 5) => { let a = 0, f = 1, amp = 0.5; for (let i = 0;
 // ---------- landmark shaping (real km) ----------
 const gauss = (x, z, lon, lat, r) => { const dx = x - toX(lon), dz = z - toZ(lat); return Math.exp(-(dx * dx + dz * dz) / (2 * r * r)); };
 export const FUJI = { lon: 138.7274, lat: 35.3606, R: 21, H: 3.776 };
-export function fujiProfile(r) { // real km above base
-  if (r >= FUJI.R) return 0;
-  const t = r / FUJI.R;
-  return (FUJI.H - 0.9) * Math.pow(1 - t, 1.75) * (1 - 0.04 * (r < 0.35 ? 1 - r / 0.35 : 0));
-}
 export const LAKES = [
-  { name: 'kawaguchiko', lon: 138.755, lat: 35.515, a: 3.4, b: 0.75, rot: 0.35, level: 0.833 },
-  { name: 'ashi', lon: 139.0, lat: 35.215, a: 1.1, b: 3.4, rot: 0.15, level: 0.723 },
-  { name: 'biwa', lon: 136.08, lat: 35.27, a: 10, b: 30, rot: -0.35, level: 0.085 },
-  { name: 'yamanaka', lon: 138.87, lat: 35.415, a: 2.2, b: 0.9, rot: -0.4, level: 0.98 },
+  { name: 'kawaguchiko', lon: 138.755, lat: 35.515, a: 3.4, b: 0.75, rot: 0.35, level: 0.829 },
+  { name: 'ashi', lon: 139.0, lat: 35.215, a: 1.1, b: 3.4, rot: 0.15, level: 0.719 },
+  { name: 'biwa', lon: 136.08, lat: 35.27, a: 10, b: 30, rot: -0.35, level: 0.081 },
+  { name: 'yamanaka', lon: 138.87, lat: 35.415, a: 2.2, b: 0.9, rot: -0.4, level: 0.984 },
 ];
 function inLake(x, z) {
   for (const L of LAKES) {
@@ -99,36 +127,23 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
     }
     return a;
   };
-  const near = blur(mask, Math.max(1, Math.round(4 / cell)));
   const mask1 = blur(mask, 1);
-  const inland = blur(mask, Math.max(2, Math.round(28 / cell)));
 
   const base = new Float32Array(N);    // without Fuji (the Fuji mesh drapes on it)
   const realKm = new Float32Array(N);  // with Fuji, for tree line
   const colKm = new Float32Array(N);
-  const rawH = (x, z, inl, nr) => {
-    let h = Math.pow(inl, 1.25) * (0.15 + 1.35 * Math.pow(ridged(x / 70, z / 70), 2.2)) + 0.12 * nr * (fbm(x / 18, z / 18) + 0.5);
-    // Japanese Alps
-    const ax = x - toX(137.65), az = z - toZ(36.15);
-    h += 2.0 * Math.exp(-(ax * ax) / (2 * 28 * 28) - (az * az) / (2 * 75 * 75)) * (0.6 + 0.6 * ridged(x / 25, z / 25)) * inl;
-    // plains and basins where the cities are
-    const plain = Math.max(gauss(x, z, 139.75, 35.95, 48), gauss(x, z, 136.85, 35.22, 24), gauss(x, z, 135.5, 34.68, 16), gauss(x, z, 135.76, 35.0, 5), gauss(x, z, 135.82, 34.62, 6), gauss(x, z, 140.3, 35.75, 14));
-    h *= 1 - 0.93 * plain;
-    // Hakone volcano with its caldera, Fuji foothills
-    h += 0.85 * gauss(x, z, 139.02, 35.23, 7.5) - 0.35 * gauss(x, z, 139.01, 35.22, 2.4);
-    h += 0.75 * gauss(x, z, 138.73, 35.4, 14);
-    return h;
-  };
+  const rawH = (x, z) => demKm(x, z);
+  // a lake is wherever the real surface sits at the lake's level inside its (generous) outline
+  const wet = (lake, km) => lake && km <= lake.L.level + 0.004;
   for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
     const k = j * cols + i, x = x0 + i * cell, z = z0 + j * cell;
     const m = mask[k];
-    let h = rawH(x, z, inland[k], near[k]);
+    let h = rawH(x, z);
     const lake = inLake(x, z);
-    if (lake && lake.d < 1) h = lake.L.level - 0.04;
-    else if (lake) h = Math.max(h, lake.L.level + 0.01 * (lake.d - 1));
+    if (wet(lake, h)) h = lake.L.level - 0.04;
+    else if (lake) h = Math.max(h, lake.L.level + 0.008);
     const land = THREE.MathUtils.smoothstep(m, 0.3, 0.62);
-    const fuji = fujiProfile(Math.hypot(x - toX(FUJI.lon), z - toZ(FUJI.lat)));
-    realKm[k] = (h + fuji) * land;
+    realKm[k] = h * land;
     colKm[k] = h * land;
     base[k] = h * land * VERT - (1 - land) * 1.2;
   }
@@ -184,20 +199,16 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
       let m = sample(mask, x, z);
       const edge = Math.min(x - px0, px1 - x, z - pz0, pz1 - z);
       const fade = THREE.MathUtils.smoothstep(edge, 0, 1.6);
-      if (P.coast) {
-        const mb = bilinear(mask1, x, z);
+      const km = rawH(x, z);
+      {
+        const mb = P.coast ? bilinear(mask1, x, z) : m;
         const land = THREE.MathUtils.smoothstep(mb, 0.3, 0.62);
-        const hc = rawH(x, z, bilinear(inland, x, z), bilinear(near, x, z)) * land * VERT - (1 - land) * 1.2;
+        const hc = km * land * VERT - (1 - land) * 1.2;
         h += (hc - h) * fade; m += (mb - m) * fade;
       }
-      // local relief
-      h += (fbm(x / 1.4, z / 1.4, 4) * 0.09 + ridged(x / 3.2, z / 3.2, 3) * 0.05 - 0.04) * VERT * fade * (P.relief ?? 1) * THREE.MathUtils.smoothstep(m, 0.6, 0.9);
       const lake = inLake(x, z);
-      if (lake) {
-        const lv = lake.L.level * VERT;
-        if (lake.d < 1) h = lv - 0.06 - 0.25 * (1 - lake.d);
-        else h = lv + 0.025 + (Math.max(h, lv + 0.025) - lv - 0.025) * THREE.MathUtils.smoothstep(lake.d, 1, 1.6);
-      }
+      if (wet(lake, km)) h = lake.L.level * VERT - 0.12;
+      else if (lake) h = Math.max(h, lake.L.level * VERT + 0.03);
       ph[q] = h;
       pm[q] = m;
       pkm[q] = h / VERT;
@@ -206,12 +217,10 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
   }
   const inPatch = (x, z) => { for (const P of patchData) if (x >= P.px0 && x <= P.px1 && z >= P.pz0 && z <= P.pz1) return P; return null; };
 
-  const fcx = toX(FUJI.lon), fcz = toZ(FUJI.lat);
   const baseAt = (x, z) => { const P = inPatch(x, z); return P ? sampleGrid(P.ph, P.px0, P.pz0, P.pc, P.pcols, P.prows, x, z) : coarseBase(x, z); };
-  const fujiAt = (x, z) => { const r = Math.hypot(x - fcx, z - fcz); return r < FUJI.R ? fujiKm(r, Math.atan2(z - fcz, x - fcx)) * VERT : 0; };
-  const heightAt = (x, z) => baseAt(x, z) + fujiAt(x, z);
+  const heightAt = baseAt;
   const landAt = (x, z) => { const P = inPatch(x, z); return P && P.coast ? bilinear(mask1, x, z) : bilinear(mask, x, z); };
-  const kmAt = (x, z) => baseAt(x, z) / VERT + fujiAt(x, z) / VERT;
+  const kmAt = (x, z) => baseAt(x, z) / VERT;
 
   // coarse mesh
   const geo = new THREE.PlaneGeometry(x1 - x0, z1 - z0, cols - 1, rows - 1);
@@ -252,7 +261,7 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
       pp.setY(k, P.ph[k]);
       colorFor(x, z, P.pkm[k], P.pm[k], col);
       const lake = inLake(x, z);
-      if (lake && lake.d < 1.15) col.lerp(shore, 0.6);
+      if (lake && P.pkm[k] < lake.L.level + 0.012) col.lerp(shore, 0.6);
       pcol[k * 3] = col.r; pcol[k * 3 + 1] = col.g; pcol[k * 3 + 2] = col.b;
       // continue the coarse uv so the detail texture lines up
       uv.setXY(k, (x - x0) / (x1 - x0), 1 - (z - z0) / (z1 - z0));
@@ -296,45 +305,11 @@ function detailTexture() {
 
 export const urbanW = (x, z) => Math.max(gauss(x, z, 139.72, 35.69, 13), gauss(x, z, 139.62, 35.47, 6), gauss(x, z, 135.5, 34.69, 8), gauss(x, z, 136.9, 35.17, 6), gauss(x, z, 135.77, 35.01, 3));
 
-// Detailed Fuji cone draped on the base terrain
-export function fujiKm(rr, ang) {
-  if (rr >= FUJI.R) return 0;
-  const gully = Math.sin(ang * 21) * 0.5 + Math.sin(ang * 47 + 1) * 0.3;
-  return fujiProfile(rr) * (1 - 0.03 * gully * (rr / FUJI.R)) - (rr < 0.4 ? 0.12 * (1 - rr / 0.4) : 0);
-}
+// Fuji is part of the real terrain; this unseen cone only catches clicks on the mountain
 export function buildFuji(baseAt) {
-  const cx = toX(FUJI.lon), cz = toZ(FUJI.lat);
-  const RS = 192, RR = 80;
-  const verts = [], cols = [], idx = [];
-  const snow = new THREE.Color('#f5f8ff'), rock = new THREE.Color('#4a3c37'), forest = new THREE.Color('#355c3a'), darkF = new THREE.Color('#2a4a30'), col = new THREE.Color();
-  for (let r = 0; r <= RR; r++) {
-    const rr = Math.pow(r / RR, 1.25) * FUJI.R;
-    for (let a = 0; a < RS; a++) {
-      const ang = a / RS * Math.PI * 2;
-      const gully = Math.sin(ang * 21) * 0.5 + Math.sin(ang * 47 + 1) * 0.3;
-      const x = cx + Math.cos(ang) * rr, z = cz + Math.sin(ang) * rr;
-      const km = fujiKm(rr, ang);
-      const y = baseAt(x, z) + km * VERT - 0.025;
-      verts.push(x, y, z);
-      const total = km + 0.9;
-      const snowLine = 2.75 + gully * 0.18;
-      if (total > snowLine) col.copy(snow);
-      else if (total > snowLine - 0.25) col.copy(rock).lerp(snow, (total - snowLine + 0.25) / 0.25 * (0.4 + 0.3 * gully + 0.3));
-      else if (total > 2.5) col.copy(rock);
-      else col.copy(forest).lerp(darkF, THREE.MathUtils.smoothstep(total, 1.2, 1.9)).lerp(rock, THREE.MathUtils.smoothstep(total, 2.15, 2.5));
-      cols.push(col.r, col.g, col.b);
-    }
-  }
-  for (let r = 0; r < RR; r++) for (let a = 0; a < RS; a++) {
-    const A = r * RS + a, B = r * RS + (a + 1) % RS, Cc = (r + 1) * RS + a, D = (r + 1) * RS + (a + 1) % RS;
-    idx.push(A, B, Cc, B, D, Cc);
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
-  geo.setIndex(idx); geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 }));
-  m.receiveShadow = true; m.castShadow = true;
+  const cx = toX(FUJI.lon), cz = toZ(FUJI.lat), top = baseAt(cx, cz), h = top - baseAt(cx + 12, cz);
+  const m = new THREE.Mesh(new THREE.ConeGeometry(12, h, 24).translate(0, -h / 2, 0), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }));
+  m.position.set(cx, top, cz);
   return m;
 }
 
@@ -371,7 +346,7 @@ export function lakeMeshes(waterMat) {
     const geo = new THREE.CircleGeometry(1, 48);
     geo.rotateX(-Math.PI / 2);
     const m = new THREE.Mesh(geo, mat);
-    m.scale.set(L.a * 1.04, 1, L.b * 1.04);
+    m.scale.set(L.a * 1.26, 1, L.b * 1.26);
     m.rotation.y = L.rot;
     m.position.set(toX(L.lon), L.level * VERT + 0.01, toZ(L.lat));
     m.userData.lake = L.name;
