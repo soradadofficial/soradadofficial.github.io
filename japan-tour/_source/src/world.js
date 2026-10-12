@@ -199,7 +199,7 @@ export function createWorld() {
   // Tokyo Tower + city
   const towerPos = onGround(LL(139.745, 35.659));
   const tower = createTower();
-  tower.scale.setScalar(S * 333 / 112);
+  tower.scale.setScalar(S);
   tower.position.copy(towerPos);
   scene.add(tower);
   const nara = onGround(LL(135.843, 34.685));

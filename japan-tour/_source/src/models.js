@@ -446,26 +446,49 @@ export function createLanterns(points) {
 
 // ---------- Tokyo-style lattice tower + city ----------
 export function createTower() {
+  // Built in metres (333 m tall): four flared legs, ring beams and X-bracing per face,
+  // main deck at 150 m, top deck at 250 m, antenna above. Orange/white aviation bands.
   const g = new THREE.Group();
-  const red = std('#e2462e', { roughness: 0.5 });
-  const white = std('#f2f2f2', { roughness: 0.5 });
-  const segs = 12;
-  for (let i = 0; i < segs; i++) {
-    const t0 = i / segs, t1 = (i + 1) / segs;
-    const r0 = 9 * Math.pow(1 - t0, 1.8) + 0.6, r1 = 9 * Math.pow(1 - t1, 1.8) + 0.6;
-    const h = 90 / segs;
-    const seg = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, h, 4, 1, true), i % 2 ? white : red);
-    seg.material = seg.material.clone(); seg.material.wireframe = true;
-    seg.rotation.y = Math.PI / 4; seg.position.y = i * h + h / 2; g.add(seg);
+  const red = new THREE.MeshStandardMaterial({ color: '#e8502a', roughness: 0.5, emissive: '#ff6a1c', emissiveIntensity: 0 });
+  const white = new THREE.MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.5, emissive: '#ffb060', emissiveIntensity: 0 });
+  glowMats.push({ mat: red, day: 0, night: 1.6 }, { mat: white, day: 0, night: 1.1 });
+  const parts = [[], []];
+  const up = new THREE.Vector3(0, 1, 0), d = new THREE.Vector3(), q = new THREE.Quaternion(), m = new THREE.Matrix4(), one = new THREE.Vector3(1, 1, 1);
+  const beam = (a, b, th, band) => {
+    d.subVectors(b, a); const len = d.length();
+    const geo = new THREE.BoxGeometry(th, len, th);
+    q.setFromUnitVectors(up, d.normalize());
+    geo.applyMatrix4(m.compose(a.clone().add(b).multiplyScalar(0.5), q, one));
+    parts[band].push(geo);
+  };
+  const half = (y) => 38 * Math.exp(-2.4 * y / 250) + 1.5;
+  const ys = [0, 34, 62, 86, 107, 126, 143, 158, 172, 186, 199, 211, 222, 232, 241, 250];
+  const corner = (y, i) => { const r = half(y); return new THREE.Vector3(i === 0 || i === 3 ? -r : r, y, i < 2 ? -r : r); };
+  for (let l = 0; l < ys.length - 1; l++) {
+    const band = (l >> 1) % 2, y0 = ys[l], y1 = ys[l + 1];
+    for (let i = 0; i < 4; i++) {
+      const a0 = corner(y0, i), a1 = corner(y1, i), b0 = corner(y0, (i + 1) % 4), b1 = corner(y1, (i + 1) % 4);
+      beam(a0, a1, l < 2 ? 3 : 2.2, band);
+      beam(a1, b1, 1.2, band);
+      if (l === 0) { // open arch between the feet
+        const mid = a1.clone().add(b1).multiplyScalar(0.5);
+        beam(a0.clone().lerp(a1, 0.45), mid, 1.4, band); beam(b0.clone().lerp(b1, 0.45), mid, 1.4, band);
+      } else { beam(a0, b1, 0.9, band); beam(b0, a1, 0.9, band); }
+    }
   }
-  g.add(box(9, 3, 9, red, 0, 30, 0));
-  g.add(box(5, 2.5, 5, white, 0, 56, 0));
-  const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.4, 22, 6), red);
-  ant.position.y = 101; g.add(ant);
-  const lightMat = glow('#ffa040', 0.2, 2.5);
-  const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 9.4, 90, 4, 8, true), lightMat);
-  shell.material.wireframe = true; shell.rotation.y = Math.PI / 4; shell.position.y = 45; shell.scale.setScalar(1.002);
-  g.add(shell);
+  // antenna mast, banded
+  for (let k = 0; k < 4; k++) {
+    const y0 = 256 + k * 19.25, r0 = 3 - k * 0.65, r1 = 3 - (k + 1) * 0.65;
+    parts[k % 2].push(new THREE.CylinderGeometry(r1, r0, 19.25, 4).rotateY(Math.PI / 4).translate(0, y0 + 9.6, 0));
+  }
+  g.add(new THREE.Mesh(mergeGeometries(parts[0]), red), new THREE.Mesh(mergeGeometries(parts[1]), white));
+  // decks with a dark window band, and the FootTown building under the legs
+  const glass = glow('#ffd9a0', 0.05, 1.8, { color: '#1b2430', roughness: 0.2, metalness: 0.5 });
+  const deck = (y, w, h) => { g.add(box(w, h, w, white, 0, y, 0)); g.add(box(w + 0.3, h * 0.45, w + 0.3, glass, 0, y + h * 0.05, 0)); g.add(box(w + 1.2, 0.8, w + 1.2, white, 0, y + h / 2, 0)); };
+  deck(150, 30, 11);
+  deck(252, 13, 7);
+  g.add(box(50, 20, 50, std('#d8d4cc', { roughness: 0.6 }), 0, 10, 0));
+  g.add(box(50.3, 2.2, 50.3, glass, 0, 13, 0)); g.add(box(50.3, 2.2, 50.3, glass, 0, 7, 0));
   return g;
 }
 
@@ -500,12 +523,18 @@ export function createHotel() {
   const g = new THREE.Group();
   const H = SUITE.y;
   const tex = windowsTexture(12, 36, 0.6);
-  const facade = new THREE.MeshStandardMaterial({ color: '#d9dde4', roughness: 0.35, metalness: 0.4, emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 0.05, map: null });
+  // daytime facade: pale stone with dark glazing on the same grid as the lit-window map
+  const dc = document.createElement('canvas'); dc.width = 12 * 8; dc.height = 36 * 12;
+  const dg = dc.getContext('2d'); dg.fillStyle = '#e6e3dc'; dg.fillRect(0, 0, dc.width, dc.height);
+  dg.fillStyle = '#33465c'; for (let y = 0; y < 36; y++) for (let x = 0; x < 12; x++) dg.fillRect(x * 8 + 1, y * 12 + 3, 6, 6);
+  const day = new THREE.CanvasTexture(dc); day.colorSpace = THREE.SRGBColorSpace; day.magFilter = THREE.NearestFilter;
+  const facade = new THREE.MeshStandardMaterial({ map: day, roughness: 0.45, metalness: 0.15, emissive: '#ffffff', emissiveMap: tex, emissiveIntensity: 0.05 });
   glowMats.push({ mat: facade, day: 0.05, night: 1.6 });
   const body = box(SUITE.w + 4, H, SUITE.d + 2, facade, 0, H / 2, 0);
   g.add(body);
   const trim = std('#c9a64a', { metalness: 0.8, roughness: 0.3 });
   g.add(box(SUITE.w + 5, 0.6, SUITE.d + 3, trim, 0, H, 0));
+  for (const x of [-1, 1]) for (const z of [-1, 1]) g.add(box(1.6, H, 1.6, std('#f2efe8'), x * (SUITE.w / 2 + 2), H / 2, z * (SUITE.d / 2 + 1)));
   // podium + entrance canopy
   g.add(box(44, 8, 34, std('#eceae4'), 0, 4, 2));
   g.add(box(14, 0.5, 6, trim, 0, 6.5, -19));
