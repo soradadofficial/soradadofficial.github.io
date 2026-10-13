@@ -927,6 +927,7 @@ export function createWorld() {
   const stays = {
     exterior: (id) => ({ pos: STAY[id].ext[0], look: STAY[id].ext[1], env: STAY[id].env, petals: 0.3 }),
     hideRoom() { if (shownRoom) shownRoom.visible = false; shownRoom = null; },
+    hasRoom: () => !!shownRoom,
     async room(id, roomId) {
       roomMeta ??= await (await fetch('./rooms/rooms.json')).json();
       const m = roomMeta[roomId], a = STAY[id];

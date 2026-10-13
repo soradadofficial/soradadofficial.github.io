@@ -396,8 +396,11 @@ function frame() {
   const y = smoothScroll;
 
   const storyT = clamp01((y - M.storyTop) / M.storyScroll);
-  const we = smooth((y - (M.exploreTop - M.vh)) / M.vh);
-  const wb = smooth((y - (M.builderTop - M.vh)) / M.vh);
+  let we = smooth((y - (M.exploreTop - M.vh)) / M.vh);
+  let wb = smooth((y - (M.builderTop - M.vh)) / M.vh);
+  if (world.stays.hasRoom()) { // walk-in rooms are metres wide in world units: a sliver of story or builder pose would put the camera outside the room
+    if (we > 0.6 && wb < 0.4) { we = 1; wb = 0; } else stays.leaveRoom(); // scrolled well away: back to the property sheet
+  }
   weNow = we; wbNow = wb;
   if (free && (we < 0.9 || wb > 0.1)) setFree(false);
 

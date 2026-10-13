@@ -43,7 +43,7 @@ export function initStays({ world, fly, setOrbit, onSelect }) {
     card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap', 'stay-sheet');
     card.innerHTML = '<button class="sheet-close" type="button" id="sheetClose" aria-label="ปิดหน้าที่พัก">✕</button>' + html; card.scrollTop = 0;
     document.body.classList.add('stay-open'); // phones: the sheet becomes a bottom drawer so the 3D view stays visible
-    $('#sheetClose').addEventListener('click', () => { setOrbit(false); api.close(); card.innerHTML = ''; });
+    $('#sheetClose').addEventListener('click', () => { const out = world.stays.hasRoom() && current; setOrbit(false); api.close(); card.innerHTML = ''; if (out) fly(world.stays.exterior(out.id)); }); // closing inside a room flies back out to the building
   };
 
   function openStay(id) {
@@ -74,7 +74,7 @@ export function initStays({ world, fly, setOrbit, onSelect }) {
     try { room = await world.stays.room(s.id, roomId); } catch (e) { swap(`<h3>${r.name}</h3><p class="muted">โหลดห้อง 3 มิติไม่สำเร็จ ลองใหม่อีกครั้ง</p><button class="btn btn-small" type="button" id="backStay">← กลับ</button>`); $('#backStay').addEventListener('click', () => openStay(s.id)); return; }
     if (current !== s) return; // user moved on while loading
     meta = room.meta;
-    const go = (sec) => { setOrbit(false); fly(room.view(sec)); card.querySelectorAll('[data-sec]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.sec === sec)); $('#secNote').textContent = r.notes?.[sec] || SECTIONS[sec].note; };
+    const go = (sec) => { setOrbit(false); const la = $('#lookAround'); if (la) { la.setAttribute('aria-pressed', 'false'); la.textContent = 'หมุนมองรอบห้องเอง'; } fly(room.view(sec)); card.querySelectorAll('[data-sec]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.sec === sec)); $('#secNote').textContent = r.notes?.[sec] || SECTIONS[sec].note; };
     swap(`
       <button class="link-btn" type="button" id="backStay">← ${s.name} · ห้องทั้งหมด</button>
       <h3>${r.name}</h3>
@@ -100,6 +100,6 @@ export function initStays({ world, fly, setOrbit, onSelect }) {
     $('#pickRoom').addEventListener('click', () => onSelect({ hotel: s.id, room: r.id }));
     go('bed');
   }
-  const api = { openStay, close() { current = null; card.classList.remove('stay-sheet'); document.body.classList.remove('stay-open'); tabs.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', 'false')); world.stays.hideRoom(); } };
+  const api = { openStay, leaveRoom() { if (current && world.stays.hasRoom()) { setOrbit(false); openStay(current.id); } }, close() { current = null; card.classList.remove('stay-sheet'); document.body.classList.remove('stay-open'); tabs.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', 'false')); world.stays.hideRoom(); } };
   return api;
 }
