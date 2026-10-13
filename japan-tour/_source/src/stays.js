@@ -1,4 +1,5 @@
 import { STAYS, SECTIONS } from './data.js';
+import { DETAIL } from './stay-detail.js';
 
 // Stays browser: pick a property, read it like a booking site, then step into any room in 3D.
 // Rooms are Blender-built .glb files loaded only when opened; they sit in the world at the
@@ -87,9 +88,35 @@ export function initStays({ world, fly, setOrbit, onSelect }) {
           <div class="room-cta"><span class="price">฿${fmt(r.price)}<small>/คืน</small></span><button class="btn btn-small" type="button" data-room="${r.id}">ดูห้อง 3D</button></div>
         </article>`).join('')}</div>
       ${world.stays.tower(id) ? '<h4>เลือกชั้นและห้องบนตึก</h4><div id="towerPick"></div>' : ''}
+      ${deep(s)}
       <p class="fine">ที่พักและราคาเป็นข้อมูลสมมติสำหรับเดโม ไม่ใช่โรงแรมจริง</p>`);
     card.querySelectorAll('[data-room]').forEach((b) => b.addEventListener('click', () => openRoom(s, b.dataset.room)));
     if (world.stays.tower(id)) towerPick(s);
+    card.querySelectorAll('[data-fk]').forEach((b) => b.addEventListener('click', () => { // a facility lights its storey on the tower
+      const T = world.stays.tower(id), k = b.dataset.fk === 'roof' ? T.n : +b.dataset.fk;
+      pick.k = null; world.stays.showFloor(id, k); fly(world.stays.floorView(id, Math.max(0, Math.min(T.n - 1, k))));
+    }));
+  }
+
+  // The in-depth part of a property sheet, in sections that open one at a time (native <details>).
+  function deep(s) {
+    const d = DETAIL[s.id], T = world.stays.tower(s.id), kv = (rows) => `<dl class="spec">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`, li = (a) => `<ul class="deep-list">${a.map((x) => `<li>${x}</li>`).join('')}</ul>`;
+    const sec = (title, body, open = false) => `<details class="deep" ${open ? 'open' : ''}><summary>${title}</summary>${body}</details>`;
+    let building = d.built;
+    if (T) { // counted from the same layout the unit picker draws
+      const units = Array.from({ length: T.n }, (_, k) => unitsOn(s, T, k)).flat();
+      building = [['ชั้นห้องพัก', `${T.n} ชั้น (ชั้น ${T.first}–${T.first + T.n - 1}) เหนือโพเดียม 2 ชั้น`], ['ความสูงโดยประมาณ', `${Math.round(10 + T.n * T.fh + 6)} ม. ตามโมเดล`], ['จำนวนห้อง', `${units.length} ห้อง · ${s.rooms.map((r) => `${r.name} ${units.filter((u) => u.room === r).length}`).join(' · ')}`], ...d.built];
+    }
+    const min = Math.min(...s.rooms.map((r) => r.price)), max = Math.max(...s.rooms.map((r) => r.price));
+    return `<h4>ข้อมูลเชิงลึกของที่พัก</h4>
+      ${sec('ภาพรวมและอาคาร', kv([['เช็คอิน / เช็คเอาต์', `${d.times.in} / ${d.times.out}`], ['แผนกต้อนรับ', d.times.desk], ['ช่วงราคา', `฿${fmt(min)}–${fmt(max)} ต่อคืน`], ...building]), true)}
+      ${sec('สิ่งอำนวยความสะดวก', `<div class="fac">${d.facilities.map((f) => `<article><b>${f.name}</b><p>${f.text}</p>${T && f.k != null ? `<button class="link-btn" type="button" data-fk="${f.k}">ดูตำแหน่งบนตึก</button>` : ''}</article>`).join('')}</div>`)}
+      ${sec('อาหารและเครื่องดื่ม', li(d.dining))}
+      ${sec('การเดินทาง', kv(d.access))}
+      ${sec('บริการสำหรับกรุ๊ปทัวร์', li(d.tour))}
+      ${sec('นโยบายที่พัก', kv(d.policy))}
+      ${sec('การเข้าถึงสำหรับทุกคน', li(d.access4all))}
+      ${sec('เปรียบเทียบห้องทุกแบบ', `<div class="cmp-wrap"><table class="cmp"><thead><tr><th>ห้อง</th><th>ตร.ม.</th><th>ท่าน</th><th>เตียง</th><th>วิว</th><th>ยกเลิก</th><th>฿/คืน</th></tr></thead><tbody>${s.rooms.map((r) => `<tr><th>${r.name}</th><td>${r.size}</td><td>${r.guests}</td><td>${r.bed}</td><td>${r.view}</td><td>${r.cancel}</td><td>${fmt(r.price)}</td></tr>`).join('')}</tbody></table></div>`)}`;
   }
 
   // Tower stays: pick a floor (it lights up on the building), then a unit on that floor (it lights up where it sits).
