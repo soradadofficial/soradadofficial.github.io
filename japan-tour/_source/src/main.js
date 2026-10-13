@@ -198,6 +198,7 @@ const INFO = {
 let builder;
 function renderInfo(key) {
   const i = INFO[key];
+  stays?.close(); // another card replaces the stay sheet: its floor and unit lights go too
   const card = $('#infoCard');
   card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap');
   card.innerHTML = `
@@ -304,7 +305,7 @@ const overUI = (el) => el.closest && el.closest('.panel, .nav, button, a, input,
 let downAt = null;
 window.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
 window.addEventListener('pointerup', (e) => {
-  if (!downAt || !inExplore() || overUI(e.target)) return;
+  if (!downAt || !inExplore() || overUI(e.target) || world.stays.hasRoom()) return; // inside a walk-in room the scene behind the window is not clickable
   const moved = Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]);
   downAt = null;
   if (moved > 6) return;
@@ -403,6 +404,7 @@ function frame() {
     if (we > 0.6 && wb < 0.4) { we = 1; wb = 0; } else stays.leaveRoom(); // scrolled well away: back to the property sheet
   }
   weNow = we; wbNow = wb;
+  world.stays.showGlows(we > 0.5 && wb < 0.5);
   if (free && (we < 0.9 || wb > 0.1)) setFree(false);
 
   world.storyPose(storyT, storyPose);

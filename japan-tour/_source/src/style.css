@@ -385,14 +385,15 @@ body.simulating .builder-panel, body.simulating .summary { opacity: 0.08; pointe
 .pick-filter { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 8px; }
 .pick-filter select { font: inherit; color: inherit; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(244, 239, 230, 0.2); border-radius: 8px; padding: 6px 8px; min-height: 40px; flex: 1; min-width: 0; }
 .pick-filter option { color: #111; }
-.pick { display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: start; --u-0: #7fd0ff; --u-1: #f6b6c8; --u-2: #ffc46b; --u-3: #7dffb0; }
-.floor-rail { display: grid; gap: 3px; max-height: 260px; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+.pick { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: start; --u-0: #7fd0ff; --u-1: #f6b6c8; --u-2: #ffc46b; --u-3: #7dffb0; }
+.floor-rail { position: relative; display: grid; gap: 3px; max-height: 260px; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
 .floor-rail button { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; font: inherit; color: inherit; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(244, 239, 230, 0.16); border-radius: 8px; padding: 4px 8px; min-height: 34px; cursor: pointer; }
 .floor-rail button small { font-size: 0.66rem; opacity: 0.7; }
 .floor-rail button:hover, .floor-rail button:focus-visible { border-color: #ffcf7a; }
-.floor-rail button[aria-selected="true"] { background: #ffcf7a; color: #2a1c05; border-color: #ffcf7a; }
+.floor-rail button[aria-pressed="true"] { background: #ffcf7a; color: #2a1c05; border-color: #ffcf7a; }
 .floor-rail button:disabled, .unit:disabled { opacity: 0.3; cursor: default; }
-.plan-row { display: grid; gap: 3px; }
+.plan-row { display: grid; grid-template-columns: repeat(var(--bays), minmax(0, 1fr)); gap: 3px; } /* minmax(0): both rows keep equal bays whatever the labels */
+.plan-scroll { overflow-x: auto; scrollbar-width: thin; }
 .unit { font: 500 0.66rem/1 var(--f-mono, monospace); color: #10162f; background: var(--c); border: 2px solid transparent; border-radius: 5px; min-height: 34px; padding: 0; cursor: pointer; }
 .unit:hover:not(:disabled), .unit:focus-visible, .unit[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 10px var(--c); }
 .plan-core { text-align: center; font-size: 0.68rem; opacity: 0.6; border: 1px dashed rgba(244, 239, 230, 0.25); border-radius: 5px; padding: 3px; margin: 4px 0; }
@@ -400,7 +401,16 @@ body.simulating .builder-panel, body.simulating .summary { opacity: 0.08; pointe
 #enterUnit { margin-top: 6px; }
 #enterUnit[hidden] { display: none; }
 .crumbs { font-size: 0.82rem; opacity: 0.9; margin-bottom: 4px; }
-.crumbs .link-btn { display: inline; padding: 0; min-height: 0; }
+.crumbs .link-btn { display: inline-flex; align-items: center; padding: 0 4px; min-height: 44px; }
+@media (max-width: 899px) {
+  /* phones: floors become a sideways strip above a full-width plan; bays stay at least 24 px and the plan scrolls in its own box if it must */
+  .pick { grid-template-columns: minmax(0, 1fr); }
+  .floor-rail { grid-auto-flow: column; grid-auto-columns: 58px; max-height: none; overflow-x: auto; overflow-y: hidden; padding: 0 0 4px; }
+  .floor-rail button { flex-direction: column; align-items: center; min-height: 44px; }
+  .plan-scroll > * { min-width: calc(var(--bays) * 24px + (var(--bays) - 1) * 3px); }
+  .unit { min-height: 40px; }
+  .pick-filter { padding-right: 52px; } /* clear of the sticky close button */
+}
 
 /* In-depth property sections */
 .deep { border-top: 1px solid var(--ai-line, rgba(244, 239, 230, 0.16)); padding: 2px 0; }

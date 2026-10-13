@@ -61,7 +61,8 @@ export function createWorld() {
   scene.add(lakeMeshes(waterMaterial('#3f7fa6', { roughness: 0.1, metalness: 0.45, freq: 2.2, amp: 0.16 })));
   scene.add(buildThailand());
   scene.add(buildNear());
-  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000), waterMaterial('#1f5677', { roughness: 0.36, metalness: 0.15, freq: 0.35, amp: 0.12 }));
+  // the sea is cut into small quads: a two-triangle plane this size interpolates log depth badly near the camera and shows through coastal land
+  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(16000, 16000, 256, 256), waterMaterial('#1f5677', { roughness: 0.36, metalness: 0.15, freq: 0.35, amp: 0.12 }));
   ocean.rotation.x = -Math.PI / 2; ocean.position.set(-600, -0.1, 300);
   ocean.receiveShadow = true;
   scene.add(ocean);
@@ -933,7 +934,7 @@ export function createWorld() {
     kyoto: { onGround: true, at: () => kyotoPos.clone(), to: kyotoPos.clone().add(V(6, 1, 0)), env: ENV.golden, ext: [kyotoPos.clone().add(V(-1.6, 1.3, 1.6)), kyotoPos.clone()] },
     osaka: { at: osakaT.at, yaw: face(osakaHotelPos, castlePos), env: ENV.golden, ext: [osakaHotelPos.clone().add(V(3.4, 1.6, 4.2)), osakaHotelPos.clone().add(V(-0.5, 0.9, -0.3))] },
   };
-  let roomMeta = null, shownRoom = null;
+  let roomMeta = null, shownRoom = null, glowsShown = true;
   // One pair of lamps serves whichever room is open. They stay in the scene (dark when no room is shown), so the
   // light count never changes and opening a room does not make every material recompile.
   const lampRig = new THREE.Group(), lamp = new THREE.PointLight('#ffe2c0', 4.5, 14, 1.4), lamp2 = new THREE.PointLight('#fff1dc', 1.8, 10, 1.4);
@@ -978,15 +979,19 @@ export function createWorld() {
     // tower stays: floor and unit pickers
     tower: (id) => TOWER[id] && { n: TOWER[id].n, bays: TOWER[id].bays, first: TOWER[id].first, fh: TOWER[id].fh },
     showFloor(id, k) { // light one storey of the tower (k = null: none)
-      for (const T of Object.values(TOWER)) T.band.visible = T.unit.visible = false;
+      for (const T of Object.values(TOWER)) T.band.visible = T.unit.visible = T.band.userData.on = T.unit.userData.on = false;
       const T = TOWER[id]; if (!T || k == null) return;
       if (k < 0) { T.band.scale.set(T.w + 27.6, 4.5, T.d + 23.6); T.band.position.set(0, 10 + k * 5 + 2.5, 4); } // podium storeys (lobby, dining): 5 m each, wider than the tower and set 4 m toward the entrance, as in blender/hotels.py
-      else { T.band.scale.set(T.w + 1.6, T.fh * 0.9, T.d + 1.6); T.band.position.set(0, T.y(k) + T.fh / 2, 0); }
-      T.band.visible = true;
+      else { T.band.scale.set(T.w + 2.2, T.fh * 0.9, T.d + 1.6); T.band.position.set(0, T.y(k) + T.fh / 2, 0); } // 2.2: past the end walls (outer face at w/2 + 0.9)
+      T.band.visible = glowsShown; T.band.userData.on = true;
     },
     showUnit(id, u) { // light one unit on that storey: where it sits and which way it faces
-      const T = TOWER[id]; if (!T) return; T.unit.visible = !!u; if (!u) return;
+      const T = TOWER[id]; if (!T) return; T.unit.userData.on = !!u; T.unit.visible = !!u && glowsShown; if (!u) return;
       T.unit.scale.set(u.bays * T.w / T.bays, T.fh * 0.92, T.d / 2 + 1); T.unit.position.set(T.x(u.bay, u.bays), T.y(u.k) + T.fh / 2, u.side * (T.d / 4 + 0.5));
+    },
+    showGlows(on) { // the picker lights show only while the stays view is on screen (not in the story, the builder or other cards)
+      if (on === glowsShown) return; glowsShown = on;
+      for (const T of Object.values(TOWER)) { T.band.visible = on && T.band.userData.on; T.unit.visible = on && T.unit.userData.on; }
     },
     floorView(id, k, side = -1) { const T = TOWER[id]; return { pos: T.h.localToWorld(V(T.w * 0.9 * -side, T.y(k) + 34, side * (T.d / 2 + 135))), look: T.h.localToWorld(V(0, T.y(k) - 4, 0)), env: STAY[id].env, petals: 0 }; },
     async room(id, roomId, unit) {
