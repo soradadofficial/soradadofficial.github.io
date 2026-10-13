@@ -29,13 +29,17 @@ scene.fog = new THREE.Fog('#cfe3f0', 60, 420);
 const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.01, 3000);
 const sky = createSky(); scene.add(sky);
 { const e = ENV.day, u = sky.material.uniforms; u.top.value.copy(e.top); u.bottom.value.copy(e.bottom); u.sunColor.value.copy(e.sun); u.sunDir.value.copy(e.sunDir).normalize(); }
-scene.add(new THREE.HemisphereLight('#eaf4ff', '#7c8a66', 1.15));
+const hemi = new THREE.HemisphereLight('#eaf4ff', '#7c8a66', 1.15); scene.add(hemi);
 const sun = new THREE.DirectionalLight('#fff6e6', 2.1);
 sun.position.set(30, 60, 25); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32, near: 1, far: 160 }); sun.shadow.bias = -0.0004;
 scene.add(sun, sun.target);
 const controls = new OrbitControls(camera, renderer.domElement);
 Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 0.25, maxDistance: 140, maxPolarAngle: Math.PI * 0.49 });
+
+// Night mode: every lamp is a point in one of these lists (field-local), drawn as additive glows.
+const LAMPS = { road: [], runway: [], taxi: [], green: [], red: [], apron: [], home: [] };
+const uNight = { value: 0 };
 
 // ---------- airfield (same builder as the tour, aircraft at true scale) ----------
 const FREE = [11, 16, 18, 22, 23]; // stands used by the simulated flights
@@ -48,7 +52,7 @@ const { stands, complex, dep } = field.userData;
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), lines = [];
   stands.forEach((st, i) => {
     const fx = Math.sin(st.rot), fz = Math.cos(st.rot); // nose direction
-    q.setFromAxisAngle(V(0, 1, 0), st.rot); m.compose(V(st.x + fz * 42 * K + fx * 30 * K, 0, st.z - fx * 42 * K + fz * 30 * K), q, V(1, 1, 1)); mast.setMatrixAt(i, m); head.setMatrixAt(i, m);
+    q.setFromAxisAngle(V(0, 1, 0), st.rot); m.compose(V(st.x + fz * 42 * K + fx * 30 * K, 0, st.z - fx * 42 * K + fz * 30 * K), q, V(1, 1, 1)); mast.setMatrixAt(i, m); head.setMatrixAt(i, m); LAMPS.apron.push(V(st.x + fz * 42 * K + fx * 30 * K, 32 * K, st.z - fx * 42 * K + fz * 30 * K));
     lines.push(new THREE.PlaneGeometry(0.9 * K, 120 * K).rotateX(-Math.PI / 2).translate(0, 0.012, -32 * K).rotateY(st.rot).translate(st.x, 0, st.z));
   });
   mast.castShadow = true; field.add(mast, head, new THREE.Mesh(mergeGeometries(lines), new THREE.MeshBasicMaterial({ color: '#f2c230', toneMapped: false })));
@@ -117,8 +121,16 @@ const flags = []; // [sprite, pole] pairs, faded out when the camera is low
     const pts = r.p.map((q) => L(q)), major = /motorway|trunk|primary/.test(r.k);
     (major ? big : small).push(strip(pts, (W[r.k] || 4) * K, (r.up ? 0.05 : 0.006) + (major ? 0.002 : 0)));
     if (major && !r.k.endsWith('-l')) for (let i = 0; i < pts.length; i += 3) lit.push(pts[i]);
+    if (!/service/.test(r.k)) for (let i = 0; i < pts.length; i += major ? 1 : 2) LAMPS.road.push(pts[i].clone().setY(0.06));
   }
   merged((OSM.aero || []).filter((w) => w.k === 'taxiway').map((w) => strip(w.p.map((q) => L(q)), 12.5 * K, 0.009)), std('#8f9299', { roughness: 0.9 })); // real taxiway centrelines, 25 m wide
+  for (const w of OSM.aero || []) { // edge lights every 60 m: white along runways (30 m out), blue along taxiways (12.5 m out)
+    const rw = w.k === 'runway', off = (rw ? 30 : 12.5) * K, list = rw ? LAMPS.runway : LAMPS.taxi, pts = w.p.map((q) => L(q));
+    for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], d = a.distanceTo(b), n = Math.max(1, Math.round(d / (60 * K))), sx = -(b.z - a.z) / d * off, sz = (b.x - a.x) / d * off;
+      for (let k = 0; k < n; k++) { const x = a.x + (b.x - a.x) * k / n, z = a.z + (b.z - a.z) * k / n; list.push(V(x + sx, 0.02, z + sz), V(x - sx, 0.02, z - sz)); (rw ? LAMPS.runway : LAMPS.green).push(V(x, 0.02, z)); } } // centreline: white on runways, green on taxiways
+    if (rw) for (const [e, o] of [[pts[0], pts[1]], [pts[pts.length - 1], pts[pts.length - 2]]]) { const d = e.distanceTo(o), sx = -(o.z - e.z) / d, sz = (o.x - e.x) / d; // green threshold bar, red end bar just outside it
+      for (let k = -6; k <= 6; k++) { LAMPS.green.push(V(e.x + sx * k * 5 * K, 0.02, e.z + sz * k * 5 * K)); LAMPS.red.push(V(e.x + sx * k * 5 * K - (o.x - e.x) / d * 12 * K, 0.02, e.z + sz * k * 5 * K - (o.z - e.z) / d * 12 * K)); } }
+  }
   merged(big, std('#f4f2ec', { roughness: 0.7 }));
   merged(small, std('#d9d6cd', { roughness: 0.8 }));
   const lamps = new THREE.InstancedMesh(new THREE.SphereGeometry(0.01, 6, 4), new THREE.MeshBasicMaterial({ color: '#ff5a4a', toneMapped: false }), lit.length);
@@ -140,9 +152,13 @@ const flags = []; // [sprite, pole] pairs, faded out when the camera is low
     walls.push(new THREE.ExtrudeGeometry(sh, { depth: h, bevelEnabled: false }).rotateX(-Math.PI / 2));
   }
   const wallMat = std('#f3f1ec', { roughness: 0.75 });
-  wallMat.onBeforeCompile = (sh) => { // window bands by storey and bay on the walls, darker flat roofs
+  wallMat.onBeforeCompile = (sh) => { // window bands by storey and bay on the walls, darker flat roofs; at night some windows are lit
+    sh.uniforms.uNight = uNight;
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW; varying vec3 vN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvW = (modelMatrix * vec4(position, 1.0)).xyz; vN = normal;');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vW; varying vec3 vN;').replace('#include <color_fragment>', `#include <color_fragment>
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vW; varying vec3 vN; uniform float uNight;').replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      if (vN.y < 0.5) { vec2 cell = floor(vec2((vW.x + vW.z) / ${(6 * K).toFixed(5)}, vW.y / ${(3.6 * K).toFixed(5)})); float fl = fract(vW.y / ${(3.6 * K).toFixed(5)}), bay = fract((vW.x + vW.z) / ${(6 * K).toFixed(5)});
+        float on = step(0.45, fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453)) * step(0.3, fl) * step(fl, 0.8) * step(0.18, bay);
+        totalEmissiveRadiance += vec3(1.0, 0.78, 0.45) * on * uNight * 1.6; }`).replace('#include <color_fragment>', `#include <color_fragment>
       if (vN.y < 0.5) { float fl = fract(vW.y / ${(3.6 * K).toFixed(5)}), bay = fract((vW.x + vW.z) / ${(6 * K).toFixed(5)});
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.40, 0.50), step(0.3, fl) * step(fl, 0.8) * step(0.18, bay) * 0.8); }
       else diffuseColor.rgb *= 0.86;`);
@@ -180,9 +196,37 @@ const flags = []; // [sprite, pole] pairs, faded out when the camera is low
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(); let nt = 0, nr = 0;
   const tones = ['#c2643f', '#b5583a', '#8f9aa6', '#d9d4c8', '#7f5a48', '#a54c35'];
   for (let i = 0; i < 9000 && nt < 5200; i++) { const x = -70 + rnd() * 150, z = -75 + rnd() * 140; if (inField(x, z)) continue; const sc = 0.7 + rnd() * 1.1; m.compose(V(x, 0.07 * sc, z), q, V(sc, sc * (0.8 + rnd() * 0.5), sc)); tree.setMatrixAt(nt, m); tree.setColorAt(nt++, c.set('#417d4c').offsetHSL((rnd() - 0.5) * 0.05, 0, (rnd() - 0.5) * 0.14)); }
-  for (let k = 0; k < 60; k++) { const cx = -65 + rnd() * 140, cz = -70 + rnd() * 130; for (let i = 0; i < 44 && nr < 2600; i++) { const x = cx + (rnd() - 0.5) * 5, z = cz + (rnd() - 0.5) * 5; if (inField(x, z)) continue; q.setFromAxisAngle(V(0, 1, 0), rnd() * 3); m.compose(V(x, 0.035, z), q, V(0.7 + rnd(), 1, 0.7 + rnd())); roof.setMatrixAt(nr, m); roof.setColorAt(nr++, c.set(tones[Math.floor(rnd() * tones.length)])); } }
+  for (let k = 0; k < 60; k++) { const cx = -65 + rnd() * 140, cz = -70 + rnd() * 130; for (let i = 0; i < 44 && nr < 2600; i++) { const x = cx + (rnd() - 0.5) * 5, z = cz + (rnd() - 0.5) * 5; if (inField(x, z)) continue; q.setFromAxisAngle(V(0, 1, 0), rnd() * 3); m.compose(V(x, 0.035, z), q, V(0.7 + rnd(), 1, 0.7 + rnd())); roof.setMatrixAt(nr, m); if (nr % 3 === 0) LAMPS.home.push(V(x, 0.06, z)); roof.setColorAt(nr++, c.set(tones[Math.floor(rnd() * tones.length)])); } }
   tree.count = nt; roof.count = nr; tree.castShadow = roof.castShadow = true; field.add(tree, roof);
 }
+
+// ---------- night mode ----------
+const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+const glows = Object.entries({ road: ['#ffc98a', 0.2], runway: ['#ffffff', 0.16], taxi: ['#5a8cff', 0.1], green: ['#4dff9a', 0.1], red: ['#ff4a3d', 0.14], apron: ['#fff1cf', 0.75], home: ['#ffb870', 0.16] }).map(([k, [color, size]]) => {
+  const pts = new THREE.Points(new THREE.BufferGeometry().setFromPoints(LAMPS[k]), new THREE.PointsMaterial({ color, size, map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: false }));
+  pts.frustumCulled = false; pts.visible = false; pts.userData.size = size; field.add(pts); return pts;
+});
+// pools of light on the apron under each mast
+const pools = new THREE.InstancedMesh(new THREE.CircleGeometry(70 * K, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: glowTex, color: '#ffe9bd', transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }), LAMPS.apron.length);
+{ const m = new THREE.Matrix4(); LAMPS.apron.forEach((p, i) => pools.setMatrixAt(i, m.makeTranslation(p.x, 0.016, p.z))); pools.visible = false; field.add(pools); }
+const DAY = ENV.day, NIGHT = ENV.night, lit = []; // lit: building materials that glow from inside
+let night = 0;
+function applyNight(n) {
+  night = n; uNight.value = n;
+  const u = sky.material.uniforms;
+  u.top.value.lerpColors(DAY.top, NIGHT.top, n); u.bottom.value.lerpColors(DAY.bottom, NIGHT.bottom, n); u.sunColor.value.lerpColors(DAY.sun, NIGHT.sun, n); u.night.value = n;
+  scene.fog.color.set('#cfe3f0').lerp(NIGHT.fog, n);
+  hemi.intensity = 1.15 - 0.75 * n; hemi.color.set('#eaf4ff').lerp(NIGHT.sun, n * 0.6); sun.intensity = 2.1 - 1.85 * n; sun.color.set('#fff6e6').lerp(NIGHT.sun, n);
+  for (const g of glows) { g.material.opacity = n; g.visible = n > 0.02; }
+  pools.material.opacity = n * 0.55; pools.visible = n > 0.02;
+  for (const [m, k] of lit) m.emissiveIntensity = n * k;
+}
+field.userData.ready.then(() => { // glass glows warm, the membrane roofs glow softly, as the real concourses do at night
+  const GLOW = { Glass: ['#ffd9a0', 1.5], TubeGlass: ['#9fd8ff', 1.3], Membrane: ['#ffe9c8', 0.45], Roof: ['#ffe2b0', 0.1] }, seen = new Set();
+  complex.holder.traverse((o) => { const g = o.isMesh && GLOW[o.material.name]; if (g && !seen.has(o.material)) { seen.add(o.material); o.material.emissive = new THREE.Color(g[0]); o.material.emissiveIntensity = 0; lit.push([o.material, g[1]]); } });
+  applyNight(night);
+});
+$('#night').addEventListener('click', (e) => { const on = e.currentTarget.getAttribute('aria-pressed') !== 'true'; e.currentTarget.setAttribute('aria-pressed', on); const o = { n: night }; gsap.to(o, { n: on ? 1 : 0, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 2.2, ease: 'power1.inOut', onUpdate: () => applyNight(o.n) }); });
 
 // ---------- structure view: fade the skin, keep the steel ----------
 const SKIN = ['Roof', 'Glass', 'Membrane', 'TubeGlass', 'Dark'];
@@ -450,6 +494,7 @@ function frame() {
   const rolling = planes.some((q) => q.phase === 'takeoff' && q.g.position.y < q.gy + 0.3 || q.phase === 'taxiOut' && q.pu > 0.97);
   for (const p of planes) { const z = p.g.position.z; p.held = rolling && p.phase === 'taxiIn' && z > dep.z - 0.9 && z < dep.z - 0.4 && Math.abs(p.g.position.x - dep.x) < dep.len / 2; if (p.held) p.off -= sim; }
   counting = sim > 0; stepOps(T); counting = false;
+  if (night > 0.02) { const far = THREE.MathUtils.clamp(camera.position.distanceTo(controls.target) / 7, 1, 5); for (const g of glows) g.material.size = g.userData.size * far; } // lamps stay visible from far away
   // map labels: shown from above, gone in low close-ups
   for (const [sp, pole] of flags) { const o = THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
   if (focus && focus.g.visible) { // chase the chosen flight; the user can still orbit and zoom around it
@@ -465,6 +510,6 @@ function frame() {
 }
 camera.position.copy(field.localToWorld(V(-30, 40, 24))); controls.target.copy(field.localToWorld(V(6, 0, -7)));
 goto('all'); hud(); frame();
-if (location.search.includes('debug')) window.__bkk = { planes, field, camera, controls, goto, setLayer, tally, cycle: CYCLE, dep: { x: dep.x / K, z: dep.z / K, len: dep.len / K }, parkAt: PH.slice(0, 3).reduce((n, q) => n + q[1], 0), set T(v) { T = v; }, get T() { return T; },
+if (location.search.includes('debug')) window.__bkk = { applyNight, planes, field, camera, controls, goto, setLayer, tally, cycle: CYCLE, dep: { x: dep.x / K, z: dep.z / K, len: dep.len / K }, parkAt: PH.slice(0, 3).reduce((n, q) => n + q[1], 0), set T(v) { T = v; }, get T() { return T; },
   // test hook: where every aircraft is at a given time, in metres on the airfield
   at(t) { stepOps(t); const r = planes.map((p) => ({ no: p.f.no, phase: p.phase, shown: p.g.visible, x: p.g.position.x / K, y: p.g.position.y / K, z: p.g.position.z / K })); stepOps(T); return r; } };
