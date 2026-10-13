@@ -4,12 +4,27 @@
 // Run: node scripts/build-routes.mjs
 import { writeFileSync, readFileSync } from 'node:fs';
 
-const STOPS = { // lon, lat
-  nrt: [140.3857, 35.7648], tokyo: [139.7454, 35.6586], hakone: [139.0256, 35.2010], kawa: [138.7687, 35.4983], nagoya: [136.8816, 35.1709],
+const STOPS = { // lon, lat. Points sit on the expressway or main road beside each stop, so the route does not dive into side streets and back
+  nrt: [140.3857, 35.7648], tokyo: [139.7513, 35.6556], hakone: [139.0256, 35.2010], kawa: [138.7687, 35.4983], nagoya: [136.8000, 35.3000],
   fushimi: [135.7727, 34.9671], nara: [135.8430, 34.6850], osaka: [135.5262, 34.6873], kix: [135.2440, 34.4320],
 };
 const SPUR = [STOPS.kawa, [138.7700, 35.5262]]; // round the lake to the hotel on the north shore
 
+// Drop out-and-back spurs and loops: where the route returns to within ~80 m of a point it
+// passed less than 6 km of driving earlier, cut the excursion out.
+function unloop(pts) {
+  const out = [], KX = Math.cos(35 * Math.PI / 180);
+  const d = (a, b) => Math.hypot((a[0] - b[0]) * KX, a[1] - b[1]) * 111;
+  const run = [0];
+  for (const p of pts) {
+    let cut = -1;
+    for (let i = out.length - 12; i >= 0 && run[out.length - 1] - run[i] < 6; i--) if (d(out[i], p) < 0.08) { cut = i; break; }
+    if (cut >= 0) { out.length = cut + 1; run.length = cut + 1; }
+    if (out.length) run.push(run[run.length - 1] + d(out[out.length - 1], p));
+    out.push(p);
+  }
+  return out;
+}
 function simplify(pts, tol) { // Douglas-Peucker in degrees
   const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
   const stack = [[0, pts.length - 1]];
@@ -33,18 +48,20 @@ async function drive(coords) {
   return j.routes[0];
 }
 const railOnly = !!process.env.RAIL_ONLY;
-const out = railOnly ? JSON.parse(readFileSync('src/routes.json', 'utf8')) : { road: {}, stops: STOPS };
+const out = JSON.parse(readFileSync('src/routes.json', 'utf8')); // keep whatever is not rebuilt this run (ROAD_ONLY=1 / RAIL_ONLY=1)
+if (!railOnly) { out.road = {}; out.stops = STOPS; }
 const names = Object.keys(STOPS);
 for (let i = 0; i < names.length - 1 && !railOnly; i++) {
   const r = await drive([STOPS[names[i]], STOPS[names[i + 1]]]);
-  out.road[`${names[i]}-${names[i + 1]}`] = simplify(r.geometry.coordinates, 0.0004);
+  out.road[`${names[i]}-${names[i + 1]}`] = simplify(unloop(r.geometry.coordinates), 0.0012); // ~120 m: keeps the line of the road, drops hairpin jitter the map cannot show
   console.log(names[i], '->', names[i + 1], (r.distance / 1000).toFixed(0), 'km', out.road[`${names[i]}-${names[i + 1]}`].length, 'pts');
   await new Promise((s) => setTimeout(s, 1200));
 }
-if (!railOnly) out.spur = simplify((await drive(SPUR)).geometry.coordinates, 0.0002);
+if (!railOnly) out.spur = simplify(unloop((await drive(SPUR)).geometry.coordinates), 0.0006);
 console.log('spur', out.spur.length, 'pts');
 
 // ---- Tokaido Shinkansen ----
+if (!process.env.ROAD_ONLY)
 // All high-speed track pieces between Tokyo and Shin-Osaka (both tracks, thousands of short
 // ways). Rather than stitching them, bin every track point by its position along the
 // station-to-station guide line and average each bin: that yields the ordered centreline.

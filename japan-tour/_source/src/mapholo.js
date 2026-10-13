@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { AIRPORTS, PLACES } from './data.js';
 import { toX, toZ } from './geo.js';
 import { routeLine, createLabel } from './scenery.js';
+import PAIRS from './pairs.json';
 
 // Builder overlay drawn on the real terrain: glowing pins at airports and sights,
 // flight arcs and a draped road route that reveal when the plan changes.
@@ -66,18 +67,14 @@ export function createHoloMap({ ground, thaiXZ }) {
     for (let i = 0; i <= n; i++) { const t = i / n; const v = p.clone().lerp(q, t); v.y += Math.sin(t * Math.PI) * lift; out.push(v); }
     return out;
   };
-  const draped = (p, q) => {
-    const out = [];
-    const d = p.distanceTo(q), n = Math.max(8, Math.ceil(d / 3));
-    const nx = -(q.z - p.z) / d, nz = (q.x - p.x) / d;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n, bend = Math.sin(t * Math.PI) * d * 0.06;
-      const x = p.x + (q.x - p.x) * t + nx * bend, z = p.z + (q.z - p.z) * t + nz * bend;
-      out.push(new THREE.Vector3(x, Math.max(0.05, ground(x, z)) + 1.2, z));
-    }
-    return out;
-  };
 
+  // real driving route between two stops (baked from OpenStreetMap), or null where there is none
+  const roadBetween = (a, b) => {
+    const fwd = PAIRS[`${a}|${b}`], rev = PAIRS[`${b}|${a}`], r = fwd || rev;
+    if (!r) return null;
+    const pts = r.pts.map(([lo, la]) => { const x = toX(lo), z = toZ(la); return new THREE.Vector3(x, Math.max(0.05, ground(x, z)) + 1.2, z); });
+    return fwd ? pts : pts.reverse();
+  };
   let revealStart = 0, legs = null, sim = null;
   const walker = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: '#ffffff', transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false, fog: false, blending: THREE.AdditiveBlending }));
   walker.scale.set(0.06, 0.06, 1); walker.renderOrder = 23; walker.visible = false; g.add(walker);
@@ -96,7 +93,8 @@ export function createHoloMap({ ground, thaiXZ }) {
     const steps = [{ pts: legs.out, dur: 5, off: [0, 620, 480], text: `วันที่ 1 · บิน ${plan.dep} → ${plan.arr} · เข้าพัก ${plan.hotel.name}` }];
     legs.road.forEach((pts, k) => {
       const stop = plan.stopObjs[k];
-      steps.push({ pts, dur: 3.6, hold: stop ? 1.6 : 0.4, off: [0, 150, 170], text: stop ? `วันที่ ${dayOf(k)} · รถโค้ชไป ${stop.name}` : `วันที่ ${nDays} · ไปสนามบิน ${plan.ret}` });
+      const fly = legs.hops[k], how = fly ? 'บินภายในประเทศไป' : 'รถโค้ชไป';
+      steps.push({ pts, dur: fly ? 4.2 : 3.6, hold: stop ? 1.6 : 0.4, off: fly ? [0, 420, 380] : [0, 150, 170], text: stop ? `วันที่ ${dayOf(k)} · ${how} ${stop.name}` : `วันที่ ${nDays} · ${fly ? 'บินไป' : 'ไป'}สนามบิน ${plan.ret}` });
     });
     steps.push({ pts: legs.back, dur: 5, off: [0, 620, 480], text: `วันที่ ${nDays} · บิน ${plan.ret} → ${plan.dep} กลับบ้าน` });
     sim = { steps, i: -1, t0: now, say, pos: new THREE.Vector3(), look: new THREE.Vector3(), started: false };
@@ -123,9 +121,17 @@ export function createHoloMap({ ground, thaiXZ }) {
     addRoute(arc(a, b, a.distanceTo(b) * 0.1 + 20, 120), '#7fe3ff', 3, 1.0);
     addRoute(arc(c, a, c.distanceTo(a) * 0.07 + 20, 120), '#ffd27a', 2.5, 0.8);
     const stops = [b, ...plan.stops.map((id) => posOf(PLACES.find((x) => x.id === id))), c];
-    const pts = [], road = [];
-    for (let i = 0; i < stops.length - 1; i++) { const seg = draped(stops[i], stops[i + 1]); road.push(seg.slice()); if (i) seg.shift(); pts.push(...seg); }
-    legs = { out: arc(a, b, a.distanceTo(b) * 0.1 + 20, 120), back: arc(c, a, c.distanceTo(a) * 0.07 + 20, 120), road };
+    const ids = [plan.arr, ...plan.stops, plan.ret];
+    const pts = [], road = [], hops = [];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const real = roadBetween(ids[i], ids[i + 1]);
+      if (real) { real[0].copy(stops[i]).setY(real[0].y); real[real.length - 1].copy(stops[i + 1]).setY(real[real.length - 1].y); }
+      const seg = real || arc(stops[i], stops[i + 1], stops[i].distanceTo(stops[i + 1]) * 0.08 + 12, 60); // no road (Hokkaido): domestic flight
+      hops.push(!real); road.push(seg.slice());
+      if (real) { if (pts.length) seg.shift(); pts.push(...seg); } else { if (pts.length > 1) addRoute(pts.splice(0), '#ff8fb8', 3, 1.4); addRoute(seg, '#b9a6ff', 2.5, 1.0); }
+    }
+    legs = null;
+    legs = { out: arc(a, b, a.distanceTo(b) * 0.1 + 20, 120), back: arc(c, a, c.distanceTo(a) * 0.07 + 20, 120), road, hops };
     if (pts.length > 1) addRoute(pts, '#ff8fb8', 3, 1.4);
     for (const id of [plan.dep, plan.arr, plan.ret, ...plan.stops]) if (markers[id]) markers[id].userData.active = true;
   }

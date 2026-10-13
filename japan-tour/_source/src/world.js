@@ -123,7 +123,7 @@ export function createWorld() {
   const cruiseA = brg(52, 200, 40);
   const W = {
     start: bw(-10.4, 0, GO), roll: bw(-4, 0, GO), lift: bw(3.5, 0, GO + 0.03), climb1: bw(13, 0, GO + 1.0), climb2: bw(22, 0, GO + 3.0), // 4 km runway = 24 units here
-    turn: brg(24, 32, 9), climb3: brg(40, 85, 22), cruiseA, cruiseB: cruiseA.clone().lerp(J1, 0.4).setY(45), cruiseC: cruiseA.clone().lerp(J1, 0.75).setY(45),
+    turn: brg(24, 32, 9), climb3: brg(40, 85, 22), cruiseA, cruiseB: LL(130.72, 31.8, 45), cruiseC: LL(135.79, 33.45, 45), // over Taiwan, then the Kagoshima and Kushimoto fixes along the Pacific coast (approximate)
     J1, J1b: V(225, 30, 176), J2: V(280, 15, 86), IF: thrN.clone().addScaledVector(apDir, -48).setY(nrtY + 6.5), FAF: thrN.clone().addScaledVector(apDir, -20).setY(nrtY + 2.4),
     thr: thrN.clone().setY(gyN + 0.06), touch: nw(-NRT_LEN / 2 + 1.0, 0, GO), roll2: nw(NRT_LEN / 2 - 0.9, 0, GO),
     tx1: nw(NRT_LEN / 2 - 0.45, 0.42, GO), tx2: nw(NRT_LEN / 2 - 0.62, 1.0, GO), tx3: nw(0.85, 1.05, GO), tx4: nw(0.4, 1.45, GO), gate: nw(0.4, 1.95, GO),
@@ -143,7 +143,7 @@ export function createWorld() {
   // even spacing. The vertical profile is the ground, eased so the deck does not jitter.
   const roadY = (x, z) => Math.max(H(x, z), 0.03) + 0.014;
   const polyPath = (pts, step) => {
-    for (let k = 0; k < 2; k++) { // Chaikin: round the corners left by simplification
+    for (let k = 0; k < 3; k++) { // Chaikin: round the corners left by simplification
       const o = [pts[0]];
       for (let i = 0; i < pts.length - 1; i++) o.push(pts[i].clone().lerp(pts[i + 1], 0.25), pts[i].clone().lerp(pts[i + 1], 0.75));
       o.push(pts[pts.length - 1]); pts = o;

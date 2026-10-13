@@ -1,4 +1,5 @@
 import { AIRPORTS, DEPARTURES, ARRIVALS, PLACES, HOTELS, STAYS, INSURANCE, ADDONS, flightFare, distanceKm } from './data.js';
+import PAIRS from './pairs.json';
 
 const $ = (s) => document.querySelector(s);
 const fmt = (n) => n.toLocaleString('th-TH');
@@ -35,7 +36,10 @@ export function computePlan() {
   const ret = state.ret === 'auto' ? nearestAirport(last) : state.ret;
   const chain = [AIRPORTS[state.arr], ...stops, AIRPORTS[ret]];
   let roadKm = 0;
-  for (let i = 0; i < chain.length - 1; i++) roadKm += distanceKm(chain[i], chain[i + 1]) * 1.3;
+  for (let i = 0; i < chain.length - 1; i++) { // real driving distance where a road route exists
+    const a = chain[i].id || chain[i].code, b = chain[i + 1].id || chain[i + 1].code;
+    roadKm += (PAIRS[`${a}|${b}`] || PAIRS[`${b}|${a}`])?.km ?? distanceKm(chain[i], chain[i + 1]) * 1.3;
+  }
   const flyKm = distanceKm(AIRPORTS[state.dep], AIRPORTS[state.arr]) + distanceKm(AIRPORTS[ret], AIRPORTS[state.dep]);
   const fare = Math.round((flightFare(state.dep, state.arr) + flightFare(state.dep, ret)) / 2 / 100) * 100;
   const hotel = STAYS.find((h) => h.id === state.hotel);
