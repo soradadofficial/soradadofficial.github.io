@@ -5,7 +5,7 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { glowMats, createTerminal } from './models.js';
 import { createAirliner } from './models2.js';
-import { MODEL_SCALE as S } from './geo.js';
+import { MODEL_SCALE as S, landMaterial } from './geo.js';
 
 // Builders for the km-scale world: roads, rail, airports, cities, forests, labels, route lines.
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -114,12 +114,12 @@ export function createAirport({ x, z, y, bearing, len = 4, width = 0.9, side = 1
   const g = new THREE.Group();
   g.position.set(x, y, z);
   g.rotation.y = Math.PI / 2 - bearing * Math.PI / 180;
-  const grass = std(thai ? '#7e9d55' : '#86a061', { roughness: 1 });
+  const grass = landMaterial(thai ? '#6f9a4c' : '#86a061');
   const padDepth = seaPad ? y + 1.4 : 0.2;
   const pad = new THREE.Mesh(new THREE.BoxGeometry(len + 1.2, padDepth, 5.4), [grass, grass, grass, grass, grass, grass]);
   pad.position.set(0, -padDepth / 2, side * 1.7);
   pad.receiveShadow = true;
-  g.add(pad);
+  if (!thai) g.add(pad); // Bangkok's airfield lies directly on the flat Thai plain
   const asphalt = std('#34373d', { roughness: 0.9 });
   const flat = (w, d, mat, px, pz, py = 0.004) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat);

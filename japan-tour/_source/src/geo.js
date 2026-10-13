@@ -98,6 +98,55 @@ function inLake(x, z) {
   return null;
 }
 
+// Surface shading shared by every piece of land (see the comments inside)
+function landShade(sh) {
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying vec3 vWNor;')
+      .replace('#include <project_vertex>', 'vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz; vWNor = mat3(modelMatrix) * objectNormal;\n#include <project_vertex>');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vWPos; varying vec3 vWNor;
+        float th(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float tn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(th(i), th(i + vec2(1, 0)), f.x), mix(th(i + vec2(0, 1)), th(i + vec2(1, 1)), f.x), f.y); }
+        float tf(vec2 p) { return tn(p) * 0.5 + tn(p * 2.03) * 0.25 + tn(p * 4.1) * 0.125 + tn(p * 8.3) * 0.0625; }`)
+      .replace('#include <color_fragment>', `
+        #include <color_fragment>
+        {
+          float km = vWPos.y / ${VERT.toFixed(1)};
+          vec3 rn = normalize(vec3(vWNor.x, vWNor.y * ${VERT.toFixed(1)}, vWNor.z)); // undo the vertical exaggeration
+          float steep = 1.0 - rn.y;
+          float n1 = tf(vWPos.xz * 0.11), n2 = tf(vWPos.xz * 1.3), n3 = tf(vWPos.xz * 9.0);
+          float dry = smoothstep(0.004, 0.012, km);
+          vec3 col = diffuseColor.rgb * mix(1.0, 0.8 + 0.4 * n2, dry);
+          // canopy: darker clumps and sunlit crowns
+          float woods = dry * smoothstep(0.12, 0.4, km + steep * 2.0) * (1.0 - smoothstep(2.2, 2.5, km));
+          col = mix(col, col * vec3(0.62, 0.78, 0.6), woods * smoothstep(0.4, 0.75, n3) * 0.7);
+          col = mix(col, col * vec3(1.18, 1.2, 0.95), woods * smoothstep(0.62, 0.9, tf(vWPos.xz * 5.0 + 7.0)) * 0.5);
+          // farmland patchwork on flat lowland
+          vec2 cp = vWPos.xz * vec2(4.6, 6.2) + 0.7 * vec2(tn(vWPos.xz * 1.6), tn(vWPos.zx * 1.6 + 3.0));
+          float hc = th(floor(cp));
+          vec3 field = hc < 0.4 ? vec3(0.36, 0.50, 0.22) : hc < 0.7 ? vec3(0.47, 0.56, 0.26) : hc < 0.88 ? vec3(0.27, 0.42, 0.21) : vec3(0.60, 0.55, 0.33);
+          vec2 edge = abs(fract(cp) - 0.5);
+          field *= 1.0 - 0.18 * smoothstep(0.44, 0.5, max(edge.x, edge.y));
+          float flatland = dry * (1.0 - smoothstep(0.015, 0.06, steep)) * (1.0 - smoothstep(0.1, 0.3, km));
+          col = mix(col, field * (0.9 + 0.2 * n3), flatland * 0.5);
+          // rock: steep faces, and volcanic scree above the tree line
+          vec3 rock = mix(vec3(0.40, 0.37, 0.34), vec3(0.58, 0.54, 0.49), n2);
+          col = mix(col, rock, smoothstep(0.17, 0.3, steep + (n2 - 0.5) * 0.08) * smoothstep(0.25, 0.7, km));
+          vec3 scree = mix(vec3(0.36, 0.28, 0.25), vec3(0.48, 0.42, 0.38), n3);
+          col = mix(col, scree, smoothstep(2.25, 2.6, km + (n2 - 0.5) * 0.35));
+          // snow: ragged line, thinner on steep ground
+          float snowLine = 2.85 + (n1 - 0.5) * 0.5 + (n2 - 0.5) * 0.5 + steep * 0.8;
+          col = mix(col, vec3(0.95, 0.97, 1.0), smoothstep(snowLine, snowLine + 0.18, km));
+          diffuseColor.rgb = col;
+        }`);
+  }
+export function landMaterial(color) {
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0 });
+  m.onBeforeCompile = landShade;
+  return m;
+}
+
 // ---------- terrain ----------
 export function buildTerrain({ cell = 3, patches = [] } = {}) {
   const lon0 = 128.6, lon1 = 146.4, lat0 = 30.6, lat1 = 45.8;
@@ -183,48 +232,7 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
   const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
   // Surface shading by real slope and height: field patchwork on the plains, mottled forest
   // canopy on the hills, bare rock on steep faces and above the tree line, ragged snow line.
-  terrainMat.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying vec3 vWNor;')
-      .replace('#include <project_vertex>', 'vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz; vWNor = mat3(modelMatrix) * objectNormal;\n#include <project_vertex>');
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', `#include <common>
-        varying vec3 vWPos; varying vec3 vWNor;
-        float th(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-        float tn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(th(i), th(i + vec2(1, 0)), f.x), mix(th(i + vec2(0, 1)), th(i + vec2(1, 1)), f.x), f.y); }
-        float tf(vec2 p) { return tn(p) * 0.5 + tn(p * 2.03) * 0.25 + tn(p * 4.1) * 0.125 + tn(p * 8.3) * 0.0625; }`)
-      .replace('#include <color_fragment>', `
-        #include <color_fragment>
-        {
-          float km = vWPos.y / ${VERT.toFixed(1)};
-          vec3 rn = normalize(vec3(vWNor.x, vWNor.y * ${VERT.toFixed(1)}, vWNor.z)); // undo the vertical exaggeration
-          float steep = 1.0 - rn.y;
-          float n1 = tf(vWPos.xz * 0.11), n2 = tf(vWPos.xz * 1.3), n3 = tf(vWPos.xz * 9.0);
-          float dry = smoothstep(0.004, 0.012, km);
-          vec3 col = diffuseColor.rgb * mix(1.0, 0.8 + 0.4 * n2, dry);
-          // canopy: darker clumps and sunlit crowns
-          float woods = dry * smoothstep(0.12, 0.4, km + steep * 2.0) * (1.0 - smoothstep(2.2, 2.5, km));
-          col = mix(col, col * vec3(0.62, 0.78, 0.6), woods * smoothstep(0.4, 0.75, n3) * 0.7);
-          col = mix(col, col * vec3(1.18, 1.2, 0.95), woods * smoothstep(0.62, 0.9, tf(vWPos.xz * 5.0 + 7.0)) * 0.5);
-          // farmland patchwork on flat lowland
-          vec2 cp = vWPos.xz * vec2(2.3, 3.1) + 0.7 * vec2(tn(vWPos.xz * 0.8), tn(vWPos.zx * 0.8 + 3.0));
-          float hc = th(floor(cp));
-          vec3 field = hc < 0.4 ? vec3(0.36, 0.50, 0.22) : hc < 0.7 ? vec3(0.47, 0.56, 0.26) : hc < 0.88 ? vec3(0.27, 0.42, 0.21) : vec3(0.60, 0.55, 0.33);
-          vec2 edge = abs(fract(cp) - 0.5);
-          field *= 1.0 - 0.18 * smoothstep(0.44, 0.5, max(edge.x, edge.y));
-          float flatland = dry * (1.0 - smoothstep(0.015, 0.06, steep)) * (1.0 - smoothstep(0.1, 0.3, km));
-          col = mix(col, field * (0.9 + 0.2 * n3), flatland * 0.6);
-          // rock: steep faces, and volcanic scree above the tree line
-          vec3 rock = mix(vec3(0.40, 0.37, 0.34), vec3(0.58, 0.54, 0.49), n2);
-          col = mix(col, rock, smoothstep(0.17, 0.3, steep + (n2 - 0.5) * 0.08) * smoothstep(0.25, 0.7, km));
-          vec3 scree = mix(vec3(0.36, 0.28, 0.25), vec3(0.48, 0.42, 0.38), n3);
-          col = mix(col, scree, smoothstep(2.25, 2.6, km + (n2 - 0.5) * 0.35));
-          // snow: ragged line, thinner on steep ground
-          float snowLine = 2.85 + (n1 - 0.5) * 0.5 + (n2 - 0.5) * 0.5 + steep * 0.8;
-          col = mix(col, vec3(0.95, 0.97, 1.0), smoothstep(snowLine, snowLine + 0.18, km));
-          diffuseColor.rgb = col;
-        }`);
-  };
+  terrainMat.onBeforeCompile = landShade;
 
   // ---------- high-resolution patches (lakes, shrine hills) cut into the coarse grid ----------
   const patchData = [];
@@ -348,8 +356,8 @@ export function buildThailand() {
     const shape = new THREE.Shape(ring.map(([lo, la]) => { const [x, z] = thaiXZ(lo, la); return new THREE.Vector2(x, -z); }));
     const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.6, bevelEnabled: false });
     geo.rotateX(-Math.PI / 2);
-    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: '#6f9a4c', roughness: 0.95 }));
-    m.position.y = -0.55;
+    const m = new THREE.Mesh(geo, landMaterial('#6f9a4c'));
+    m.position.y = -0.545; // top surface level with the Bangkok airfield, which sits straight on it
     m.receiveShadow = true;
     g.add(m);
   }
@@ -361,7 +369,7 @@ export function buildNear() {
   const shapes = GEO.near.map((ring) => new THREE.Shape(ring.map(([lo, la]) => new THREE.Vector2(toX(lo), -toZ(la)))));
   const geo = new THREE.ShapeGeometry(shapes, 2);
   geo.rotateX(-Math.PI / 2);
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: '#7a9b55', roughness: 1 }));
+  const m = new THREE.Mesh(geo, landMaterial('#7a9b55'));
   m.position.y = -0.06;
   m.receiveShadow = true;
   return m;

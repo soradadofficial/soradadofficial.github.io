@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { glowMats } from './models.js';
+import { glowMats, textTexture } from './models.js';
 import { LD } from './fx.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
@@ -429,4 +429,99 @@ export function createBeacon(color = '#7dffb0') {
   };
   g.userData.setOpacity = (o) => { mat.uniforms.opacity.value = o; ring.visible = o > 0.05; pillar.visible = o > 0.02; };
   return g;
+}
+
+// ---------- Suvarnabhumi (BKK): louvred canopy on trusses, glass hall, elliptical concourse tube, tower ----------
+// Built in metres; front (airside) faces +z, gates at x = -25, 0, 25 like the generic terminal.
+export function createSuvarnabhumi(label = 'BKK') {
+  const g = new THREE.Group();
+  const steel = std('#eef1f4', { roughness: 0.4, metalness: 0.35 });
+  const dark = std('#39424d', { roughness: 0.6, metalness: 0.3 });
+  // curtain wall: blue glass with a fine mullion grid, lit warm from inside at night
+  const wallTex = canvasTex(256, 64, (c, w, h) => {
+    const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#9cc7e2'); gr.addColorStop(1, '#4f86ad');
+    c.fillStyle = gr; c.fillRect(0, 0, w, h);
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    for (let x = 0; x < w; x += 16) c.fillRect(x, 0, 1.5, h);
+    for (let y = 0; y < h; y += 16) c.fillRect(0, y, w, 1.2);
+  });
+  wallTex.wrapS = THREE.RepeatWrapping; wallTex.repeat.set(4, 1);
+  const glass = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.08, metalness: 0.65, emissive: '#ffd9a0', emissiveMap: wallTex, emissiveIntensity: 0.04 });
+  glowMats.push({ mat: glass, day: 0.04, night: 0.9 });
+  // canopy: white louvres with glazed strips
+  const roofTex = canvasTex(256, 64, (c, w, h) => {
+    c.fillStyle = '#f3f5f7'; c.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 8) { c.fillStyle = '#c9d2da'; c.fillRect(x, 0, 2, h); }
+    c.fillStyle = '#7fb0cf'; for (let x = 28; x < w; x += 32) c.fillRect(x, 6, 4, h - 12);
+  });
+  const roofMat = new THREE.MeshStandardMaterial({ map: roofTex, roughness: 0.45, metalness: 0.3 });
+  // concourse skin: white membrane bays alternating with glass bays; the glass glows blue at night
+  const bays = (glassCol, membrane) => canvasTex(64, 256, (c, w, h) => {
+    c.fillStyle = membrane; c.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 32) { c.fillStyle = glassCol; c.fillRect(0, y + 4, w, 12); c.fillStyle = membrane === '#000' ? '#000' : '#cfd6dc'; c.fillRect(0, y + 3, w, 1.5); c.fillRect(0, y + 16, w, 1.5); }
+  });
+  const skinTex = bays('#5d9bc4', '#f6f7f8'), skinGlow = bays('#7fd0ff', '#000');
+  for (const t of [skinTex, skinGlow]) { t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 3); }
+  const skin = new THREE.MeshStandardMaterial({ map: skinTex, roughness: 0.3, metalness: 0.3, emissive: '#ffffff', emissiveMap: skinGlow, emissiveIntensity: 0.02, side: THREE.DoubleSide });
+  glowMats.push({ mat: skin, day: 0.02, night: 1.2 });
+
+  // main hall and the floating canopy on eight truss frames
+  const hall = new THREE.Mesh(new RoundedBoxGeometry(94, 12, 20, 3, 1.2), glass); hall.position.set(0, 6, -6); g.add(hall);
+  const canopy = new THREE.Mesh(new RoundedBoxGeometry(112, 1.4, 36, 3, 0.6), [steel, steel, roofMat, dark, steel, steel]); canopy.position.set(0, 18, -5); g.add(canopy);
+  for (let x = -49; x <= 49; x += 14) {
+    const beam = new THREE.Mesh(new RoundedBoxGeometry(1, 1.8, 34, 2, 0.3), steel); beam.position.set(x, 16.6, -5); g.add(beam);
+    for (const sz of [-1, 1]) { // legs lean outward like the real super-trusses
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 17, 12), steel);
+      leg.position.set(x, 8.2, -5 + sz * 14.5); leg.rotation.x = sz * 0.1; g.add(leg);
+    }
+  }
+  // concourse: half-ellipse tube along the apron with glazed end walls
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 124, 40, 1, true, 0, Math.PI), skin);
+  tube.rotation.z = Math.PI / 2; tube.rotation.y = Math.PI / 2; tube.scale.set(8.5, 1, 7);
+  const tubeG = new THREE.Group(); tubeG.add(tube); tubeG.rotation.y = Math.PI / 2; tubeG.position.set(0, 0, 11); g.add(tubeG);
+  for (const sx of [-1, 1]) {
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(1, 24, 0, Math.PI), glass);
+    cap.scale.set(7, 8.5, 1); cap.rotation.y = sx * Math.PI / 2; cap.position.set(sx * 62, 0, 11); g.add(cap);
+  }
+  for (let x = -60; x <= 60; x += 10) { // steel ribs over the skin
+    const rib = new THREE.Mesh(new THREE.TorusGeometry(1, 0.035, 6, 28, Math.PI), steel);
+    rib.scale.set(7.15, 8.7, 7.15); rib.rotation.y = Math.PI / 2; rib.position.set(x, 0, 11); g.add(rib);
+  }
+  // jet bridges
+  for (const x of [-25, 0, 25]) {
+    const br = new THREE.Mesh(new RoundedBoxGeometry(2.6, 2.6, 10, 3, 0.5), steel); br.position.set(x, 4.2, 20.5); g.add(br);
+    const win = new THREE.Mesh(new THREE.BoxGeometry(2.66, 0.9, 8.4), glass); win.position.set(x, 4.5, 20.5); g.add(win);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 3, 10), dark); leg.position.set(x, 1.5, 24.5); g.add(leg);
+  }
+  // sign on the hall front, above the concourse
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(24, 3.6), new THREE.MeshBasicMaterial({ map: textTexture(label, { font: '700 66px sans-serif', color: '#ffffff', bg: '#4c2a7a' }), toneMapped: false }));
+  sign.position.set(0, 14.6, 4.2); g.add(sign);
+  // gilded Thai pavilion roofs at both ends of the landside
+  const gold = std('#d9b25b', { metalness: 0.75, roughness: 0.3 });
+  for (const sx of [-1, 1]) {
+    const sala = new THREE.Group();
+    for (let k = 0; k < 3; k++) {
+      const r = new THREE.Mesh(new THREE.ConeGeometry(4.6 - k * 1.2, 2.6, 4, 4), gold);
+      const rp = r.geometry.attributes.position; // concave sweep of a Thai roof
+      for (let i = 0; i < rp.count; i++) { const t = 1 - (rp.getY(i) + 1.3) / 2.6, f = 1 - 0.28 * Math.sin(t * Math.PI); rp.setX(i, rp.getX(i) * f); rp.setZ(i, rp.getZ(i) * f); }
+      r.geometry.computeVertexNormals();
+      r.rotation.y = Math.PI / 4; r.position.y = 4.3 + k * 1.9; sala.add(r);
+    }
+    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.25, 4, 8), gold); fin.position.y = 10.6; sala.add(fin);
+    const base = new THREE.Mesh(new RoundedBoxGeometry(6, 3, 6, 2, 0.3), std('#f4efe4')); base.position.y = 1.5; sala.add(base);
+    sala.position.set(sx * 62, 0, -6); g.add(sala);
+  }
+  // control tower: slender flared shaft, glazed cab under a domed cap
+  const lathe = (pts, mat) => new THREE.Mesh(new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), 36), mat);
+  const tower = new THREE.Group();
+  tower.add(lathe([[3.4, 0], [2.6, 6], [2.0, 20], [1.8, 40], [2.0, 47], [3.2, 50.5], [5.2, 52.5]], steel));
+  tower.add(lathe([[5.2, 52.5], [6.2, 54], [6.4, 56.5], [5.6, 58.5]], glass));
+  tower.add(lathe([[5.9, 58.5], [5.4, 59.6], [3.6, 60.8], [0.01, 61.4]], steel));
+  tower.add(lathe([[6.6, 52.2], [6.6, 52.8]], dark));
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.18, 7, 8), dark); mast.position.y = 64.5; tower.add(mast);
+  const bea = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3a3a' }));
+  bea.position.y = 68.2; bea.userData.blink = true; tower.add(bea);
+  tower.position.set(70, 0, 6);
+  g.add(tower);
+  return bakeInto(g, (o) => o.userData.blink || o.material.isMeshBasicMaterial);
 }
