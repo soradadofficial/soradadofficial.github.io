@@ -109,6 +109,7 @@ const flags = []; // [sprite, pole] pairs, faded out when the camera is low
     (major ? big : small).push(strip(pts, (W[r.k] || 4) * K, (r.up ? 0.05 : 0.006) + (major ? 0.002 : 0)));
     if (major && !r.k.endsWith('-l')) for (let i = 0; i < pts.length; i += 3) lit.push(pts[i]);
   }
+  merged((OSM.aero || []).filter((w) => w.k === 'taxiway').map((w) => strip(w.p.map((q) => L(q)), 12.5 * K, 0.009)), std('#8f9299', { roughness: 0.9 })); // real taxiway centrelines, 25 m wide
   merged(big, std('#f4f2ec', { roughness: 0.7 }));
   merged(small, std('#d9d6cd', { roughness: 0.8 }));
   const lamps = new THREE.InstancedMesh(new THREE.SphereGeometry(0.01, 6, 4), new THREE.MeshBasicMaterial({ color: '#ff5a4a', toneMapped: false }), lit.length);
@@ -182,12 +183,41 @@ field.userData.ready.then(() => { complex.holder.traverse((o) => { if (o.isMesh 
 const ops = new THREE.Group(); field.add(ops);
 const GO = 4.05 * K; // aircraft origin above the ground
 const TW_E = -1.75, TW_W = dep.z + 1.75, XT = complex.x - 3.9; // inner taxiway east, inner taxiway west, cross-field taxiway
+// Taxi routing on the real taxiway centrelines (OpenStreetMap aeroway=taxiway): the ways are cut into
+// short pieces, ends closer than 12 m are joined into one node, and routes are shortest paths on that graph.
+const NAV = (() => {
+  const P = [], adj = [], cells = new Map(), CELL = 15 * K, JOIN = 12 * K;
+  const node = (x, z) => {
+    const cx = Math.round(x / CELL), cz = Math.round(z / CELL);
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (const n of cells.get(`${cx + i},${cz + j}`) || []) if (Math.hypot(P[n][0] - x, P[n][1] - z) < JOIN) return n;
+    P.push([x, z]); adj.push([]); const k = `${cx},${cz}`; cells.set(k, [...(cells.get(k) || []), P.length - 1]); return P.length - 1;
+  };
+  for (const w of OSM.aero || []) {
+    if (w.k !== 'taxiway') continue;
+    let prev = -1;
+    w.p.forEach((q, i) => {
+      const b = L(q), a = i ? L(w.p[i - 1]) : b, n = i ? Math.max(1, Math.ceil(a.distanceTo(b) / (25 * K))) : 1;
+      for (let k = 1; k <= n; k++) { const x = a.x + (b.x - a.x) * k / n, z = a.z + (b.z - a.z) * k / n, id = node(x, z); if (prev >= 0 && prev !== id) { const d = Math.hypot(P[prev][0] - x, P[prev][1] - z); adj[prev].push([id, d]); adj[id].push([prev, d]); } prev = id; }
+    });
+  }
+  const nearest = (x, z, ok = () => true) => { let best = -1, bd = Infinity; P.forEach((q, i) => { const d = Math.hypot(q[0] - x, q[1] - z); if (d < bd && ok(q)) { bd = d; best = i; } }); return best; };
+  const busy = new Set(); // nodes used by arrivals; departures pay 6x to share them, so they take the parallel taxiway
+  function route(a, b, inbound = false) { // shortest path a -> b as [x, z] points about 60 m apart, or null when the graph does not connect them
+    if (a < 0 || b < 0) return null;
+    const dist = new Float64Array(P.length).fill(Infinity), from = new Int32Array(P.length).fill(-1), queue = [a]; dist[a] = 0;
+    for (let h = 0; h < queue.length; h++) { const u = queue[h]; for (const [v, w] of adj[u]) { const d = !inbound && busy.has(v) ? w * 6 : w; if (dist[u] + d < dist[v] - 1e-9) { dist[v] = dist[u] + d; from[v] = u; queue.push(v); } } }
+    if (dist[b] === Infinity) return null;
+    const out = []; for (let u = b; u >= 0; u = from[u]) { out.push(P[u]); if (inbound) busy.add(u); } out.reverse();
+    return out.filter((_, i) => i % 2 === 0 || i === out.length - 1);
+  }
+  return { P, nearest, route };
+})();
 const curve = (pts, step = 0.05) => Path.fromControl(pts.map(([x, z, y = GO]) => V(x, y, z)), step);
 const FLIGHTS = [
   { no: 'TT 642', route: 'โตเกียว NRT', from: 'เชียงใหม่ CNX', stand: 23 }, { no: 'TT 318', route: 'โอซาก้า KIX', from: 'ภูเก็ต HKT', stand: 22 },
   { no: 'TT 205', route: 'โซล ICN', from: 'สิงคโปร์ SIN', stand: 18 }, { no: 'TT 771', route: 'ฮ่องกง HKG', from: 'นาโกย่า NGO', stand: 16 }, { no: 'TT 096', route: 'ไทเป TPE', from: 'ฟุกุโอกะ FUK', stand: 11 },
 ];
-const PH = [['approach', 16], ['rollout', 9], ['taxiIn', 22], ['park', 48], ['push', 9], ['taxiOut', 36], ['takeoff', 15], ['away', 5]];
+const PH = [['approach', 16], ['rollout', 9], ['taxiIn', 32], ['park', 48], ['push', 9], ['taxiOut', 72], ['takeoff', 15], ['away', 5]];
 const CYCLE = PH.reduce((s, p) => s + p[1], 0);
 const STATUS = { approach: 'กำลังร่อนลง', rollout: 'ลงจอดแล้ว', taxiIn: 'แท็กซี่เข้าหลุมจอด', park: 'จอดที่หลุมจอด', push: 'ดันถอย', taxiOut: 'แท็กซี่ไปทางวิ่ง 02R', takeoff: 'ขึ้นบิน', away: 'ออกเดินทางแล้ว' };
 const STEPS = [['ต่อสะพานเทียบ', 0, 4], ['ผู้โดยสารขาเข้าลงเครื่อง', 3, 15], ['ขนกระเป๋าลง–ขึ้น', 5, 34], ['เติมน้ำมันจากท่อใต้ลานจอด', 7, 30], ['ขนอาหารและทำความสะอาด', 9, 28], ['ผู้โดยสารขาออกขึ้นเครื่อง', 29, 43], ['ถอดสะพาน ต่อรถดันถอย', 43, 48]];
@@ -197,15 +227,23 @@ const gseReady = loader.loadAsync('./models/gse.glb').then((g) => { for (const n
 const dotGeo = new THREE.SphereGeometry(0.011, 6, 5);
 const dots = new THREE.InstancedMesh(dotGeo, new THREE.MeshBasicMaterial({ color: '#ffffff', toneMapped: false }), FLIGHTS.length * 36);
 dots.frustumCulled = false; ops.add(dots);
+const EXIT = NAV.nearest(3.2, 0, (q) => Math.abs(q[1]) < 0.1 && q[0] > 1.5); // first taxiway off 01/19 past the roll-out
+const gateOf = (st) => NAV.nearest(st.x - Math.cos(st.rot) * 110 * K, st.z + Math.sin(st.rot) * 110 * K); // taxiway node behind a stand
+for (const f of FLIGHTS) f.inbound = NAV.route(EXIT, gateOf(stands[f.stand]), true); // all arrivals first, so every departure can avoid them
 const planes = FLIGHTS.map((f, i) => {
   const s = stands[f.stand], nose = V(Math.cos(s.rot), 0, -Math.sin(s.rot)); // unit vector the parked aircraft points along
   const g = createAirliner(); g.scale.setScalar(K); g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); ops.add(g);
-  const apron = [s.x - nose.x * 0.75, s.z - nose.z * 0.75]; // just behind the stand, on the apron taxilane
-  const arr = curve([[-44, 0.2, 8], [-28, 0.1, 3.2], [-14, 0, 0.5], [-9.6, 0], [0, 0], [2.6, -0.15], [3.43, -1.0], [4.4, TW_E], [Math.min(s.x - 1.2, apron[0] - 0.8), TW_E], [apron[0] - 0.45, (TW_E + apron[1]) / 2], apron, [s.x, s.z]]);
-  const split = [arr.closest(V(-9.6, 0, 0)), arr.closest(V(2.0, 0, 0))];
-  const pushEnd = [s.x + 0.75, (TW_E + apron[1]) / 2]; // stops on the apron taxilane, clear of arrivals on the inner taxiway
-  const push = curve([[s.x, s.z], [s.x - nose.x * 0.5, s.z - nose.z * 0.5], [(apron[0] + pushEnd[0]) / 2 + 0.1, (apron[1] + pushEnd[1]) / 2], pushEnd]);
-  const out = curve([pushEnd, [pushEnd[0] + Math.sign(XT - pushEnd[0]) * 0.7, TW_E], [XT + 0.7, TW_E], [XT, TW_E - 0.6], [XT, TW_W + 0.6], [XT - 0.6, TW_W], [dep.x - dep.len / 2 + 1.4, TW_W], [dep.x - dep.len / 2 + 0.5, TW_W - 0.7], [dep.x - dep.len / 2 + 0.55, dep.z - 0.02], [dep.x - dep.len / 2 + 1.2, dep.z]]);
+  // arrival: land north on 01/19, leave it at the first exit past the roll-out, taxi to the node behind the stand
+  const back = [s.x - nose.x * 110 * K, s.z - nose.z * 110 * K], gate = gateOf(s);
+  const exit = EXIT, inbound = f.inbound, hold = NAV.nearest(dep.x - dep.len / 2 + 0.3, dep.z, (q) => Math.abs(q[1] - dep.z) < 0.1 && q[0] < dep.x - dep.len / 2 + 0.9);
+  const outbound = NAV.route(gate, hold);
+  if (!inbound || !outbound) console.error('no taxi route for stand', f.stand);
+  const G = NAV.P[gate], E = NAV.P[exit], H = NAV.P[hold];
+  const arr = curve([[-44, 0.2, 8], [-28, 0.1, 3.2], [-14, 0, 0.5], [-9.6, 0], [0, 0], [E[0] - 1.2, 0], ...(inbound || [E, G]), [s.x, s.z]]);
+  const split = [arr.closest(V(-9.6, 0, 0)), arr.closest(V(E[0] - 1.2, 0, 0))];
+  const push = curve([[s.x, s.z], [s.x - nose.x * 0.4, s.z - nose.z * 0.4], [(back[0] + G[0]) / 2, (back[1] + G[1]) / 2], G]);
+  const start = [dep.x - dep.len / 2 + 1.2, dep.z];
+  const out = curve([...(outbound || [G, H]), ...(H[0] < start[0] - 0.3 ? [[(H[0] + start[0]) / 2, dep.z]] : []), start]);
   const tko = curve([[dep.x - dep.len / 2 + 1.2, dep.z], [dep.x + 1, dep.z], [dep.x + 4.5, dep.z, GO + 0.06], [dep.x + 12, dep.z + 0.4, 2.2], [dep.x + 30, dep.z + 6, 7.5], [dep.x + 46, dep.z + 16, 11]]);
   // service point frame at the stand, in metres: +x along the nose, +z to the aircraft's right
   const bay = new THREE.Group(); bay.position.set(s.x, 0, s.z); bay.rotation.y = s.rot; bay.scale.setScalar(K); ops.add(bay);
@@ -387,6 +425,6 @@ function frame() {
 }
 camera.position.copy(field.localToWorld(V(-30, 40, 24))); controls.target.copy(field.localToWorld(V(6, 0, -7)));
 goto('all'); hud(); frame();
-if (location.search.includes('debug')) window.__bkk = { planes, field, camera, controls, goto, setLayer, tally, set T(v) { T = v; }, get T() { return T; },
+if (location.search.includes('debug')) window.__bkk = { planes, field, camera, controls, goto, setLayer, tally, cycle: CYCLE, parkAt: PH.slice(0, 3).reduce((n, q) => n + q[1], 0), set T(v) { T = v; }, get T() { return T; },
   // test hook: where every aircraft is at a given time, in metres on the airfield
   at(t) { stepOps(t); const r = planes.map((p) => ({ no: p.f.no, phase: p.phase, shown: p.g.visible, x: p.g.position.x / K, y: p.g.position.y / K, z: p.g.position.z / K })); stepOps(T); return r; } };

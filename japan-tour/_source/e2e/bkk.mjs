@@ -15,7 +15,7 @@ try {
   await page.waitForFunction(() => window.__bkk && window.__bkk.planes.every((p) => p.veh.Tug), null, { timeout: 30000 });
 
   // choreography: step two full loops, every aircraft keeps its phase order and its distance from the others
-  const frames = await page.evaluate(() => { const out = []; for (let t = 0; t < 330; t += 0.5) out.push(window.__bkk.at(t)); return out; });
+  const frames = await page.evaluate(() => { const out = []; for (let t = 0; t < window.__bkk.cycle * 2; t += 0.5) out.push(window.__bkk.at(t)); return out; });
   let closest = Infinity, where = '';
   frames.forEach((f, k) => {
     f.forEach((a, i) => {
@@ -31,7 +31,7 @@ try {
   assert.ok(closest >= 70, 'aircraft on the ground stay at least 70 m apart (centre to centre)');
 
   // early release: hurry a parked flight, the button greys out and the flight reaches pushback early
-  await page.evaluate(() => { const b = window.__bkk; b.T = 0; b.T = (165 - b.planes[0].off % 160 + 160 + 60) % 160; }); // ponytail: relies on the 160 s loop; read it from the page if the loop length changes
+  await page.evaluate(() => { const b = window.__bkk, c = b.cycle; b.T = ((b.parkAt + 4 - b.planes[0].off) % c + c) % c; }); // flight 0 is 4 s into its stand time
   await page.click('[data-follow="0"]');
   await page.waitForFunction(() => window.__bkk.planes[0].phase === 'park' && !document.querySelector('#early').disabled, null, { timeout: 60000 });
   assert.equal(await page.textContent('#early'), 'ปล่อยเครื่องก่อนเวลา');
