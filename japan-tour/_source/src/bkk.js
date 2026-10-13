@@ -90,7 +90,15 @@ const mapLayer = new THREE.Group(); field.add(mapLayer);
     const sh = new THREE.Shape(b.p.map(([e, n]) => new THREE.Vector2(complex.x + n * K, -(complex.z + e * K))));
     walls.push(new THREE.ExtrudeGeometry(sh, { depth: h, bevelEnabled: false }).rotateX(-Math.PI / 2));
   }
-  merged(walls, std('#f3f1ec', { roughness: 0.75 }), true);
+  const wallMat = std('#f3f1ec', { roughness: 0.75 });
+  wallMat.onBeforeCompile = (sh) => { // window bands by storey and bay on the walls, darker flat roofs
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vW; varying vec3 vN;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvW = (modelMatrix * vec4(position, 1.0)).xyz; vN = normal;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vW; varying vec3 vN;').replace('#include <color_fragment>', `#include <color_fragment>
+      if (vN.y < 0.5) { float fl = fract(vW.y / ${(3.6 * K).toFixed(5)}), bay = fract((vW.x + vW.z) / ${(6 * K).toFixed(5)});
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.40, 0.50), step(0.3, fl) * step(fl, 0.8) * step(0.18, bay) * 0.8); }
+      else diffuseColor.rgb *= 0.86;`);
+  };
+  merged(walls, wallMat, true);
 }
 // villages and trees outside the fence, as on a scale model
 {
@@ -270,7 +278,12 @@ function hud() {
 }
 
 // ---------- loop ----------
-addEventListener('resize', () => { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+const fit = () => { // on phones the panels fill the lower half, so the view centre moves up into the free area
+  renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight;
+  if (innerWidth < 900) camera.setViewOffset(innerWidth, innerHeight, 0, innerHeight * 0.24, innerWidth, innerHeight); else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+};
+addEventListener('resize', fit); fit();
 const clock = new THREE.Clock();
 let hudT = 0;
 function frame() {
