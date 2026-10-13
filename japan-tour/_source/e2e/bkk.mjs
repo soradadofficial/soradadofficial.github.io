@@ -45,6 +45,15 @@ try {
   await page.waitForFunction(() => window.__bkk.planes[0].phase === 'push', null, { timeout: 15000 });
   assert.deepEqual(errors, [], 'no page errors or failed requests');
 
+  // smoothness: 10 s in the airspace view at night, with every effect on
+  await page.evaluate(() => { window.__bkk.applyNight(1); window.__bkk.goto('air'); });
+  await page.waitForTimeout(2500);
+  const ft = await page.evaluate(() => new Promise((res) => { const t = []; let last = performance.now(); const end = last + 10000; const f = (now) => { t.push(now - last); last = now; now < end ? requestAnimationFrame(f) : res(t.sort((a, b) => a - b)); }; requestAnimationFrame(f); }));
+  const p95 = ft[Math.floor(ft.length * 0.95)], worst = ft[ft.length - 1];
+  console.log(`frame times, airspace at night: median ${ft[ft.length >> 1].toFixed(1)} ms, p95 ${p95.toFixed(1)} ms, worst ${worst.toFixed(1)} ms over ${ft.length} frames`);
+  assert.ok(p95 < 16.7 && worst < 50, 'frames stay smooth on this machine');
+  assert.deepEqual(errors, [], 'no page errors after the airspace and night views');
+
   // reduced motion: the simulation starts paused
   const calm = await browser.newContext({ reducedMotion: 'reduce' }), p2 = await calm.newPage();
   await p2.goto(URL, { waitUntil: 'load' });
