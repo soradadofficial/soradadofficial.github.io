@@ -53,8 +53,29 @@ const { stands, complex, dep } = field.userData;
   });
   mast.castShadow = true; field.add(mast, head, new THREE.Mesh(mergeGeometries(lines), new THREE.MeshBasicMaterial({ color: '#f2c230', toneMapped: false })));
 }
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), std('#b3b48c', { roughness: 1 }));
-ground.rotation.x = -Math.PI / 2; ground.position.y = -0.004; ground.receiveShadow = true; scene.add(ground);
+const BLOCK = { x: 5, z: -5, w: 156, d: 146, deep: 7, metres: 35 }; // plate in field units; the section shows 35 m of ground, about 33x taller than true scale
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(BLOCK.w, BLOCK.d).rotateX(-Math.PI / 2), std('#b3b48c', { roughness: 1 }));
+ground.position.set(BLOCK.x, -0.004, BLOCK.z); ground.receiveShadow = true; field.add(ground);
+// Layer depths are approximate, for a typical Bangkok-plain profile; replace when surveyed values are in.
+const STRATA = [['ผิวทางและชั้นรองพื้นทาง', 0, 1, '#a9adb5'], ['ชั้นทรายถม', 1, 2.5, '#f6dc9e'], ['ดินเหนียวอ่อนกรุงเทพฯ', 2.5, 12, '#b7cfe0'], ['ดินเหนียวแข็ง', 12, 22, '#ecbfa6'], ['ชั้นทรายชั้นแรก', 22, 35, '#f9e9b8']];
+{
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 560; const x = c.getContext('2d'), py = (m) => m / BLOCK.metres * c.height;
+  for (const [, a, b, col] of STRATA) { x.fillStyle = col; x.fillRect(0, py(a), c.width, py(b - a) + 1); }
+  x.fillStyle = 'rgba(160,120,60,0.35)'; for (let i = 0; i < 900; i++) x.fillRect((i * 733) % c.width, py(22) + (i * 197) % py(13), 4, 4); // sand grains
+  x.strokeStyle = 'rgba(255,255,255,0.9)'; x.lineWidth = 3; for (let u = 14; u < c.width; u += 28) { x.beginPath(); x.moveTo(u, py(1)); x.lineTo(u, py(10)); x.stroke(); } // vertical drains through the soft clay
+  x.fillStyle = 'rgba(60,150,220,0.22)'; x.fillRect(0, py(1.2), c.width, c.height); x.strokeStyle = '#2f8fd6'; x.lineWidth = 4; x.setLineDash([22, 12]); x.beginPath(); x.moveTo(0, py(1.2)); x.lineTo(c.width, py(1.2)); x.stroke(); x.setLineDash([]);
+  document.fonts.ready.then(() => {
+    x.textBaseline = 'middle'; x.font = '600 34px "IBM Plex Sans Thai", Tahoma, sans-serif';
+    for (const [n, a, b] of STRATA) { const t = `${n} · ราว ${a}–${b} ม.`, w = x.measureText(t).width, x0 = a ? 600 : 40, y = Math.max(py((a + b) / 2), 28); x.fillStyle = 'rgba(255,255,255,0.82)'; x.fillRect(x0, y - 24, w + 28, 48); x.fillStyle = '#23304a'; x.fillText(t, x0 + 14, y + 2); } // the thin top layer is labelled to the side
+    x.font = '500 26px "IBM Plex Sans Thai", Tahoma, sans-serif'; x.fillStyle = '#1f6fb5'; x.fillText('ระดับน้ำใต้ดิน (โดยประมาณ)', 1380, py(1.2) + 22); x.fillStyle = '#23304a'; x.fillText('แผ่นระบายน้ำแนวดิ่ง (PVD) ลึกราว 10 ม.', 1380, py(7));
+    tex.needsUpdate = true;
+  });
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping; tex.repeat.x = 6; tex.anisotropy = 8;
+  const side = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, fog: false });
+  for (const [len, rot, px, pz] of [[BLOCK.w, 0, 0, BLOCK.d / 2], [BLOCK.w, Math.PI, 0, -BLOCK.d / 2], [BLOCK.d, Math.PI / 2, BLOCK.w / 2, 0], [BLOCK.d, -Math.PI / 2, -BLOCK.w / 2, 0]]) {
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(len, BLOCK.deep), side); f.rotation.y = rot; f.position.set(BLOCK.x + px, -BLOCK.deep / 2, BLOCK.z + pz); field.add(f);
+  }
+}
 { const plate = new THREE.Mesh(new THREE.PlaneGeometry(35.5, 22).rotateX(-Math.PI / 2), std('#bcd6a2', { roughness: 1 })); plate.position.set(2.25, -0.002, -8); plate.receiveShadow = true; field.add(plate); } // same bounds as inField() below
 sun.target.position.copy(field.localToWorld(V(complex.x, 0, complex.z)));
 sun.position.copy(sun.target.position).add(V(30, 60, 25));
@@ -175,9 +196,9 @@ const planes = FLIGHTS.map((f, i) => {
   const apron = [s.x - nose.x * 0.75, s.z - nose.z * 0.75]; // just behind the stand, on the apron taxilane
   const arr = curve([[-44, 0.2, 8], [-28, 0.1, 3.2], [-14, 0, 0.5], [-9.6, 0], [0, 0], [2.6, -0.15], [3.43, -1.0], [4.4, TW_E], [Math.min(s.x - 1.2, apron[0] - 0.8), TW_E], [apron[0] - 0.45, (TW_E + apron[1]) / 2], apron, [s.x, s.z]]);
   const split = [arr.closest(V(-9.6, 0, 0)), arr.closest(V(2.0, 0, 0))];
-  const pushEnd = [s.x + 0.75, TW_E];
-  const push = curve([[s.x, s.z], [s.x - nose.x * 0.5, s.z - nose.z * 0.5], [(apron[0] + pushEnd[0]) / 2 + 0.1, (apron[1] + TW_E) / 2], pushEnd]);
-  const out = curve([pushEnd, [XT + 0.7, TW_E], [XT, TW_E - 0.6], [XT, TW_W + 0.6], [XT - 0.6, TW_W], [dep.x - dep.len / 2 + 1.4, TW_W], [dep.x - dep.len / 2 + 0.5, TW_W - 0.7], [dep.x - dep.len / 2 + 0.55, dep.z - 0.02], [dep.x - dep.len / 2 + 1.2, dep.z]]);
+  const pushEnd = [s.x + 0.75, (TW_E + apron[1]) / 2]; // stops on the apron taxilane, clear of arrivals on the inner taxiway
+  const push = curve([[s.x, s.z], [s.x - nose.x * 0.5, s.z - nose.z * 0.5], [(apron[0] + pushEnd[0]) / 2 + 0.1, (apron[1] + pushEnd[1]) / 2], pushEnd]);
+  const out = curve([pushEnd, [pushEnd[0] + Math.sign(XT - pushEnd[0]) * 0.7, TW_E], [XT + 0.7, TW_E], [XT, TW_E - 0.6], [XT, TW_W + 0.6], [XT - 0.6, TW_W], [dep.x - dep.len / 2 + 1.4, TW_W], [dep.x - dep.len / 2 + 0.5, TW_W - 0.7], [dep.x - dep.len / 2 + 0.55, dep.z - 0.02], [dep.x - dep.len / 2 + 1.2, dep.z]]);
   const tko = curve([[dep.x - dep.len / 2 + 1.2, dep.z], [dep.x + 1, dep.z], [dep.x + 4.5, dep.z, GO + 0.06], [dep.x + 12, dep.z + 0.4, 2.2], [dep.x + 30, dep.z + 6, 7.5], [dep.x + 46, dep.z + 16, 11]]);
   // service point frame at the stand, in metres: +x along the nose, +z to the aircraft's right
   const bay = new THREE.Group(); bay.position.set(s.x, 0, s.z); bay.rotation.y = s.rot; bay.scale.setScalar(K); ops.add(bay);
@@ -211,12 +232,23 @@ function place(p, path, d, back = false) {
   if (back) tan.negate();
   p.g.rotation.set(0, Math.atan2(-tan.z, tan.x), Math.asin(Math.max(-1, Math.min(1, tan.y))) * (back ? -1 : 1), 'YZX');
 }
+const PAX = 180, FUEL_RATE = 650; // simulated: passengers per flight, litres per second through the dispenser
+const tally = { landed: 0, departed: 0, pax: 0, fuel: 0 };
+let counting = false; // off while the clock is being set by hand
+const fuelling = (p) => p.phase === 'park' && p.pt >= 7 && p.pt < 30;
+const stepNow = (p) => p.phase === 'park' ? [...STEPS].reverse().find(([, a, b]) => p.pt >= a && p.pt < b) : null;
+// Hurry one flight: its own clock runs 6x until it reaches the wanted phase, so the crew finish what they are doing first.
+// ponytail: the other flights keep their slots, so a hurried flight can close up on one ahead; add slot swapping if that matters.
+function hurry(p) { if (p.phase === 'park') p.rush = 'push'; else if (['takeoff', 'away', 'approach'].includes(p.phase)) p.rush = 'rollout'; }
+const canHurry = (p) => !planes.some((q) => q.rush) && (p.phase === 'park' ? p.pt < 40 : ['takeoff', 'away'].includes(p.phase));
 function stepOps(T) {
   let di = 0;
   planes.forEach((p) => {
     let t = (T + p.off) % CYCLE, name = '';
+    const was = p.phase;
     for (const [n, dur] of PH) { if (t < dur) { name = n; p.pt = t; p.pu = t / dur; break; } t -= dur; }
     p.phase = name;
+    if (counting && was !== name) { if (name === 'rollout') { tally.landed++; tally.pax += PAX; } else if (name === 'away') { tally.departed++; tally.pax += PAX; } }
     const { arr, split, push, out, tko } = p.paths, u = p.pu;
     p.g.visible = name !== 'away';
     p.g.userData.gear.visible = !(name === 'takeoff' && u > 0.55) && !(name === 'approach' && u < 0.35);
@@ -266,6 +298,7 @@ const PARTS = [
   { id: 'rwy', name: 'ทางวิ่ง 02R', eye: [-9, 1.6, -15.6], at: [-3, 0, -13.2], layer: 'ops', title: 'ทางวิ่ง 02R/20L', text: 'ทางวิ่งเส้นกลาง ใช้เป็นทางวิ่งขาออกหลัก เครื่องบินจำลองแท็กซี่ข้ามสนามมาเข้าแถวที่หัวทางวิ่งแล้ววิ่งขึ้นไปทางเหนือ', facts: [['ความยาว', '3,700 ม.'], ['ระยะจาก 02L/20R', '400 ม.'], ['ระยะจาก 01/19', '2,200 ม.']], src: 'AIP ประเทศไทย' },
   { id: 'twr', name: 'หอบังคับการ', eye: [14.9, 1.3, -9.9], at: [13.24, 0.55, -7.99], title: 'หอบังคับการบิน', text: 'ตั้งอยู่ฝั่งผู้โดยสารขาเข้าเมือง ทางเหนือค่อนตะวันตกของอาคารหลัก เคยเป็นหอบังคับการบินแบบตั้งอิสระที่สูงที่สุดในโลกช่วงปี 2006–2014', facts: [['ความสูง', '132.2 ม.']], src: 'Wikipedia' },
   { id: 'sat', name: 'SAT-1', eye: [1.2, 1.5, -2.4], at: [3.9, 0.1, -6.6], title: 'อาคารเทียบเครื่องบินรองหลังที่ 1', text: 'อาคารกลางสนามทางใต้ของอาคารหลัก เชื่อมกันด้วยรถไฟฟ้าไร้คนขับในอุโมงค์ใต้ลานจอด เพิ่มความจุของสนามบินเป็น 60 ล้านคนต่อปี', facts: [['พื้นที่', '251,400 ตร.ม.'], ['หลุมจอด', '28 (8 หลุมรองรับ A380/747-8)'], ['ความยาว', 'ราว 1,019 ม.']], src: 'Wikipedia · OpenStreetMap' },
+  { id: 'soil', name: 'ชั้นดิน', eye: [0, 0.8, 82], at: [0, -3.2, 68], title: 'หน้าตัดชั้นดินใต้สนามบิน', text: 'ขอบแผ่นโมเดลถูกตัดให้เห็นชั้นดิน สนามบินสร้างบนดินเหนียวอ่อนของที่ราบลุ่มกรุงเทพฯ จึงต้องปรับปรุงดินก่อน โดยถมทรายเป็นน้ำหนักกดทับ และปักแผ่นระบายน้ำแนวดิ่ง (PVD) ให้น้ำในดินเหนียวไหลออกและดินทรุดตัวล่วงหน้า', facts: [['วิธีปรับปรุงดิน', 'PVD ร่วมกับน้ำหนักกดทับ'], ['ดินเหนียวอ่อน', 'หนาราว 10 ม.'], ['มาตราส่วนแนวดิ่ง', 'ขยายราว 33 เท่า']], tag: 'ความลึกโดยประมาณ', src: 'ลักษณะชั้นดินทั่วไปของที่ราบลุ่มกรุงเทพฯ รอตัวเลขที่ตรวจสอบแล้ว' },
   { id: 'map', name: 'พื้นที่รอบข้าง', eye: [4, 46, 26], at: [8, 0, -8], title: 'ถนน คลอง และอาคารรอบสนามบิน', text: 'ถนนที่ใช้งานจริง ทางขับ ลานจอด คลอง ทางรถไฟ และผังอาคารรอบสนามบินวาดจากข้อมูล OpenStreetMap ตามพิกัดจริง ถนนสายหลักเป็นเส้นขาวมีจุดไฟ สถานีแอร์พอร์ตเรลลิงก์อยู่ใต้อาคารหลัก', facts: [['แอร์พอร์ตเรลลิงก์', '28.6 กม. ถึงพญาไท'], ['ระยะจากใจกลางเมือง', 'ราว 25 กม.']], src: '© OpenStreetMap contributors (ODbL) · Wikipedia' },
 ];
 let layer = 'overview';
@@ -290,7 +323,10 @@ LAYERS.forEach(([id, name]) => { const b = document.createElement('button'); b.t
 PARTS.forEach((p) => { const b = document.createElement('button'); b.type = 'button'; b.dataset.id = p.id; b.textContent = p.name; b.addEventListener('click', () => goto(p.id)); $('#parts').append(b); });
 
 // ---------- flight board, turnaround steps, clock ----------
-let focus = null, focusIdx = 0, followFresh = false, playing = true, speed = 1, T = 0;
+let focus = null, focusIdx = 0, followFresh = false, speed = 1, T = 0;
+let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches; // starts paused for people who ask for less motion
+$('#play').setAttribute('aria-pressed', playing); $('#play').textContent = playing ? 'หยุดชั่วคราว' : 'เล่นต่อ';
+$('#early').addEventListener('click', () => { const p = planes[focusIdx]; if (canHurry(p)) { hurry(p); hud(); } });
 $('#board').innerHTML = FLIGHTS.map((f, i) => `<tr data-i="${i}"><td>${f.no}</td><td class="rt"></td><td class="st"></td><td><button type="button" data-follow="${i}" aria-label="ตามดูเที่ยวบิน ${f.no}">ตามดู</button></td></tr>`).join('');
 document.querySelectorAll('[data-follow]').forEach((b) => b.addEventListener('click', () => { focusIdx = +b.dataset.follow; focus = planes[focusIdx]; followFresh = true; gsap.killTweensOf(camera.position); gsap.killTweensOf(controls.target); setLayer('ops'); document.querySelectorAll('#parts button').forEach((x) => x.setAttribute('aria-pressed', 'false')); }));
 [1, 4, 12].forEach((v) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = v + '×'; b.setAttribute('aria-pressed', v === 1); b.addEventListener('click', () => { speed = v; document.querySelectorAll('#speed button').forEach((x) => x.setAttribute('aria-pressed', x === b)); }); $('#speed').append(b); });
@@ -303,7 +339,12 @@ function hud() {
     row.querySelector('.st').textContent = STATUS[p.phase];
   });
   const p = planes[focusIdx], s = p.phase === 'park' ? p.pt : p.phase === 'push' ? 99 : -1;
-  $('#focusName').textContent = `${p.f.no} · ${STATUS[p.phase]}`;
+  const now = stepNow(p);
+  $('#focusName').textContent = `${p.f.no} · ${now ? `${now[0]} (${STEPS.indexOf(now) + 1}/${STEPS.length})` : STATUS[p.phase]}`;
+  const air = ['takeoff', 'away', 'approach'].includes(p.phase);
+  $('#early').textContent = p.rush ? 'กำลังเร่งงาน…' : air ? 'เรียกเครื่องลง' : 'ปล่อยเครื่องก่อนเวลา'; $('#early').disabled = !canHurry(p);
+  $('#tally').textContent = `ลงจอด ${tally.landed} · ออกเดินทาง ${tally.departed} · ผู้โดยสาร ${tally.pax.toLocaleString('th-TH')} คน · น้ำมัน ${Math.round(tally.fuel).toLocaleString('th-TH')} ล.`;
+  $('#busy').value = planes.reduce((n, q) => n + (q.phase === 'park' ? STEPS.filter(([, a, b]) => q.pt >= a && q.pt < b).length : 0), 0);
   $('#steps').innerHTML = STEPS.map(([n, a, b]) => `<li class="${s >= b ? 'done' : s >= a ? 'now' : ''}"><i></i>${n}<small>${a}–${b}</small></li>`).join('');
   const mm = Math.floor(T / 60) % 60, hh = (6 + Math.floor(T / 3600)) % 24;
   $('#clock').textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
@@ -320,8 +361,10 @@ const clock = new THREE.Clock();
 let hudT = 0;
 function frame() {
   const dt = Math.min(0.05, clock.getDelta());
-  if (playing) T += dt * speed * 60 / 60; // one simulated second per real second at 1x
-  stepOps(T);
+  const sim = playing ? dt * speed : 0; // one simulated second per real second at 1x
+  T += sim;
+  for (const p of planes) { if (p.rush) { if (p.phase === p.rush) p.rush = null; else p.off += sim * 5; } if (fuelling(p)) tally.fuel += sim * (p.rush ? 6 : 1) * FUEL_RATE; }
+  counting = sim > 0; stepOps(T); counting = false;
   // map labels: shown from above, gone in low close-ups
   for (const [sp, pole] of flags) { const o = THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
   if (focus && focus.g.visible) { // chase the chosen flight; the user can still orbit and zoom around it
@@ -337,4 +380,6 @@ function frame() {
 }
 camera.position.copy(field.localToWorld(V(-30, 40, 24))); controls.target.copy(field.localToWorld(V(6, 0, -7)));
 goto('all'); hud(); frame();
-if (location.search.includes('debug')) window.__bkk = { planes, field, camera, controls, goto, setLayer, set T(v) { T = v; }, get T() { return T; } };
+if (location.search.includes('debug')) window.__bkk = { planes, field, camera, controls, goto, setLayer, tally, set T(v) { T = v; }, get T() { return T; },
+  // test hook: where every aircraft is at a given time, in metres on the airfield
+  at(t) { stepOps(t); const r = planes.map((p) => ({ no: p.f.no, phase: p.phase, shown: p.g.visible, x: p.g.position.x / K, y: p.g.position.y / K, z: p.g.position.z / K })); stepOps(T); return r; } };

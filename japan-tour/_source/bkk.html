@@ -27,7 +27,7 @@
   h2 { font: 600 0.78rem/1 var(--f-mono); letter-spacing: 0.12em; color: var(--sakura); margin: 0 0 8px; text-transform: uppercase; }
   .seg, .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   button { font: inherit; color: var(--washi); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: 999px; padding: 0.35rem 0.85rem; min-height: 40px; cursor: pointer; }
-  button:hover { border-color: var(--sakura); }
+  button:hover { border-color: var(--sakura); } button:disabled { opacity: 0.45; cursor: default; border-color: var(--line); }
   button[aria-pressed="true"] { background: var(--sakura); color: #2a0f1c; border-color: var(--sakura); font-weight: 600; }
   .card h3 { font: 700 1.1rem/1.3 var(--f-display); margin: 0 0 6px; } .card p { margin: 0 0 8px; color: var(--dim); }
   .card dl { margin: 0; display: grid; gap: 4px; } .card dl div { display: grid; grid-template-columns: 8.5rem 1fr; gap: 8px; font-size: 0.88rem; border-top: 1px solid var(--line); padding-top: 4px; }
@@ -64,12 +64,15 @@
   <div class="right">
     <section class="panel"><h2>เที่ยวบินจำลอง</h2><table class="board"><thead><tr><th>เที่ยวบิน</th><th>เส้นทาง</th><th>สถานะ</th><th></th></tr></thead><tbody id="board"></tbody></table></section>
     <section class="panel"><h2>บริการภาคพื้น · <span id="focusName"></span></h2><ol class="steps" id="steps"></ol>
+      <button type="button" id="early" style="margin-top:10px">ปล่อยเครื่องก่อนเวลา</button>
       <p class="legend" style="margin:10px 0 0"><span><i style="background:#7fd0ff"></i>ผู้โดยสารขาเข้า</span><span><i style="background:#f6b6c8"></i>ผู้โดยสารขาออก</span><span><i style="background:#ffc46b"></i>แนวท่อน้ำมัน</span></p></section>
   </div>
   <div class="panel bar">
     <span class="clock" id="clock">00:00</span>
     <button type="button" id="play" aria-pressed="true">หยุดชั่วคราว</button>
     <label>ความเร็ว <span class="seg" id="speed" style="display:inline-flex;margin-left:6px"></span></label>
+    <span id="tally" aria-live="off" style="font:500 0.82rem var(--f-mono)"></span>
+    <label>งานที่กำลังทำ <meter id="busy" min="0" max="12" value="0"></meter></label>
     <span class="note">ลำดับเวลา ตำแหน่งอาคารรอบข้าง และเที่ยวบินเป็นแบบจำลองโดยประมาณ ไม่ใช่ข้อมูลปฏิบัติการจริง</span>
   </div>
 </div>
