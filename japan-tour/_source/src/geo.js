@@ -183,6 +183,13 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
   };
   const detail = detailTexture();
   const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: detail, roughness: 0.95, metalness: 0 });
+  // blend in a second, rotated and much larger copy of the detail so the tiling grid does not show from afar
+  terrainMat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `
+      #ifdef USE_MAP
+        diffuseColor *= mix(texture2D(map, vMapUv), texture2D(map, mat2(0.8, -0.6, 0.6, 0.8) * vMapUv * 0.173), 0.5);
+      #endif`);
+  };
 
   // ---------- high-resolution patches (lakes, shrine hills) cut into the coarse grid ----------
   const patchData = [];

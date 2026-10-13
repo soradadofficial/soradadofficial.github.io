@@ -199,7 +199,7 @@ export function createWorld() {
     ['Shizuoka', 138.389, 34.972], ['Hamamatsu', 137.735, 34.704], ['Toyohashi', 137.382, 34.763], ['Nagoya', 136.882, 35.171], ['Gifu-Hashima', 136.69, 35.316],
     ['Maibara', 136.29, 35.315], ['Kyoto', 135.758, 34.985], ['Shin-Osaka', 135.5, 34.733],
   ];
-  const railRaw = Path.fromControl(STN.map(([, a, b]) => LL(a, b)), 0.25, (x, z) => H(x, z));
+  const railRaw = Path.fromControl(ROUTES.rail ? ROUTES.rail.map(([a, b]) => LL(a, b)) : STN.map(([, a, b]) => LL(a, b)), 0.25, (x, z) => H(x, z)); // real track centreline when baked
   {
     // the real line tunnels through the mountains: follow the valley floors (lower envelope)
     // and let the terrain hide the deck where it runs under a ridge

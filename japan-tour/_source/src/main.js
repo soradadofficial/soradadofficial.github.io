@@ -114,7 +114,9 @@ function fadeChapters() {
     const r = el.getBoundingClientRect();
     if (r.bottom < -50 || r.top > vh + 50) { if (el.style.opacity !== '0') el.style.opacity = '0'; continue; }
     const c = (r.top + r.height / 2) / vh;
-    const k = smooth(Math.min(1, Math.max(0, (c - 0.02) / 0.26))) * smooth(Math.min(1, Math.max(0, (0.98 - c) / 0.26)));
+    // on phones the route card owns the top of the screen: fade chapters out before they slide under it
+    const topIn = isSmall() ? 0.36 : 0.02, ramp = isSmall() ? 0.14 : 0.26;
+    const k = smooth(Math.min(1, Math.max(0, (c - topIn) / ramp))) * smooth(Math.min(1, Math.max(0, (0.98 - c) / 0.26)));
     el.style.opacity = k.toFixed(3);
     el.style.transform = `translateY(${((1 - k) * (c > 0.5 ? 18 : -18)).toFixed(1)}px)`;
     el.style.pointerEvents = k > 0.3 ? '' : 'none';

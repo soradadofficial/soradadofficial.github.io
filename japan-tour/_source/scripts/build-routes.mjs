@@ -45,25 +45,46 @@ if (!railOnly) out.spur = simplify((await drive(SPUR)).geometry.coordinates, 0.0
 console.log('spur', out.spur.length, 'pts');
 
 // ---- Tokaido Shinkansen ----
+// All high-speed track pieces between Tokyo and Shin-Osaka (both tracks, thousands of short
+// ways). Rather than stitching them, bin every track point by its position along the
+// station-to-station guide line and average each bin: that yields the ordered centreline.
 try {
-  const q = '[out:json][timeout:90];relation["route"="train"]["name"~"東海道新幹線"];out geom;';
-  const r = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'User-Agent': 'tour-test-demo build script', 'Content-Type': 'application/x-www-form-urlencoded' } });
-  const txt = await r.text();
-  if (txt[0] !== '{') throw new Error(txt.slice(0, 300).replace(/\s+/g, ' '));
-  const j = JSON.parse(txt);
-  const rel = j.elements.sort((a, b) => b.members.length - a.members.length)[0];
-  const ways = rel.members.filter((m) => m.type === 'way' && m.geometry && m.role === '').map((m) => m.geometry.map((p) => [p.lon, p.lat]));
-  // chain the member ways end to end, starting from the one nearest Tokyo station
-  const d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
-  let cur = [139.767, 35.681]; const line = []; const left = ways.slice();
-  while (left.length) {
-    let bi = -1, bd = Infinity, flip = false;
-    left.forEach((w, i) => { const a = d2(w[0], cur), b = d2(w[w.length - 1], cur); if (a < bd) { bd = a; bi = i; flip = false; } if (b < bd) { bd = b; bi = i; flip = true; } });
-    if (bd > 0.02 ** 2 && line.length) break; // gap: the rest is the other track or sidings
-    const w = left.splice(bi, 1)[0]; if (flip) w.reverse();
-    line.push(...w); cur = w[w.length - 1];
+  const STN = [[139.767, 35.681], [139.617, 35.507], [139.155, 35.256], [139.077, 35.104], [138.911, 35.126], [138.389, 34.972], [137.735, 34.704], [137.382, 34.763], [136.882, 35.171], [136.69, 35.316], [136.29, 35.315], [135.758, 34.985], [135.5, 34.733]];
+  const ways = [];
+  for (const b of [[34.6, 135.4, 35.5, 136.6], [34.6, 136.6, 35.5, 137.8], [34.6, 137.8, 35.5, 139.0], [34.9, 139.0, 35.8, 139.9]]) {
+    const q = `[out:json][timeout:60];way["railway"="rail"]["highspeed"="yes"]["name"~"東海道新幹線"](${b.join(',')});out geom;`;
+    let got = null;
+    for (const host of ['https://overpass.private.coffee/api/interpreter', 'https://overpass-api.de/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter']) {
+      try {
+        const r = await fetch(host, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'User-Agent': 'tour-test-demo build script', 'Content-Type': 'application/x-www-form-urlencoded' }, signal: AbortSignal.timeout(90000) });
+        const t = await r.text();
+        if (t[0] === '{') { got = JSON.parse(t).elements; break; }
+      } catch { /* try the next mirror */ }
+    }
+    if (!got) throw new Error('no Overpass mirror answered for ' + b.join(','));
+    ways.push(...got.filter((w) => !w.tags.service)); // skip depot and siding tracks
   }
+  const KX = Math.cos(35.2 * Math.PI / 180), cum = [0];
+  for (let i = 1; i < STN.length; i++) cum.push(cum[i - 1] + Math.hypot((STN[i][0] - STN[i - 1][0]) * KX, STN[i][1] - STN[i - 1][1]));
+  const BIN = 0.004, bins = new Map(); // ~400 m
+  const add = (lon, lat) => {
+    let best = Infinity, at = 0;
+    for (let i = 0; i < STN.length - 1; i++) {
+      const ax = STN[i][0] * KX, ay = STN[i][1], dx = STN[i + 1][0] * KX - ax, dy = STN[i + 1][1] - ay;
+      const t = Math.max(0, Math.min(1, ((lon * KX - ax) * dx + (lat - ay) * dy) / (dx * dx + dy * dy)));
+      const d = Math.hypot(lon * KX - ax - t * dx, lat - ay - t * dy);
+      if (d < best) { best = d; at = cum[i] + t * (cum[i + 1] - cum[i]); }
+    }
+    if (best > 0.12) return;
+    const k = Math.round(at / BIN), e = bins.get(k) || [0, 0, 0];
+    e[0] += lon; e[1] += lat; e[2]++; bins.set(k, e);
+  };
+  for (const w of ways) for (let i = 0; i < w.geometry.length - 1; i++) {
+    const a = w.geometry[i], b = w.geometry[i + 1], n = Math.max(1, Math.ceil(Math.hypot((b.lon - a.lon) * KX, b.lat - a.lat) / 0.001));
+    for (let k = 0; k <= n; k++) add(a.lon + (b.lon - a.lon) * k / n, a.lat + (b.lat - a.lat) * k / n);
+  }
+  const line = [...bins].sort((a, b) => a[0] - b[0]).map(([, e]) => [e[0] / e[2], e[1] / e[2]]);
   out.rail = simplify(line, 0.0004);
-  console.log('rail', rel.tags.name, ways.length, 'ways ->', out.rail.length, 'pts, ends', out.rail[0], out.rail[out.rail.length - 1]);
-} catch (e) { console.log('rail failed, keeping station spline:', e.message); }
+  console.log('rail', ways.length, 'ways ->', line.length, 'bins ->', out.rail.length, 'pts, ends', out.rail[0], out.rail[out.rail.length - 1]);
+} catch (e) { console.log('rail failed, keeping what is baked:', e.message); }
 writeFileSync('src/routes.json', JSON.stringify(out));
