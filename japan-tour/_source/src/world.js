@@ -768,7 +768,9 @@ export function createWorld() {
   function update({ dt, time, storyT, camera, look, envState, petalsTarget, storyWeight = 1, builderWeight = 0 }) {
     waterTime.value = time;
     setActors(storyT);
-    forest.visible = camera.position.y < 120; // trees are sub-pixel from cruise altitude
+    // LOD: no trees from cruise altitude, and only the batches inside the fog range otherwise
+    forest.visible = camera.position.y < 120;
+    if (forest.visible) for (const b of forest.children) b.visible = b.boundingSphere.center.distanceTo(camera.position) - b.boundingSphere.radius < scene.fog.far;
     sky.position.copy(camera.position);
     sky.material.uniforms.time.value = time;
     guide.userData.update(time);

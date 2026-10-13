@@ -221,7 +221,7 @@ export function createTrail(max = 160, size = 1) {
 
 // ---------- Vignette + grain + subtle chromatic shift ----------
 export const FilmShader = {
-  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, vignette: { value: 0.9 }, grain: { value: 0.035 }, grade: { value: 1 } },
+  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, vignette: { value: 0.3 }, grain: { value: 0.015 }, grade: { value: 1 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `
     uniform sampler2D tDiffuse; uniform float time; uniform float vignette; uniform float grain; uniform float grade;
@@ -240,7 +240,7 @@ export const FilmShader = {
       float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
       vec3 graded = col + vec3(-0.006, 0.004, 0.022) * (1.0 - smoothstep(0.0, 0.35, l));
       graded = mix(graded, graded * vec3(1.06, 1.0, 0.9), smoothstep(0.45, 1.0, l));
-      graded = mix(vec3(l), graded, 1.06);
+      graded = mix(vec3(l), graded, 1.14);
       col = mix(col, graded, grade);
       col *= mix(1.0, smoothstep(0.85, 0.15, r2*1.6), vignette);
       col += (rand(uv*vec2(1000.0) + time) - 0.5) * grain;

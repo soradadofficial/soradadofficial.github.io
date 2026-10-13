@@ -176,19 +176,54 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
     else if (km < 0.03) out.copy(sand).lerp(field, Math.max(THREE.MathUtils.smoothstep(km, 0.0, 0.004), THREE.MathUtils.smoothstep(m, 0.5, 0.9)));
     else if (km < 0.35) out.copy(field).lerp(lowGreen, 0.5 + n * 0.5);
     else if (km < 1.2) out.copy(lowGreen).lerp(forest, THREE.MathUtils.smoothstep(km, 0.35, 1.0)).lerp(darkForest, Math.max(0, n) * 0.6);
-    else if (km < 2.2) out.copy(forest).lerp(rock, THREE.MathUtils.smoothstep(km, 1.4, 2.2));
-    else out.copy(rock).lerp(snow, THREE.MathUtils.smoothstep(km, 2.3 + n * 0.3, 2.7));
+    else out.copy(forest).lerp(darkForest, 0.3 + Math.max(0, n) * 0.5);
     out.lerp(city, urbanW(x, z) * 0.6 * (1 - THREE.MathUtils.smoothstep(km, 0.95, 1.3)) * (m > 0.5 ? 1 : 0));
     return out;
   };
-  const detail = detailTexture();
-  const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: detail, roughness: 0.95, metalness: 0 });
-  // blend in a second, rotated and much larger copy of the detail so the tiling grid does not show from afar
+  const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, metalness: 0 });
+  // Surface shading by real slope and height: field patchwork on the plains, mottled forest
+  // canopy on the hills, bare rock on steep faces and above the tree line, ragged snow line.
   terrainMat.onBeforeCompile = (sh) => {
-    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `
-      #ifdef USE_MAP
-        diffuseColor *= mix(texture2D(map, vMapUv), texture2D(map, mat2(0.8, -0.6, 0.6, 0.8) * vMapUv * 0.173), 0.5);
-      #endif`);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying vec3 vWNor;')
+      .replace('#include <project_vertex>', 'vWPos = (modelMatrix * vec4(transformed, 1.0)).xyz; vWNor = mat3(modelMatrix) * objectNormal;\n#include <project_vertex>');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+        varying vec3 vWPos; varying vec3 vWNor;
+        float th(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float tn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(th(i), th(i + vec2(1, 0)), f.x), mix(th(i + vec2(0, 1)), th(i + vec2(1, 1)), f.x), f.y); }
+        float tf(vec2 p) { return tn(p) * 0.5 + tn(p * 2.03) * 0.25 + tn(p * 4.1) * 0.125 + tn(p * 8.3) * 0.0625; }`)
+      .replace('#include <color_fragment>', `
+        #include <color_fragment>
+        {
+          float km = vWPos.y / ${VERT.toFixed(1)};
+          vec3 rn = normalize(vec3(vWNor.x, vWNor.y * ${VERT.toFixed(1)}, vWNor.z)); // undo the vertical exaggeration
+          float steep = 1.0 - rn.y;
+          float n1 = tf(vWPos.xz * 0.11), n2 = tf(vWPos.xz * 1.3), n3 = tf(vWPos.xz * 9.0);
+          float dry = smoothstep(0.004, 0.012, km);
+          vec3 col = diffuseColor.rgb * mix(1.0, 0.8 + 0.4 * n2, dry);
+          // canopy: darker clumps and sunlit crowns
+          float woods = dry * smoothstep(0.12, 0.4, km + steep * 2.0) * (1.0 - smoothstep(2.2, 2.5, km));
+          col = mix(col, col * vec3(0.62, 0.78, 0.6), woods * smoothstep(0.4, 0.75, n3) * 0.7);
+          col = mix(col, col * vec3(1.18, 1.2, 0.95), woods * smoothstep(0.62, 0.9, tf(vWPos.xz * 5.0 + 7.0)) * 0.5);
+          // farmland patchwork on flat lowland
+          vec2 cp = vWPos.xz * vec2(2.3, 3.1) + 0.7 * vec2(tn(vWPos.xz * 0.8), tn(vWPos.zx * 0.8 + 3.0));
+          float hc = th(floor(cp));
+          vec3 field = hc < 0.4 ? vec3(0.36, 0.50, 0.22) : hc < 0.7 ? vec3(0.47, 0.56, 0.26) : hc < 0.88 ? vec3(0.27, 0.42, 0.21) : vec3(0.60, 0.55, 0.33);
+          vec2 edge = abs(fract(cp) - 0.5);
+          field *= 1.0 - 0.18 * smoothstep(0.44, 0.5, max(edge.x, edge.y));
+          float flatland = dry * (1.0 - smoothstep(0.015, 0.06, steep)) * (1.0 - smoothstep(0.1, 0.3, km));
+          col = mix(col, field * (0.9 + 0.2 * n3), flatland * 0.6);
+          // rock: steep faces, and volcanic scree above the tree line
+          vec3 rock = mix(vec3(0.40, 0.37, 0.34), vec3(0.58, 0.54, 0.49), n2);
+          col = mix(col, rock, smoothstep(0.17, 0.3, steep + (n2 - 0.5) * 0.08) * smoothstep(0.25, 0.7, km));
+          vec3 scree = mix(vec3(0.36, 0.28, 0.25), vec3(0.48, 0.42, 0.38), n3);
+          col = mix(col, scree, smoothstep(2.25, 2.6, km + (n2 - 0.5) * 0.35));
+          // snow: ragged line, thinner on steep ground
+          float snowLine = 2.85 + (n1 - 0.5) * 0.5 + (n2 - 0.5) * 0.5 + steep * 0.8;
+          col = mix(col, vec3(0.95, 0.97, 1.0), smoothstep(snowLine, snowLine + 0.18, km));
+          diffuseColor.rgb = col;
+        }`);
   };
 
   // ---------- high-resolution patches (lakes, shrine hills) cut into the coarse grid ----------
@@ -244,7 +279,6 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  detail.repeat.set((x1 - x0) / 1.6, (z1 - z0) / 1.6);
   // Split the national grid into chunks that share the vertex buffers, so everything
   // outside the view is culled instead of drawing 1.3 M triangles every pass.
   const mesh = new THREE.Group();
@@ -295,34 +329,6 @@ export function buildTerrain({ cell = 3, patches = [] } = {}) {
     mesh.add(pm);
   }
   return { mesh, heightAt, baseAt, landAt, kmAt, urbanAt: (x, z) => urbanW(x, z), bounds: { x0, x1, z0, z1 } };
-}
-
-// Mottled canopy / field texture tiled over the terrain for close-up detail
-function detailTexture() {
-  const c = document.createElement('canvas');
-  c.width = c.height = 256;
-  const g = c.getContext('2d');
-  g.fillStyle = '#e8e8e8'; g.fillRect(0, 0, 256, 256);
-  let s = 7;
-  const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-  // field patches
-  for (let i = 0; i < 70; i++) {
-    const v = 200 + Math.floor(rnd() * 55);
-    g.fillStyle = `rgb(${v},${v},${v})`;
-    g.save(); g.translate(rnd() * 256, rnd() * 256); g.rotate(rnd() * 0.5 - 0.25);
-    g.fillRect(-15, -10, 18 + rnd() * 30, 12 + rnd() * 24); g.restore();
-  }
-  // canopy speckle
-  for (let i = 0; i < 2600; i++) {
-    const v = 150 + Math.floor(rnd() * 90);
-    g.fillStyle = `rgba(${v},${v},${v},0.55)`;
-    g.beginPath(); g.arc(rnd() * 256, rnd() * 256, 0.8 + rnd() * 2.4, 0, 7); g.fill();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
-  return t;
 }
 
 export const urbanW = (x, z) => Math.max(gauss(x, z, 139.72, 35.69, 13), gauss(x, z, 139.62, 35.47, 6), gauss(x, z, 135.5, 34.69, 8), gauss(x, z, 136.9, 35.17, 6), gauss(x, z, 135.77, 35.01, 3));

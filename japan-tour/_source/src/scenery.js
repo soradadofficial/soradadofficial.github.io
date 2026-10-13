@@ -321,8 +321,8 @@ export function createForest(spots, cell = 16) {
   ]);
   const blobGeo = new THREE.DodecahedronGeometry(0.5, 0).scale(1, 0.85, 1).translate(0, 0.62, 0);
   const trunkGeo = new THREE.CylinderGeometry(0.06, 0.09, 0.4, 5, 1, true).translate(0, 0.2, 0);
-  const mats = { conif: std('#2f5a35', { flatShading: true, roughness: 0.95, side: THREE.DoubleSide }), broad: std('#4f7d3a', { flatShading: true, roughness: 0.95 }), trunk: std('#4a3426', { roughness: 0.95 }) };
-  const base = { conif: new THREE.Color('#2f5a35'), broad: new THREE.Color('#4f7d3a'), trunk: new THREE.Color('#4a3426') };
+  const mats = { conif: std('#3f7a48', { flatShading: true, roughness: 0.95, side: THREE.DoubleSide }), broad: std('#6c9c46', { flatShading: true, roughness: 0.95 }), trunk: std('#5a4030', { roughness: 0.95 }) };
+  const base = { conif: new THREE.Color('#3f7a48'), broad: new THREE.Color('#6c9c46'), trunk: new THREE.Color('#5a4030') };
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = V(1, 1, 1), p = V(0, 0, 0), c = new THREE.Color();
   const mk = (geo, list, key) => {
     const im = new THREE.InstancedMesh(geo, mats[key], list.length);
@@ -330,7 +330,7 @@ export function createForest(spots, cell = 16) {
       q.setFromAxisAngle(V(0, 1, 0), t.r * 6.28);
       m.compose(p.set(t.x, t.y - 0.01, t.z), q, sc.set(t.s, t.s * (0.9 + t.r * 0.4), t.s));
       im.setMatrixAt(i, m);
-      im.setColorAt(i, c.copy(base[key]).offsetHSL((t.r - 0.5) * 0.04, (t.r - 0.5) * 0.15, (t.r - 0.5) * 0.12));
+      im.setColorAt(i, c.copy(base[key]).offsetHSL((t.r - 0.5) * 0.07, (t.r - 0.5) * 0.2, (t.r - 0.5) * 0.16));
     });
     im.castShadow = key !== 'trunk'; im.receiveShadow = true;
     im.computeBoundingSphere(); // per-area batches are culled when off screen
