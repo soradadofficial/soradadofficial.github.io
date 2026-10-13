@@ -322,7 +322,8 @@ function frame() {
   const dt = Math.min(0.05, clock.getDelta());
   if (playing) T += dt * speed * 60 / 60; // one simulated second per real second at 1x
   stepOps(T);
-  for (const [sp, pole] of flags) { const o = THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); // map labels: shown from above, gone in low close-ups sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
+  // map labels: shown from above, gone in low close-ups
+  for (const [sp, pole] of flags) { const o = THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
   if (focus && focus.g.visible) { // chase the chosen flight; the user can still orbit and zoom around it
     focus.g.getWorldPosition(tmp); const d = camera.position.distanceTo(tmp);
     camera.position.add(tmp.clone().sub(controls.target)); controls.target.copy(tmp);
