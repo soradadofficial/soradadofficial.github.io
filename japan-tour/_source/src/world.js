@@ -904,38 +904,64 @@ export function createWorld() {
   const kyotoPos = onGround(LL(135.778, 35.0));
   const gltf = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./draco/'));
   // tower hotels (Blender models): placed now, filled in when the file arrives
-  const tower3 = (id, at, to, depth, bay) => {
-    const h = new THREE.Group(); h.position.copy(at); h.rotation.y = face(at, to); h.scale.setScalar(RS); scene.add(h); h.updateMatrixWorld(true);
+  // footprint, storeys above the podium and storey height as in blender/hotels.py; bays = glazing bays along the long side; first = number on the lowest guest floor
+  const TOWER = { tokyo: { w: 58, d: 22, n: 30, fh: 3.15, bays: 14, first: 3 }, osaka: { w: 46, d: 20, n: 17, fh: 3.8, bays: 12, first: 3 } };
+  const DEF = { tokyo: { k: 24, bay: 7, bays: 1, side: -1 }, osaka: { k: 13, bay: 6, bays: 1, side: -1 } }; // the unit a room opens in when none is picked
+  const tower3 = (id, at, to) => {
+    const T = TOWER[id], h = new THREE.Group(); h.position.copy(at); h.rotation.y = face(at, to); h.scale.setScalar(RS); scene.add(h); h.updateMatrixWorld(true);
     gltf.loadAsync(`./models/hotel-${id}.glb`).then((g) => {
       const lod = new THREE.LOD();
       [['LOD0', 0], ['LOD1', 30]].forEach(([n, dist]) => lod.addLevel(g.scene.getObjectByName(n), dist));
       lod.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; if (o.material.name === 'Facade' && !o.material.userData.glow) { o.material.userData.glow = true; o.material.emissive.set('#ffd9a0'); glowMats.push({ mat: o.material, day: 0.02, night: 0.55 }); } });
       h.add(lod);
     });
-    return (m, floorY) => h.localToWorld(V(bay / 2, floorY, -depth / 2 + m.d / 2 + 0.3)); // a room just inside the landmark-side facade, centred on a glazing bay rather than a fin
+    // glowing volumes for the floor and unit pickers
+    const glow = (color) => { const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false })); m.visible = false; m.renderOrder = 5;
+      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: '#ffffff', toneMapped: false, fog: false }))); h.add(m); return m; }; // bright outline so the pick reads on a lit facade
+    T.h = h; T.band = glow('#ffab1f'); T.unit = glow('#2dffa0'); T.unit.material.blending = THREE.NormalBlending; T.unit.material.opacity = 0.85; T.unit.renderOrder = 6; // the unit reads as solid green on top of the amber floor
+    T.y = (k) => 10 + k * T.fh;                                        // floor level of storey k (0 = lowest guest floor)
+    T.x = (bay, bays = 1) => -T.w / 2 + (bay + bays / 2) * T.w / T.bays; // centre of a run of bays
+    // a room just inside the facade of its unit: side -1 faces the landmark, +1 the city behind
+    T.at = (m, u = DEF[id]) => h.localToWorld(V(T.x(u.bay, u.bays), T.y(u.k) + 0.2, u.side * (T.d / 2 - m.d / 2 - 0.3)));
+    return T;
   };
-  const tokyoRoom = tower3('tokyo', tokyoHotelPos, towerPos, 22, 58 / 14), osakaRoom = tower3('osaka', osakaHotelPos, castlePos, 20, 46 / 12);
+  const tokyoT = tower3('tokyo', tokyoHotelPos, towerPos), osakaT = tower3('osaka', osakaHotelPos, castlePos);
   const STAY = {
-    tokyo: { at: (m) => tokyoRoom(m, 10 + 24 * 3.15 + 0.2), yaw: face(tokyoHotelPos, towerPos), env: ENV.dusk, ext: [tokyoHotelPos.clone().add(V(4.2, 2.2, 5.2)), tokyoHotelPos.clone().add(V(-0.6, 1.5, -0.4))] },
+    tokyo: { at: tokyoT.at, yaw: face(tokyoHotelPos, towerPos), env: ENV.dusk, ext: [tokyoHotelPos.clone().add(V(4.2, 2.2, 5.2)), tokyoHotelPos.clone().add(V(-0.6, 1.5, -0.4))] },
     hakone: { onGround: true, at: () => hakVilla.clone(), to: V(ashiC.x, ashiC.y, ashiC.z), env: ENV.golden, ext: [ryokan.localToWorld(V(70, 52, 55)), ryokanPos.clone()] },
     kawaguchiko: { at: (m) => hotel.localToWorld(V(0, 40, -12 + m.d / 2 + 0.3)), yaw: hotel.rotation.y, env: ENV.day, ext: [hotelEye, hotelLook] },
     kyoto: { onGround: true, at: () => kyotoPos.clone(), to: kyotoPos.clone().add(V(6, 1, 0)), env: ENV.golden, ext: [kyotoPos.clone().add(V(-1.6, 1.3, 1.6)), kyotoPos.clone()] },
-    osaka: { at: (m) => osakaRoom(m, 10 + 13 * 3.8 + 0.2), yaw: face(osakaHotelPos, castlePos), env: ENV.golden, ext: [osakaHotelPos.clone().add(V(3.4, 1.6, 4.2)), osakaHotelPos.clone().add(V(-0.5, 0.9, -0.3))] },
+    osaka: { at: osakaT.at, yaw: face(osakaHotelPos, castlePos), env: ENV.golden, ext: [osakaHotelPos.clone().add(V(3.4, 1.6, 4.2)), osakaHotelPos.clone().add(V(-0.5, 0.9, -0.3))] },
   };
   let roomMeta = null, shownRoom = null;
+  // One pair of lamps serves whichever room is open. They stay in the scene (dark when no room is shown), so the
+  // light count never changes and opening a room does not make every material recompile.
+  const lampRig = new THREE.Group(), lamp = new THREE.PointLight('#ffe2c0', 4.5, 14, 1.4), lamp2 = new THREE.PointLight('#fff1dc', 1.8, 10, 1.4);
+  lamp.position.set(0, 2.3, 0); lampRig.add(lamp, lamp2); lampRig.scale.setScalar(RS); scaleLights(lampRig, RS); scene.add(lampRig);
+  const LAMP = [lamp.intensity, lamp2.intensity]; lamp.intensity = lamp2.intensity = 0;
   const roomCache = new Map();
   const stays = {
     exterior: (id) => ({ pos: STAY[id].ext[0], look: STAY[id].ext[1], env: STAY[id].env, petals: 0.3 }),
-    hideRoom() { if (shownRoom) shownRoom.visible = false; shownRoom = null; },
+    hideRoom() { if (shownRoom) shownRoom.visible = false; shownRoom = null; lamp.intensity = lamp2.intensity = 0; },
     hasRoom: () => !!shownRoom,
-    async room(id, roomId) {
+    // tower stays: floor and unit pickers
+    tower: (id) => TOWER[id] && { n: TOWER[id].n, bays: TOWER[id].bays, first: TOWER[id].first, fh: TOWER[id].fh },
+    showFloor(id, k) { // light one storey of the tower (k = null: none)
+      for (const T of Object.values(TOWER)) T.band.visible = T.unit.visible = false;
+      const T = TOWER[id]; if (!T || k == null) return;
+      T.band.scale.set(T.w + 1.6, T.fh * 0.9, T.d + 1.6); T.band.position.set(0, T.y(k) + T.fh / 2, 0); T.band.visible = true;
+    },
+    showUnit(id, u) { // light one unit on that storey: where it sits and which way it faces
+      const T = TOWER[id]; if (!T) return; T.unit.visible = !!u; if (!u) return;
+      T.unit.scale.set(u.bays * T.w / T.bays, T.fh * 0.92, T.d / 2 + 1); T.unit.position.set(T.x(u.bay, u.bays), T.y(u.k) + T.fh / 2, u.side * (T.d / 4 + 0.5));
+    },
+    floorView(id, k, side = -1) { const T = TOWER[id]; return { pos: T.h.localToWorld(V(T.w * 0.9 * -side, T.y(k) + 34, side * (T.d / 2 + 135))), look: T.h.localToWorld(V(0, T.y(k) - 4, 0)), env: STAY[id].env, petals: 0 }; },
+    async room(id, roomId, unit) {
       roomMeta ??= await (await fetch('./rooms/rooms.json')).json();
       const m = roomMeta[roomId], a = STAY[id];
       if (!roomCache.has(roomId)) {
         const g = (await gltf.loadAsync(`./rooms/${roomId}.glb`)).scene;
-        const lamp = new THREE.PointLight('#ffe2c0', 4.5, 14, 1.4); lamp.position.set(0, 2.3, 0); g.add(lamp);
-        const lamp2 = new THREE.PointLight('#fff1dc', 1.8, 10, 1.4); lamp2.position.set(0, 1.6, -m.d / 2 + 1); g.add(lamp2);
-        g.scale.setScalar(RS); scaleLights(g, RS);
+        g.scale.setScalar(RS);
         g.position.copy(a.at(m));
         g.rotation.y = a.yaw ?? face(g.position, a.to);
         if (a.onGround) { // sit level on the highest ground under the room and its deck, on a stone plinth
@@ -952,6 +978,8 @@ export function createWorld() {
       }
       stays.hideRoom();
       const g = roomCache.get(roomId); g.visible = true; shownRoom = g;
+      if (TOWER[id]) { const u = unit || DEF[id]; g.position.copy(a.at(m, u)); g.rotation.y = a.yaw + (u.side > 0 ? Math.PI : 0); g.updateMatrixWorld(true); } // the same room model serves every unit of its type
+      lampRig.position.copy(g.position); lampRig.rotation.copy(g.rotation); lamp2.position.set(0, 1.6, -m.d / 2 + 1); lamp.intensity = LAMP[0]; lamp2.intensity = LAMP[1];
       return {
         meta: m,
         // eye from the baked preset; the look point is pulled in to 2.2 m so orbiting pivots inside the room

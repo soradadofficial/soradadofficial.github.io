@@ -380,3 +380,24 @@ td:not(:first-child) { font-family: var(--f-mono); font-size: 0.84rem; }
 .sim-hud span { font-family: var(--f-mono); font-size: 0.72rem; color: #7dffb0; letter-spacing: 0.1em; } .sim-hud b { font-weight: 600; }
 body.simulating .builder-panel, body.simulating .summary { opacity: 0.08; pointer-events: none; transition: opacity .4s; }
 .builder-panel, .summary { transition: opacity .4s; }
+
+/* Tower stays: floor rail and floor plan */
+.pick-filter { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+.pick-filter select { font: inherit; color: inherit; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(244, 239, 230, 0.2); border-radius: 8px; padding: 6px 8px; min-height: 40px; flex: 1; min-width: 0; }
+.pick-filter option { color: #111; }
+.pick { display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: start; --u-0: #7fd0ff; --u-1: #f6b6c8; --u-2: #ffc46b; --u-3: #7dffb0; }
+.floor-rail { display: grid; gap: 3px; max-height: 260px; overflow-y: auto; scrollbar-width: thin; padding-right: 2px; }
+.floor-rail button { display: flex; justify-content: space-between; align-items: baseline; gap: 4px; font: inherit; color: inherit; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(244, 239, 230, 0.16); border-radius: 8px; padding: 4px 8px; min-height: 34px; cursor: pointer; }
+.floor-rail button small { font-size: 0.66rem; opacity: 0.7; }
+.floor-rail button:hover, .floor-rail button:focus-visible { border-color: #ffcf7a; }
+.floor-rail button[aria-selected="true"] { background: #ffcf7a; color: #2a1c05; border-color: #ffcf7a; }
+.floor-rail button:disabled, .unit:disabled { opacity: 0.3; cursor: default; }
+.plan-row { display: grid; gap: 3px; }
+.unit { font: 500 0.66rem/1 var(--f-mono, monospace); color: #10162f; background: var(--c); border: 2px solid transparent; border-radius: 5px; min-height: 34px; padding: 0; cursor: pointer; }
+.unit:hover:not(:disabled), .unit:focus-visible, .unit[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 10px var(--c); }
+.plan-core { text-align: center; font-size: 0.68rem; opacity: 0.6; border: 1px dashed rgba(244, 239, 230, 0.25); border-radius: 5px; padding: 3px; margin: 4px 0; }
+.plan-side { margin: 4px 0; font-size: 0.74rem; opacity: 0.8; text-align: center; }
+#enterUnit { margin-top: 6px; }
+#enterUnit[hidden] { display: none; }
+.crumbs { font-size: 0.82rem; opacity: 0.9; margin-bottom: 4px; }
+.crumbs .link-btn { display: inline; padding: 0; min-height: 0; }
