@@ -53,24 +53,29 @@ const { stands, complex, dep } = field.userData;
   });
   mast.castShadow = true; field.add(mast, head, new THREE.Mesh(mergeGeometries(lines), new THREE.MeshBasicMaterial({ color: '#f2c230', toneMapped: false })));
 }
-const BLOCK = { x: 5, z: -5, w: 156, d: 146, deep: 7, metres: 35 }; // plate in field units; the section shows 35 m of ground, about 33x taller than true scale
+const BLOCK = { x: 5, z: -5, w: 156, d: 146, deep: 7, top: -2, metres: 62 }; // plate in field units; the section runs from 2 m of fill down to 60 m, about 19x taller than true scale
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(BLOCK.w, BLOCK.d).rotateX(-Math.PI / 2), std('#b3b48c', { roughness: 1 }));
 ground.position.set(BLOCK.x, -0.004, BLOCK.z); ground.receiveShadow = true; field.add(ground);
-// Layer depths are approximate, for a typical Bangkok-plain profile; replace when surveyed values are in.
-const STRATA = [['ผิวทางและชั้นรองพื้นทาง', 0, 1, '#a9adb5'], ['ชั้นทรายถม', 1, 2.5, '#f6dc9e'], ['ดินเหนียวอ่อนกรุงเทพฯ', 2.5, 12, '#b7cfe0'], ['ดินเหนียวแข็ง', 12, 22, '#ecbfa6'], ['ชั้นทรายชั้นแรก', 22, 35, '#f9e9b8']];
+// Metres below the original ground. Depths, drains, piles and canal from research/bkk-subsoil-spec.md (sources listed there).
+const STRATA = [['ทรายถม 1.5 ม. และผิวทาง', -2, 0, '#c9c4b4'], ['เปลือกดินผิวบน', 0, 2, '#dccba6'], ['ดินเหนียวอ่อนมาก สีเทาเข้ม', 2, 10, '#a9c3d8'], ['ดินเหนียวอ่อนถึงปานกลาง', 10, 15, '#c6d6e2'], ['ดินเหนียวแข็ง', 15, 25, '#ecbfa6'], ['ทรายชั้นแรก (ชั้นน้ำบาดาล)', 25, 47, '#f9e9b8'], ['ดินเหนียวปนทรายแป้ง แข็งมาก', 47, 57, '#dcbccb'], ['ทรายแน่นมาก', 57, 60, '#f1d38a']];
 {
-  const c = document.createElement('canvas'); c.width = 2048; c.height = 560; const x = c.getContext('2d'), py = (m) => m / BLOCK.metres * c.height;
-  for (const [, a, b, col] of STRATA) { x.fillStyle = col; x.fillRect(0, py(a), c.width, py(b - a) + 1); }
-  x.fillStyle = 'rgba(160,120,60,0.35)'; for (let i = 0; i < 900; i++) x.fillRect((i * 733) % c.width, py(22) + (i * 197) % py(13), 4, 4); // sand grains
-  x.strokeStyle = 'rgba(255,255,255,0.9)'; x.lineWidth = 3; for (let u = 14; u < c.width; u += 28) { x.beginPath(); x.moveTo(u, py(1)); x.lineTo(u, py(10)); x.stroke(); } // vertical drains through the soft clay
-  x.fillStyle = 'rgba(60,150,220,0.22)'; x.fillRect(0, py(1.2), c.width, c.height); x.strokeStyle = '#2f8fd6'; x.lineWidth = 4; x.setLineDash([22, 12]); x.beginPath(); x.moveTo(0, py(1.2)); x.lineTo(c.width, py(1.2)); x.stroke(); x.setLineDash([]);
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 1024; const x = c.getContext('2d'), py = (m) => (m - BLOCK.top) / BLOCK.metres * c.height;
+  for (const [, a, b, col] of STRATA) { x.fillStyle = col; x.fillRect(0, py(a), c.width, py(b) - py(a) + 1); }
+  x.fillStyle = 'rgba(160,120,60,0.3)'; for (let i = 0; i < 1400; i++) x.fillRect((i * 733) % c.width, py(25) + (i * 197) % (py(47) - py(25)), 4, 4); // sand grains
+  x.strokeStyle = 'rgba(255,255,255,0.9)'; x.lineWidth = 3; for (let u = 14; u < 1180; u += 28) { x.beginPath(); x.moveTo(u, py(-1.5)); x.lineTo(u, py(10)); x.stroke(); } // 10 m vertical drains
+  x.fillStyle = '#5b6470'; for (const [u, tip, w] of [[1500, 26, 9], [1530, 26, 9], [1570, 30, 9], [1600, 30, 9], [1650, 42, 15], [1690, 42, 15], [1730, 42, 15]]) x.fillRect(u, py(-2), w, py(tip) - py(-2)); // terminal piles, tips in the first sand
+  x.fillStyle = '#4f9fc4'; x.fillRect(1240, py(-2), 190, py(0.6) - py(-2)); // perimeter canal, drawn wider than its 35 m so it can be seen
+  x.fillStyle = 'rgba(60,150,220,0.16)'; x.fillRect(0, py(0.75), c.width, c.height); x.strokeStyle = '#2f8fd6'; x.lineWidth = 4; x.setLineDash([22, 12]); x.beginPath(); x.moveTo(0, py(0.75)); x.lineTo(c.width, py(0.75)); x.stroke(); x.setLineDash([]);
   document.fonts.ready.then(() => {
-    x.textBaseline = 'middle'; x.font = '600 34px "IBM Plex Sans Thai", Tahoma, sans-serif';
-    for (const [n, a, b] of STRATA) { const t = `${n} · ราว ${a}–${b} ม.`, w = x.measureText(t).width, x0 = a ? 600 : 40, y = Math.max(py((a + b) / 2), 28); x.fillStyle = 'rgba(255,255,255,0.82)'; x.fillRect(x0, y - 24, w + 28, 48); x.fillStyle = '#23304a'; x.fillText(t, x0 + 14, y + 2); } // the thin top layer is labelled to the side
-    x.font = '500 26px "IBM Plex Sans Thai", Tahoma, sans-serif'; x.fillStyle = '#1f6fb5'; x.fillText('ระดับน้ำใต้ดิน (โดยประมาณ)', 1380, py(1.2) + 22); x.fillStyle = '#23304a'; x.fillText('แผ่นระบายน้ำแนวดิ่ง (PVD) ลึกราว 10 ม.', 1380, py(7));
+    x.textBaseline = 'middle';
+    const tag = (t, u, v, fg = '#23304a') => { x.font = '600 26px "IBM Plex Sans Thai", Tahoma, sans-serif'; const w = x.measureText(t).width; x.fillStyle = 'rgba(255,255,255,0.86)'; x.fillRect(u, v - 18, w + 20, 36); x.fillStyle = fg; x.fillText(t, u + 10, v + 2); };
+    for (const [n, a, b] of STRATA) tag(a < 0 ? n : `${n} · ${a}–${b} ม.`, a < 0 ? 40 : a < 2 ? 430 : 300, py((a + b) / 2));
+    tag('ระดับน้ำใต้ดิน ลึก 0.5–1 ม.', 820, py(3.6), '#1f6fb5'); tag('แผ่นระบายน้ำแนวดิ่ง (PVD) ยาว 10 ม. ระยะ 1 ม.', 700, py(7.4));
+    tag('คลองระบายน้ำรอบสนามบิน กว้าง 35 ม. ลึก 2 ม.', 1180, py(4.2), '#1f6fb5'); tag('เสาเข็มอาคารผู้โดยสาร ปลาย −26, −30, −42 ม.', 1440, py(50));
+    tag('แผนภาพ: ระยะแนวนอนไม่ตามมาตราส่วน', 1440, py(58.5));
     tex.needsUpdate = true;
   });
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping; tex.repeat.x = 6; tex.anisotropy = 8;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping; tex.repeat.x = 11; // one repeat is about twice as wide as the face is deep, the canvas's own shape tex.anisotropy = 8;
   const side = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, fog: false });
   for (const [len, rot, px, pz] of [[BLOCK.w, 0, 0, BLOCK.d / 2], [BLOCK.w, Math.PI, 0, -BLOCK.d / 2], [BLOCK.d, Math.PI / 2, BLOCK.w / 2, 0], [BLOCK.d, -Math.PI / 2, -BLOCK.w / 2, 0]]) {
     const f = new THREE.Mesh(new THREE.PlaneGeometry(len, BLOCK.deep), side); f.rotation.y = rot; f.position.set(BLOCK.x + px, -BLOCK.deep / 2, BLOCK.z + pz); field.add(f);
@@ -150,6 +155,8 @@ const flags = []; // [sprite, pole] pairs, faded out when the camera is low
   };
   document.fonts.ready.then(() => {
     for (const w of longest((OSM.water || []).filter((w) => w.line), 10)) flag(w.name, L(w.at), '#1f6fb5', '#ffffff');
+    const ring = longest((OSM.water || []).filter((w) => w.line && !w.name && Math.hypot(...w.p[w.p.length >> 1]) < 4500).map((w) => ({ ...w, name: String(w.p[0]) })), 1)[0];
+    if (ring) flag('คลองระบายน้ำรอบสนามบิน (กว้าง 35 ม.)', L(ring.at), '#1f6fb5', '#ffffff');
     for (const r of longest((OSM.roads || []).filter((r) => /motorway|trunk|primary/.test(r.k) && !r.k.endsWith('-l')), 7)) flag(r.name, L(r.at), '#f2c230', '#2a2410');
   });
 }
@@ -298,7 +305,7 @@ const PARTS = [
   { id: 'rwy', name: 'ทางวิ่ง 02R', eye: [-9, 1.6, -15.6], at: [-3, 0, -13.2], layer: 'ops', title: 'ทางวิ่ง 02R/20L', text: 'ทางวิ่งเส้นกลาง ใช้เป็นทางวิ่งขาออกหลัก เครื่องบินจำลองแท็กซี่ข้ามสนามมาเข้าแถวที่หัวทางวิ่งแล้ววิ่งขึ้นไปทางเหนือ', facts: [['ความยาว', '3,700 ม.'], ['ระยะจาก 02L/20R', '400 ม.'], ['ระยะจาก 01/19', '2,200 ม.']], src: 'AIP ประเทศไทย' },
   { id: 'twr', name: 'หอบังคับการ', eye: [14.9, 1.3, -9.9], at: [13.24, 0.55, -7.99], title: 'หอบังคับการบิน', text: 'ตั้งอยู่ฝั่งผู้โดยสารขาเข้าเมือง ทางเหนือค่อนตะวันตกของอาคารหลัก เคยเป็นหอบังคับการบินแบบตั้งอิสระที่สูงที่สุดในโลกช่วงปี 2006–2014', facts: [['ความสูง', '132.2 ม.']], src: 'Wikipedia' },
   { id: 'sat', name: 'SAT-1', eye: [1.2, 1.5, -2.4], at: [3.9, 0.1, -6.6], title: 'อาคารเทียบเครื่องบินรองหลังที่ 1', text: 'อาคารกลางสนามทางใต้ของอาคารหลัก เชื่อมกันด้วยรถไฟฟ้าไร้คนขับในอุโมงค์ใต้ลานจอด เพิ่มความจุของสนามบินเป็น 60 ล้านคนต่อปี', facts: [['พื้นที่', '251,400 ตร.ม.'], ['หลุมจอด', '28 (8 หลุมรองรับ A380/747-8)'], ['ความยาว', 'ราว 1,019 ม.']], src: 'Wikipedia · OpenStreetMap' },
-  { id: 'soil', name: 'ชั้นดิน', eye: [-7, 0.8, 82], at: [-7, -3.2, 68], title: 'หน้าตัดชั้นดินใต้สนามบิน', text: 'ขอบแผ่นโมเดลถูกตัดให้เห็นชั้นดิน สนามบินสร้างบนดินเหนียวอ่อนของที่ราบลุ่มกรุงเทพฯ จึงต้องปรับปรุงดินก่อน โดยถมทรายเป็นน้ำหนักกดทับ และปักแผ่นระบายน้ำแนวดิ่ง (PVD) ให้น้ำในดินเหนียวไหลออกและดินทรุดตัวล่วงหน้า', facts: [['วิธีปรับปรุงดิน', 'PVD ร่วมกับน้ำหนักกดทับ'], ['ดินเหนียวอ่อน', 'หนาราว 10 ม.'], ['มาตราส่วนแนวดิ่ง', 'ขยายราว 33 เท่า']], tag: 'ความลึกโดยประมาณ', src: 'ลักษณะชั้นดินทั่วไปของที่ราบลุ่มกรุงเทพฯ รอตัวเลขที่ตรวจสอบแล้ว' },
+  { id: 'soil', name: 'ชั้นดิน', eye: [5, 0.5, 81.5], at: [5, -3.5, 68], title: 'หน้าตัดชั้นดินใต้สนามบิน', text: 'สนามบินสร้างบนหนองงูเห่าเดิม ซึ่งเป็นดินเหนียวอ่อนมากหนาราว 8 ม. จึงต้องปรับปรุงดินก่อนสร้างทางวิ่ง: ปูทรายหนา 1.5 ม. ระหว่างแผ่นใยสังเคราะห์สองชั้น ปักแผ่นระบายน้ำแนวดิ่ง (PVD) แล้วถมดินกดทับไว้ 6–11 เดือนให้ดินทรุดตัวล่วงหน้า อาคารผู้โดยสารตั้งบนเสาเข็มที่ปลายหยั่งถึงชั้นทราย', facts: [['ดินเหนียวอ่อนมาก', 'ลึก 2–10 ม. · ความชื้น 92–95%'], ['PVD', 'ยาว 10 ม. ระยะ 1 ม. ตารางสี่เหลี่ยม'], ['ดินถมกดทับ', 'สูง 3.8–4.2 ม. นาน 6–11 เดือน'], ['ทางวิ่งเส้นที่ 3', 'PVD รวมกว่า 8,000 กม. ทรุดตัวราว 0.70 ม.'], ['เสาเข็มอาคาร', '25,437 ต้น ปลาย −26 ถึง −42 ม.'], ['เสาหลังคาแต่ละต้น', 'รับน้ำหนักถึง 15,000 ตัน'], ['ลานจอด', 'แผ่นคอนกรีตหนา 450 มม.'], ['คันกั้นน้ำ', 'ยาว 23.5 กม. สูง 3.5 ม.'], ['บ่อพักน้ำ', '6 บ่อ ลึกราว 2 ม.'], ['มาตราส่วนแนวดิ่ง', 'ขยายราว 19 เท่า']], tag: 'แผนภาพ', src: 'Fellenius 2009 (ASCE) · SEAGS–AGSSEA Journal · AIP ประเทศไทย · JSCE · รายการเต็มใน research/bkk-subsoil-spec.md · บางแหล่งระบุดินเหนียวแข็งลึกถึง 30 ม.' },
   { id: 'map', name: 'พื้นที่รอบข้าง', eye: [4, 46, 26], at: [8, 0, -8], title: 'ถนน คลอง และอาคารรอบสนามบิน', text: 'ถนนที่ใช้งานจริง ทางขับ ลานจอด คลอง ทางรถไฟ และผังอาคารรอบสนามบินวาดจากข้อมูล OpenStreetMap ตามพิกัดจริง ถนนสายหลักเป็นเส้นขาวมีจุดไฟ สถานีแอร์พอร์ตเรลลิงก์อยู่ใต้อาคารหลัก', facts: [['แอร์พอร์ตเรลลิงก์', '28.6 กม. ถึงพญาไท'], ['ระยะจากใจกลางเมือง', 'ราว 25 กม.']], src: '© OpenStreetMap contributors (ODbL) · Wikipedia' },
 ];
 let layer = 'overview';
