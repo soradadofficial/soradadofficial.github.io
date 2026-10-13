@@ -16,8 +16,12 @@ try {
 
   // choreography: step two full loops, every aircraft keeps its phase order and its distance from the others
   const frames = await page.evaluate(() => { const out = []; for (let t = 0; t < window.__bkk.cycle * 2; t += 0.5) out.push(window.__bkk.at(t)); return out; });
+  const dep = await page.evaluate(() => window.__bkk.dep);
+  const onStrip = (a) => Math.abs(a.z - dep.z) < 60 && Math.abs(a.x - dep.x) < dep.len / 2; // inside the 02R runway strip
   let closest = Infinity, where = '';
   frames.forEach((f, k) => {
+    const rolling = f.find((a) => a.phase === 'takeoff' && a.y < 30), crossing = f.find((a) => a.phase === 'taxiIn' && onStrip(a));
+    assert.ok(!(rolling && crossing), `${crossing?.no} crosses 02R while ${rolling?.no} is on its take-off roll, t=${k / 2}`);
     f.forEach((a, i) => {
       if (k) { const was = ORDER.indexOf(frames[k - 1][i].phase), now = ORDER.indexOf(a.phase); assert.ok(now === was || now === (was + 1) % ORDER.length, `${a.no}: ${frames[k - 1][i].phase} -> ${a.phase} at t=${k / 2}`); }
       for (const b of f.slice(i + 1)) {
