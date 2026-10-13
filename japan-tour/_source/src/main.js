@@ -11,6 +11,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { createWorld } from './world.js';
 import { loadDem } from './geo.js';
 import { FilmShader, lerpEnv, copyEnv, ENV } from './fx.js';
+import { initStays } from './stays.js';
 import { initBuilder, fillInsuranceTable } from './builder.js';
 import { lineMats } from './scenery.js';
 
@@ -123,9 +124,33 @@ function fadeChapters() {
   }
 }
 
+let stays;
+function flyPose(to) { // same flight as flyTo, without the target tabs and info card
+  setFree(false);
+  world.EXPLORE.__pose = to; exploreKey = '__pose';
+  const toEnv = timeOverride || to.env;
+  const fromPos = exploreCur.pos.clone(), fromLook = exploreCur.look.clone();
+  const fromEnv = world.makeEnv(); copyEnv(fromEnv, exploreCur.env);
+  const fromPetals = exploreCur.petals, dist = fromPos.distanceTo(to.pos);
+  const mid = fromPos.clone().lerp(to.pos, 0.5);
+  mid.y = Math.max(fromPos.y, to.pos.y) + Math.min(90, dist * 0.3);
+  const q = new THREE.QuadraticBezierCurve3(fromPos, mid, to.pos.clone());
+  exploreTween?.kill();
+  const o = { k: 0 };
+  exploreTween = gsap.to(o, {
+    k: 1, duration: reduceMotion || instant ? 0.01 : 0.9 + Math.min(2.2, dist / 100), ease: 'power2.inOut',
+    onUpdate: () => {
+      exploreCur.pos.copy(q.getPoint(o.k));
+      exploreCur.look.copy(fromLook).lerp(to.look, smooth(o.k * 1.25));
+      lerpEnv(exploreCur.env, fromEnv, toEnv, o.k);
+      exploreCur.petals = fromPetals + (to.petals - fromPetals) * o.k;
+    },
+  });
+}
 function flyTo(key) {
-  const to = world.EXPLORE[key];
+  const to = typeof key === 'object' ? key : world.EXPLORE[key]; // a named target, or a pose (stays and rooms)
   if (!to) return;
+  if (typeof key === 'object') return flyPose(to);
   setFree(false);
   exploreKey = key;
   const toEnv = timeOverride || to.env;
@@ -149,13 +174,14 @@ function flyTo(key) {
     },
   });
   document.querySelectorAll('[data-target]').forEach((b) => b.setAttribute('aria-selected', b.dataset.target === key));
+  stays?.close();
   renderInfo(key);
 }
 
 const INFO = {
-  hotel: { jp: 'さくらグランド', title: 'Sakura Grand Hotel 5★', text: 'โรงแรมหรูใกล้สถานี ล็อบบี้ไม้สไตล์ญี่ปุ่นร่วมสมัย ห้องชั้นบนหันหน้าเข้าหาภูเขาไฟฟูจิ', list: ['อาหารเช้าบุฟเฟต์ญี่ปุ่นและนานาชาติ', 'ออนเซ็นและสปาบนดาดฟ้า', 'เดิน 5 นาทีถึงสถานี'], price: 'เริ่ม ฿6,900 / คืน', action: { hotel: 'grand' }, cta: 'เลือกโรงแรมนี้' },
-  suite: { jp: '富士ビュースイート', title: 'ห้องสวีทวิวฟูจิ', text: 'ตอนนี้คุณอยู่ในห้องนี้ ลองขยับเมาส์เพื่อมองรอบ ๆ ห้องขนาด 82 ตร.ม. กระจกจากพื้นถึงเพดานรับวิวฟูจิตอนพระอาทิตย์ตก', list: ['เตียงคิงไซซ์และมุมนั่งเล่น', 'อ่างแช่ตัวริมหน้าต่าง', 'ชั้นบนสุด เช็คอินเลานจ์ส่วนตัว'], price: 'เริ่ม ฿13,100 / คืน', action: { hotel: 'grand', room: 'suite' }, cta: 'เลือกห้องนี้' },
-  ryokan: { jp: '旅館 花見', title: 'เรียวกัง ฮานามิ · ห้องทาทามิ', text: 'ห้องแบบญี่ปุ่นปูเสื่อทาทามิ นอนฟูก เสิร์ฟอาหารไคเซกิถึงห้อง และมีบ่อออนเซ็นส่วนตัวที่ระเบียง', list: ['ชุดยูกาตะสำหรับทุกท่าน', 'ดินเนอร์ไคเซกิ 9 คอร์ส', 'ออนเซ็นส่วนตัวมองเห็นทะเลสาบ'], price: 'เริ่ม ฿5,400 / คืน', action: { hotel: 'ryokan', room: 'suite' }, cta: 'เลือกเรียวกังนี้' },
+  hotel: { jp: 'さくらグランド', title: 'Sakura Grand Hotel 5★', text: 'โรงแรมหรูใกล้สถานี ล็อบบี้ไม้สไตล์ญี่ปุ่นร่วมสมัย ห้องชั้นบนหันหน้าเข้าหาภูเขาไฟฟูจิ', list: ['อาหารเช้าบุฟเฟต์ญี่ปุ่นและนานาชาติ', 'ออนเซ็นและสปาบนดาดฟ้า', 'เดิน 5 นาทีถึงสถานี'], price: 'เริ่ม ฿6,900 / คืน', action: { hotel: 'kawaguchiko' }, cta: 'เลือกโรงแรมนี้' },
+  suite: { jp: '富士ビュースイート', title: 'ห้องสวีทวิวฟูจิ', text: 'ตอนนี้คุณอยู่ในห้องนี้ ลองขยับเมาส์เพื่อมองรอบ ๆ ห้องขนาด 82 ตร.ม. กระจกจากพื้นถึงเพดานรับวิวฟูจิตอนพระอาทิตย์ตก', list: ['เตียงคิงไซซ์และมุมนั่งเล่น', 'อ่างแช่ตัวริมหน้าต่าง', 'ชั้นบนสุด เช็คอินเลานจ์ส่วนตัว'], price: 'เริ่ม ฿13,100 / คืน', action: { hotel: 'kawaguchiko', room: 'kw-sky' }, cta: 'เลือกห้องนี้' },
+  ryokan: { jp: '旅館 花見', title: 'เรียวกัง ฮานามิ · ห้องทาทามิ', text: 'ห้องแบบญี่ปุ่นปูเสื่อทาทามิ นอนฟูก เสิร์ฟอาหารไคเซกิถึงห้อง และมีบ่อออนเซ็นส่วนตัวที่ระเบียง', list: ['ชุดยูกาตะสำหรับทุกท่าน', 'ดินเนอร์ไคเซกิ 9 คอร์ส', 'ออนเซ็นส่วนตัวมองเห็นทะเลสาบ'], price: 'เริ่ม ฿5,400 / คืน', action: { hotel: 'hakone', room: 'hk-onsen' }, cta: 'เลือกเรียวกังนี้' },
   fuji: { jp: '富士山', title: 'ภูเขาไฟฟูจิ', text: 'สูง 3,776 เมตร ภูเขาที่สูงที่สุดในญี่ปุ่น ชมจากริมทะเลสาบคาวากุจิโกะ หรือขึ้นไปถึงสถานีชั้น 5', list: ['ทะเลสาบคาวากุจิโกะ', 'สถานีชั้น 5 (ตามฤดูกาล)', 'หมู่บ้านโอชิโนะฮักไก'], price: 'ค่าเข้าชม ฿1,800 / ท่าน', action: { place: 'fuji' }, cta: 'เพิ่มเข้าทริป' },
   pagoda: { jp: '忠霊塔', title: 'เจดีย์ชูเรโตะ', text: 'เจดีย์ห้าชั้นในสวนอาราคุระยามะ มุมถ่ายรูปฟูจิกับซากุระที่โด่งดังที่สุด เดินขึ้นบันได 398 ขั้น', list: ['ซากุระบานปลายมีนาคมถึงเมษายน', 'ใบไม้แดงช่วงพฤศจิกายน', 'จุดชมวิวยามเช้าคนน้อย'], price: 'รวมในทริปฟูจิ', action: { place: 'fuji' }, cta: 'เพิ่มเข้าทริป' },
   torii: { jp: '千本鳥居', title: 'อุโมงค์โทริอิ', text: 'ซุ้มประตูสีชาดนับพันต้นเรียงต่อกันขึ้นเขา ที่ศาลเจ้าฟูชิมิอินาริ เกียวโต', list: ['เปิด 24 ชั่วโมง ไม่มีค่าเข้า', 'แนะนำช่วงเช้าก่อน 8 โมง', 'เดินเต็มเส้นทางประมาณ 2 ชั่วโมง'], price: 'รวมในทริปเกียวโต', action: { place: 'kyoto' }, cta: 'เพิ่มเข้าทริป' },
@@ -239,6 +265,15 @@ function setFree(on) {
 }
 $('#freeBtn').addEventListener('click', () => setFree(!free));
 window.addEventListener('keydown', (e) => { if (e.key === 'Escape') setFree(false); });
+
+// ---------- Stays: property sheets and walk-in rooms ----------
+stays = initStays({
+  world,
+  fly: flyPose,
+  setOrbit: (on) => { controls.minDistance = on ? 0.004 : 0.05; setFree(on); },
+  onSelect: (action) => { builder.apply(action); scrollToY(M.builderTop + 2); },
+});
+if (location.search.includes('debug')) window.__stays = stays;
 
 // ---------- Click objects in the scene ----------
 const raycaster = new THREE.Raycaster();
@@ -437,7 +472,7 @@ function resize() {
 window.addEventListener('resize', resize);
 
 renderInfo('hotel');
-document.querySelector('[data-target="hotel"]').setAttribute('aria-selected', 'true');
+document.querySelector('[data-target="hotel"]')?.setAttribute('aria-selected', 'true');
 resize();
 requestAnimationFrame(frame);
 const reveal = () => setTimeout(() => $('#veil').classList.add('gone'), 500);

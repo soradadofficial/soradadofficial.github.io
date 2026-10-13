@@ -14,13 +14,20 @@ scene.add(new THREE.HemisphereLight('#ffffff', '#6b7a5a', 1.2));
 const sun = new THREE.DirectionalLight('#fff4e0', 2.2); sun.position.set(50, 80, 40); sun.castShadow = true; scene.add(sun);
 let obj;
 const fn = M1[name] || M2[name];
+const file = q.get('file'); // a .glb under public/, e.g. file=rooms/tk-corner.glb&cam=x,y,z&look=x,y,z
+if (file) {
+  const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+  const { DRACOLoader } = await import('three/examples/jsm/loaders/DRACOLoader.js');
+  obj = (await new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('/draco/')).loadAsync('/' + file)).scene;
+  scene.add(new THREE.PointLight('#ffe2c0', 14, 0, 1.4).translateY(2.3));
+} else
 if (name === 'createSakuraTrees') obj = fn([new THREE.Vector3(0, 0, 0), new THREE.Vector3(8, 0, 2)]);
 else if (name === 'createLanterns') obj = fn([new THREE.Vector3(0, 0, 0), new THREE.Vector3(3, 0, 0)]);
 else if (name === 'createDeerGeometry') obj = new THREE.Mesh(fn(), new THREE.MeshStandardMaterial({ color: '#a0703e', flatShading: true }));
 else obj = q.get('arg') ? fn(JSON.parse(q.get('arg'))) : fn();
 scene.add(obj);
 if (obj.userData.ready) await obj.userData.ready; // models loaded from a file
-obj.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
+obj.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = !file; } });
 M1.updateGlow(+(q.get('night') || 0));
 const box = new THREE.Box3().setFromObject(obj);
 const c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
@@ -31,6 +38,7 @@ const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, R * 0.01, 
 const tgt = c.clone(); if (q.get('ty')) tgt.y += +q.get('ty') * sz.y;
 cam.position.set(tgt.x + Math.cos(el) * Math.sin(az) * R, tgt.y + Math.sin(el) * R, tgt.z + Math.cos(el) * Math.cos(az) * R);
 cam.lookAt(tgt);
+if (q.get('cam')) { cam.fov = 62; cam.near = 0.05; cam.updateProjectionMatrix(); cam.position.fromArray(q.get('cam').split(',').map(Number)); cam.lookAt(new THREE.Vector3().fromArray(q.get('look').split(',').map(Number))); }
 sun.shadow.camera.left = sun.shadow.camera.bottom = -R; sun.shadow.camera.right = sun.shadow.camera.top = R; sun.shadow.camera.far = 400; sun.position.copy(c).add(new THREE.Vector3(R, R * 1.6, R * 0.8)); sun.target.position.copy(c); scene.add(sun.target);
 r.render(scene, cam);
 window.__info = { size: sz.toArray(), min: box.min.toArray(), max: box.max.toArray() };

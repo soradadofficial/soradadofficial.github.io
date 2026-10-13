@@ -340,3 +340,35 @@ td:not(:first-child) { font-family: var(--f-mono); font-size: 0.84rem; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- stays: property sheet and room detail ---------- */
+.info-card.stay-sheet { max-height: min(74vh, 760px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.stay-sheet h3 { font-size: 1.35rem; } .stay-sheet h4 { margin: 0.4rem 0 0; font-size: 0.95rem; color: var(--sakura); font-family: var(--f-body); font-weight: 600; }
+.stay-sheet h4 small { color: var(--washi-dim); font-weight: 400; }
+.stars { color: var(--kin); font-size: 0.9rem; letter-spacing: 0.1em; white-space: nowrap; }
+.stay-meta { display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; margin: 0; font-size: 0.85rem; color: var(--washi-dim); }
+.stay-sheet .tags, .stay-sheet .amen { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.stay-sheet .tags li, .stay-sheet .amen li { display: block; padding: 0.2rem 0.6rem; border: 1px solid var(--ai-line); border-radius: 999px; font-size: 0.8rem; }
+.stay-sheet .tags li::before, .stay-sheet .amen li::before { content: none; }
+.room-list { display: grid; gap: 0.5rem; }
+.room-row { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: center; padding: 0.7rem 0.8rem; border: 1px solid var(--ai-line); border-radius: 12px; background: rgba(255, 255, 255, 0.03); }
+.room-row b { display: block; font-size: 0.98rem; } .room-row small { display: block; color: var(--washi-dim); font-size: 0.8rem; line-height: 1.4; }
+.room-cta { display: grid; gap: 0.35rem; justify-items: end; } .room-cta .price small, .stay-sheet .row .price small { font-size: 0.72rem; color: var(--washi-dim); }
+.room-cta .btn, .stay-sheet .btn-small { min-height: 44px; }
+.link-btn { background: none; border: 0; padding: 0.4rem 0; color: var(--sakura); font: inherit; font-size: 0.88rem; text-align: left; cursor: pointer; min-height: 44px; }
+.sec-seg { display: grid; grid-template-columns: repeat(4, 1fr); } .sec-seg button { min-height: 44px; font-size: 0.82rem; padding: 0.3rem; }
+.spec { display: grid; gap: 0.3rem; margin: 0; } .spec div { display: grid; grid-template-columns: 5.5rem 1fr; gap: 0.6rem; font-size: 0.88rem; }
+.spec dt { color: var(--washi-dim); } .spec dd { margin: 0; }
+.floorplan { width: 100%; max-width: 260px; justify-self: center; }
+.floorplan rect { stroke: rgba(244, 239, 230, 0.55); stroke-width: 1; }
+.fp-room { fill: rgba(244, 239, 230, 0.06); } .fp-wet { fill: rgba(127, 196, 207, 0.3); } .fp-bed { fill: rgba(246, 182, 200, 0.3); } .fp-zone { fill: rgba(217, 178, 91, 0.18); } .fp-out { fill: rgba(111, 161, 96, 0.25); stroke-dasharray: 3 2; }
+.fp-win { stroke: #7fd0ff; stroke-width: 3; }
+.floorplan text { fill: var(--washi); font-size: 7px; text-anchor: middle; font-family: var(--f-body); } .floorplan .fp-dim { fill: var(--washi-dim); font-size: 6.5px; }
+.stay-tabs button { flex: 1 1 46%; text-align: left; }
+
+.sheet-close { position: sticky; top: 0; justify-self: end; margin-bottom: -2.2rem; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ai-line); background: rgba(13, 19, 48, 0.7); color: var(--washi); font-size: 1rem; cursor: pointer; z-index: 2; }
+@media (max-width: 899px) {
+  body.stay-open .explore-panel, body.stay-open .hud { display: none; }
+  body.stay-open .side-col { margin-top: auto; }
+  .info-card.stay-sheet { max-height: 46svh; width: 100%; border-radius: 18px 18px 0 0; }
+}

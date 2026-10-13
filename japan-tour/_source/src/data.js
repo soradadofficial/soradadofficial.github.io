@@ -30,17 +30,73 @@ export const PLACES = [
   { id: 'furano', en: 'Furano', name: 'ฟุราโนะ ทุ่งลาเวนเดอร์', jp: '富良野', lon: 142.38, lat: 43.34, hours: 7, price: 1900, region: 'hokkaido' },
 ];
 
-export const HOTELS = [
-  { id: 'business', name: 'City Smart 3★', note: 'ใกล้สถานี เดินทางสะดวก', perNight: 2200 },
-  { id: 'grand', name: 'Sakura Grand 5★', note: 'ห้องสวีทวิวฟูจิ ชั้นบนสุด', perNight: 6900 },
-  { id: 'ryokan', name: 'เรียวกัง ฮานามิ 4★', note: 'ห้องเสื่อทาทามิ พร้อมออนเซ็นส่วนตัว', perNight: 5400 },
+// Five stand-out stays along the route. All fictional (demo names and prices) at real locations.
+const C = { free: 'ยกเลิกฟรีก่อนเข้าพัก 3 วัน', flex: 'ยกเลิกฟรีก่อนเข้าพัก 7 วัน หลังจากนั้นคิด 1 คืน', strict: 'ยกเลิกฟรีก่อนเข้าพัก 14 วัน (ห้องจำนวนจำกัด)' };
+const A = { wifi: 'WiFi ความเร็วสูง', bf: 'อาหารเช้าบุฟเฟต์', kaiseki: 'อาหารค่ำไคเซกิเสิร์ฟในห้อง', jbf: 'อาหารเช้าแบบญี่ปุ่น', ac: 'เครื่องปรับอากาศ/ฮีตเตอร์', tv: 'สมาร์ตทีวี 55 นิ้ว', tub: 'อ่างอาบน้ำแยกฝักบัว', rain: 'ฝักบัวเรนชาวเวอร์', yukata: 'ชุดยูกาตะและรองเท้าเกี๊ยะ', tea: 'ชุดชงชาเขียว', coffee: 'เครื่องชงกาแฟแคปซูล', minibar: 'มินิบาร์', safe: 'ตู้นิรภัย', lounge: 'สิทธิ์เข้าเลานจ์ชั้นบน', onsen: 'อ่างออนเซ็นส่วนตัวกลางแจ้ง', pubonsen: 'ออนเซ็นรวมของที่พัก', balcony: 'ระเบียงส่วนตัว', garden: 'สวนส่วนตัว', hinoki: 'อ่างไม้ฮิโนกิ', kitchen: 'ครัวเล็กพร้อมอุปกรณ์', washer: 'เครื่องซักผ้า', desk: 'โต๊ะทำงาน', butler: 'บริการบัตเลอร์', pickup: 'รถรับส่งสถานี', bike: 'จักรยานให้ยืม' };
+export const STAYS = [
+  {
+    id: 'tokyo', area: 'โตเกียว', short: 'ตึกสูงวิวทาวเวอร์', name: 'Akane Sky Tokyo', jp: '茜スカイ東京', stars: 5, score: 9.2, lon: 139.745, lat: 35.659,
+    note: 'ห้องกระจกสูงจรดเพดาน วิวโตเกียวทาวเวอร์', text: 'โรงแรมตึกสูงย่านมินาโตะ ทุกห้องเป็นผนังกระจกหันเข้าหาโตเกียวทาวเวอร์ เดินถึงสถานีได้ในไม่กี่นาที เหมาะเป็นคืนแรกหลังลงเครื่อง',
+    highlights: ['วิวโตเกียวทาวเวอร์', 'สกายบาร์ชั้นบนสุด', 'ใกล้สถานีรถไฟ', 'ไกด์ไทยรับที่ล็อบบี้'],
+    rooms: [
+      { id: 'tk-deluxe', name: 'Deluxe King', size: 32, bed: 'เตียงคิง 1 เตียง', guests: 2, view: 'วิวเมืองและโตเกียวทาวเวอร์', bathText: 'อ่างอาบน้ำ ผนังกระจกเห็นห้องนอน', price: 5900, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.safe, A.desk] },
+      { id: 'tk-twin', name: 'Premier Twin', size: 38, bed: 'เตียงเดี่ยว 2 เตียง', guests: 2, view: 'วิวโตเกียวทาวเวอร์เต็มบาน', bathText: 'อ่างอาบน้ำ ผนังกระจก', price: 6800, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.minibar, A.safe] },
+      { id: 'tk-corner', name: 'Corner Suite', size: 68, bed: 'เตียงคิง 1 เตียง + โซฟา', guests: 3, living: true, view: 'วิวมุม 2 ด้าน ทาวเวอร์และอ่าวโตเกียว', bathText: 'อ่างอาบน้ำแยกฝักบัว อ่างล้างหน้าคู่', price: 11500, cancel: C.flex, amenities: [A.wifi, A.bf, A.lounge, A.tub, A.rain, A.tv, A.coffee, A.minibar, A.desk] },
+      { id: 'tk-sky', name: 'Sky Suite', size: 110, bed: 'เตียงคิง 1 เตียง + ห้องนั่งเล่น', guests: 4, living: true, view: 'พาโนรามาโตเกียวจากชั้นสูงสุด', bathText: 'อ่างอาบน้ำริมหน้าต่าง เรนชาวเวอร์', price: 19800, cancel: C.strict, amenities: [A.wifi, A.bf, A.lounge, A.butler, A.tub, A.rain, A.tv, A.coffee, A.minibar, A.desk] },
+    ],
+  },
+  {
+    id: 'hakone', area: 'ฮาโกเนะ', short: 'เรียวกังริมทะเลสาบ', name: 'เรียวกัง ฮานามิ ทะเลสาบอาชิ', jp: '旅館 花見', stars: 4, score: 9.4, lon: 139.026, lat: 35.203,
+    note: 'ห้องเสื่อทาทามิ พร้อมออนเซ็นส่วนตัว', text: 'เรียวกังไม้ริมทะเลสาบอาชิ ข้างโทริอิกลางน้ำ ห้องปูเสื่อทาทามิ นอนฟูก เสิร์ฟไคเซกิในห้อง ห้องระดับบนมีอ่างออนเซ็นไม้บนระเบียงส่วนตัว',
+    highlights: ['ออนเซ็นส่วนตัวกลางแจ้ง', 'อาหารไคเซกิ', 'ริมทะเลสาบอาชิ', 'เห็นโทริอิกลางน้ำ'],
+    rooms: [
+      { id: 'hk-washitsu', name: 'ห้องญี่ปุ่น 10 เสื่อ', size: 34, bed: 'ฟูกญี่ปุ่น 2 ชุด', guests: 3, view: 'วิวสวนและทะเลสาบ', bathText: 'ห้องน้ำในตัว ใช้ออนเซ็นรวมของที่พัก', price: 6400, cancel: C.free, amenities: [A.wifi, A.jbf, A.kaiseki, A.pubonsen, A.yukata, A.tea, A.ac] },
+      { id: 'hk-onsen', name: 'ห้องญี่ปุ่นพร้อมออนเซ็นส่วนตัว', size: 52, bed: 'ฟูกญี่ปุ่น 2 ชุด', guests: 3, onsen: true, view: 'วิวทะเลสาบอาชิจากอ่างออนเซ็น', bathText: 'อ่างไม้ฮิโนกิกลางแจ้ง น้ำแร่ธรรมชาติ', price: 9800, cancel: C.flex, amenities: [A.wifi, A.jbf, A.kaiseki, A.onsen, A.pubonsen, A.yukata, A.tea, A.ac] },
+      { id: 'hk-wayo', name: 'ห้องญี่ปุ่นผสมตะวันตก', size: 64, bed: 'เตียงเตี้ย 2 เตียง', guests: 4, onsen: true, view: 'วิวทะเลสาบและภูเขา', bathText: 'อ่างออนเซ็นไม้กลางแจ้ง', price: 12500, cancel: C.flex, amenities: [A.wifi, A.jbf, A.kaiseki, A.onsen, A.pubonsen, A.yukata, A.tea, A.ac, A.tv] },
+      { id: 'hk-hanare', name: 'เรือนแยก ฮานาเระ', size: 95, bed: 'เตียงเตี้ย 2 เตียง + ห้องนั่งเล่น', guests: 4, onsen: true, living: true, view: 'สวนส่วนตัวและทะเลสาบ', bathText: 'บ่อหินออนเซ็นขนาดใหญ่กลางแจ้ง', price: 21000, cancel: C.strict, amenities: [A.wifi, A.jbf, A.kaiseki, A.onsen, A.garden, A.butler, A.yukata, A.tea, A.ac, A.tv] },
+    ],
+  },
+  {
+    id: 'kawaguchiko', area: 'คาวากุจิโกะ', short: 'รีสอร์ตวิวฟูจิ', name: 'Sakura Grand Kawaguchiko', jp: 'さくらグランド河口湖', stars: 5, score: 9.5, lon: 138.77, lat: 35.52,
+    note: 'ทุกห้องหันเข้าหาภูเขาไฟฟูจิ', text: 'รีสอร์ตริมฝั่งเหนือของทะเลสาบคาวากุจิโกะ ทุกห้องหันเข้าหาฟูจิ ห้องระดับบนมีระเบียงและอ่างออนเซ็นส่วนตัว ชมฟูจิสะท้อนน้ำยามเช้าได้จากเตียง',
+    highlights: ['วิวฟูจิจากทุกห้อง', 'ระเบียงส่วนตัว', 'ออนเซ็นบนดาดฟ้า', 'ริมทะเลสาบ'],
+    rooms: [
+      { id: 'kw-superior', name: 'Superior Twin', size: 36, bed: 'เตียงเดี่ยว 2 เตียง', guests: 2, view: 'วิวฟูจิและทะเลสาบ', bathText: 'อ่างอาบน้ำ ผนังกระจก', price: 4900, cancel: C.free, amenities: [A.wifi, A.bf, A.pubonsen, A.tub, A.tv, A.coffee, A.safe] },
+      { id: 'kw-deluxe', name: 'Deluxe Fuji View', size: 45, bed: 'เตียงคิง 1 เตียง', guests: 2, balcony: true, view: 'วิวฟูจิเต็มบานจากระเบียง', bathText: 'อ่างอาบน้ำ ผนังกระจก', price: 6900, cancel: C.free, amenities: [A.wifi, A.bf, A.balcony, A.pubonsen, A.tub, A.tv, A.coffee, A.minibar] },
+      { id: 'kw-onsen', name: 'Onsen Suite', size: 72, bed: 'เตียงคิง 1 เตียง + โซฟา', guests: 3, balcony: true, onsen: true, living: true, view: 'วิวฟูจิจากอ่างออนเซ็นบนระเบียง', bathText: 'อ่างออนเซ็นไม้บนระเบียง เรนชาวเวอร์', price: 11900, cancel: C.flex, amenities: [A.wifi, A.bf, A.onsen, A.balcony, A.rain, A.tv, A.coffee, A.minibar, A.yukata] },
+      { id: 'kw-sky', name: 'Fuji Sky Suite', size: 120, bed: 'เตียงคิง 1 เตียง + ห้องนั่งเล่น', guests: 4, balcony: true, onsen: true, living: true, view: 'พาโนรามาฟูจิและทะเลสาบจากชั้นบนสุด', bathText: 'อ่างออนเซ็นบนระเบียง เรนชาวเวอร์', price: 18500, cancel: C.strict, amenities: [A.wifi, A.bf, A.onsen, A.balcony, A.butler, A.lounge, A.rain, A.tv, A.coffee, A.minibar] },
+    ],
+  },
+  {
+    id: 'kyoto', area: 'เกียวโต', short: 'บ้านไม้มาจิยะ', name: 'Machiya Tsumugi Kyoto', jp: '町家 つむぎ', stars: 4, score: 9.3, lon: 135.778, lat: 35.0,
+    note: 'บ้านไม้โบราณ มีสวนเล็กส่วนตัว', text: 'บ้านไม้มาจิยะอายุร้อยปีย่านฮิกาชิยามะ ปรับปรุงใหม่ทั้งหลัง พื้นไม้เข้ม คานเปลือย ระแนงไม้หน้าบ้าน และสวนสึโบะนิวะเล็ก ๆ พร้อมตะเกียงหิน',
+    highlights: ['บ้านไม้ดั้งเดิม', 'สวนสึโบะนิวะส่วนตัว', 'อ่างไม้ฮิโนกิ', 'เดินถึงย่านกิออน'],
+    rooms: [
+      { id: 'ky-kura', name: 'ห้องคุระ', size: 28, bed: 'ฟูกญี่ปุ่น 1 ชุดบนยกพื้นทาทามิ', guests: 2, view: 'สวนสึโบะนิวะ', bathText: 'อ่างไม้ฮิโนกิ', price: 5200, cancel: C.free, amenities: [A.wifi, A.jbf, A.hinoki, A.garden, A.yukata, A.tea, A.ac, A.bike] },
+      { id: 'ky-niwa', name: 'ห้องนิวะ วิวสวน', size: 42, bed: 'ฟูกญี่ปุ่น 2 ชุดบนยกพื้นทาทามิ', guests: 3, living: true, view: 'สวนสึโบะนิวะและต้นเมเปิล', bathText: 'อ่างไม้ฮิโนกิ', price: 7400, cancel: C.flex, amenities: [A.wifi, A.jbf, A.hinoki, A.garden, A.yukata, A.tea, A.ac, A.bike, A.coffee] },
+      { id: 'ky-maisonette', name: 'เหมาทั้งหลัง', size: 75, bed: 'ฟูกญี่ปุ่น 2 ชุด + โซฟา', guests: 5, living: true, big: true, view: 'สวนสึโบะนิวะเต็มหน้ากว้าง', bathText: 'ห้องอาบน้ำอ่างไม้ฮิโนกิขนาดใหญ่', price: 12800, cancel: C.strict, amenities: [A.wifi, A.jbf, A.hinoki, A.garden, A.kitchen, A.washer, A.yukata, A.tea, A.ac, A.bike] },
+    ],
+  },
+  {
+    id: 'osaka', area: 'โอซาก้า', short: 'วิวปราสาท', name: 'Kinjo View Osaka', jp: '金城ビュー大阪', stars: 4, score: 8.9, lon: 135.526, lat: 34.687,
+    note: 'วิวปราสาทโอซาก้า คุ้มค่า ใกล้สถานี', text: 'โรงแรมริมสวนปราสาทโอซาก้า ห้องฝั่งปราสาทมองเห็นหอคอยหลังคาเขียวและคูน้ำ ราคาคุ้มค่า เดินทางไปโดทงโบริและคันไซได้สะดวก',
+    highlights: ['วิวปราสาทโอซาก้า', 'ห้องครอบครัว 4 ท่าน', 'ใกล้สถานี', 'คืนสุดท้ายก่อนบินกลับ'],
+    rooms: [
+      { id: 'os-standard', name: 'Standard Queen', size: 26, bed: 'เตียงควีน 1 เตียง', guests: 2, view: 'วิวเมือง', bathText: 'อ่างอาบน้ำ', price: 3200, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.safe, A.desk] },
+      { id: 'os-castle', name: 'Castle View King', size: 34, bed: 'เตียงคิง 1 เตียง', guests: 2, view: 'วิวปราสาทโอซาก้า', bathText: 'อ่างอาบน้ำ ผนังกระจก', price: 4300, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.safe, A.desk] },
+      { id: 'os-family', name: 'Family Room', size: 48, bed: 'เตียงใหญ่ 2 เตียง', guests: 4, view: 'วิวปราสาทและสวน', bathText: 'อ่างอาบน้ำ', price: 5900, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.safe, A.washer] },
+      { id: 'os-suite', name: 'Castle Suite', size: 78, bed: 'เตียงคิง 1 เตียง + ห้องนั่งเล่น', guests: 3, living: true, view: 'วิวปราสาทเต็มบานจากห้องนั่งเล่น', bathText: 'อ่างอาบน้ำแยกฝักบัว', price: 9400, cancel: C.flex, amenities: [A.wifi, A.bf, A.lounge, A.tub, A.rain, A.tv, A.coffee, A.minibar, A.desk] },
+    ],
+  },
 ];
-
-export const ROOMS = [
-  { id: 'standard', name: 'Standard Twin', mult: 1 },
-  { id: 'deluxe', name: 'Deluxe Fuji View', mult: 1.35 },
-  { id: 'suite', name: 'Suite / Washitsu', mult: 1.9 },
-];
+export const SECTIONS = {
+  bed: { name: 'ห้องนอน', note: 'พื้นที่นอน เตียงและมุมหัวเตียง' },
+  bath: { name: 'ห้องน้ำ', note: 'ห้องน้ำและอ่างอาบน้ำของห้องนี้' },
+  living: { name: 'นั่งเล่น', note: 'มุมนั่งเล่นและโต๊ะ' },
+  view: { name: 'วิวจากห้อง', note: 'วิวจริงจากหน้าต่าง ณ ตำแหน่งที่พัก ลองเปลี่ยนเวลาในฉากเป็นเย็นหรือกลางคืนได้' },
+};
+// kept for the tour builder's list of properties
+export const HOTELS = STAYS.map((s) => ({ id: s.id, name: `${s.name} ${s.stars}★`, note: `${s.area} · ${s.note}`, perNight: Math.min(...s.rooms.map((r) => r.price)) }));
 
 export const INSURANCE = [
   { id: 'none', name: 'ไม่ซื้อ', price: 0, medical: '-', luggage: '-', delay: '-' },

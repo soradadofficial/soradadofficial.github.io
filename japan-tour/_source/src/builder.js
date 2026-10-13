@@ -1,4 +1,4 @@
-import { AIRPORTS, DEPARTURES, ARRIVALS, PLACES, HOTELS, ROOMS, INSURANCE, ADDONS, flightFare, distanceKm } from './data.js';
+import { AIRPORTS, DEPARTURES, ARRIVALS, PLACES, HOTELS, STAYS, INSURANCE, ADDONS, flightFare, distanceKm } from './data.js';
 
 const $ = (s) => document.querySelector(s);
 const fmt = (n) => n.toLocaleString('th-TH');
@@ -7,7 +7,7 @@ const state = {
   dep: 'BKK', arr: 'NRT', ret: 'auto',
   picked: new Set(['tokyo', 'fuji', 'hakone', 'kyoto', 'osaka']),
   nights: 6, pax: 2,
-  hotel: 'grand', room: 'deluxe', insurance: 'plus',
+  hotel: 'kawaguchiko', room: 'kw-deluxe', insurance: 'plus',
   addons: new Set(['wifi']),
   date: '',
 };
@@ -38,13 +38,13 @@ export function computePlan() {
   for (let i = 0; i < chain.length - 1; i++) roadKm += distanceKm(chain[i], chain[i + 1]) * 1.3;
   const flyKm = distanceKm(AIRPORTS[state.dep], AIRPORTS[state.arr]) + distanceKm(AIRPORTS[ret], AIRPORTS[state.dep]);
   const fare = Math.round((flightFare(state.dep, state.arr) + flightFare(state.dep, ret)) / 2 / 100) * 100;
-  const hotel = HOTELS.find((h) => h.id === state.hotel);
-  const room = ROOMS.find((r) => r.id === state.room);
+  const hotel = STAYS.find((h) => h.id === state.hotel);
+  const room = hotel.rooms.find((r) => r.id === state.room) || hotel.rooms[0];
   const ins = INSURANCE.find((i) => i.id === state.insurance);
-  const rooms = Math.ceil(state.pax / 2);
+  const rooms = Math.ceil(state.pax / room.guests);
   const lines = [
     ['ตั๋วเครื่องบินไป-กลับ', fare * state.pax],
-    [`ที่พัก ${state.nights} คืน × ${rooms} ห้อง`, Math.round(hotel.perNight * room.mult) * state.nights * rooms],
+    [`${hotel.name} · ${room.name} ${state.nights} คืน × ${rooms} ห้อง`, room.price * state.nights * rooms],
     ['รถโค้ชและไกด์', Math.round(roadKm * 4 + 1200 * (state.nights + 1)) * state.pax],
     ['ค่าเข้าชมสถานที่', stops.reduce((s, p) => s + p.price, 0) * state.pax],
   ];
@@ -78,7 +78,6 @@ export function initBuilder({ onChange }) {
   ARRIVALS.forEach((c) => arr.append(opt(c, `${c} · ${AIRPORTS[c].name}`)));
   ret.append(opt('auto', 'อัตโนมัติ (ใกล้จุดสุดท้าย)'));
   ARRIVALS.forEach((c) => ret.append(opt(c, `${c} · ${AIRPORTS[c].name}`)));
-  ROOMS.forEach((r) => room.append(opt(r.id, r.name)));
   const d = new Date(); d.setDate(d.getDate() + 45);
   state.date = d.toISOString().slice(0, 10);
   $('#date').value = state.date;
@@ -98,7 +97,7 @@ export function initBuilder({ onChange }) {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'opt'; b.dataset.id = h.id; b.id = `hotel-${h.id}`;
     b.innerHTML = `<span>${h.name}<small>${h.note}</small></span><span class="price">฿${fmt(h.perNight)}/คืน</span>`;
-    b.addEventListener('click', () => { state.hotel = h.id; render(); });
+    b.addEventListener('click', () => { state.hotel = h.id; state.room = ''; render(); });
     hotels.append(b);
   });
   const insurance = $('#insurance');
@@ -140,6 +139,12 @@ export function initBuilder({ onChange }) {
     });
     $('#stopCount').textContent = `${state.picked.size} แห่ง`;
     hotels.querySelectorAll('.opt').forEach((b) => b.setAttribute('aria-pressed', b.dataset.id === state.hotel));
+    // room types belong to the chosen property
+    if (room.dataset.stay !== state.hotel) {
+      room.dataset.stay = state.hotel; room.replaceChildren();
+      plan.hotel.rooms.forEach((r) => room.append(opt(r.id, `${r.name} · ${r.size} ตร.ม. · ฿${fmt(r.price)}/คืน`)));
+    }
+    state.room = plan.room.id; room.value = state.room;
     insurance.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.id === state.insurance));
 
     const start = state.date ? new Date(state.date) : new Date();
@@ -178,8 +183,7 @@ export function initBuilder({ onChange }) {
     // Called from the explore cards: add a place or stay to the trip.
     apply(action) {
       if (action.place) state.picked.add(action.place);
-      if (action.hotel) state.hotel = action.hotel;
-      if (action.room) { state.room = action.room; room.value = action.room; }
+      if (action.hotel) { state.hotel = action.hotel; state.room = action.room || ''; }
       if (action.addon) { state.addons.add(action.addon); const cb = document.getElementById(`addon-${action.addon}`); if (cb) cb.checked = true; }
       render();
     },

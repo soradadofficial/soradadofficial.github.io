@@ -15,6 +15,8 @@ import {
 import { createHoloMap } from './mapholo.js';
 import { createLife } from './life.js';
 import ROUTES from './routes.json';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const LL = (lon, lat, y = 0) => V(toX(lon), y, toZ(lat));
@@ -254,6 +256,7 @@ export function createWorld() {
     while (k > 0 && !lakeAt(ashiC.x + dir.x * k, ashiC.z + dir.z * k)) k -= 0.02;
     return (off, along = 0) => V(ashiC.x + dir.x * (k + off) - dir.z * along, 0, ashiC.z + dir.z * (k + off) + dir.x * along);
   })();
+  const hakVilla = onGround(ashiShore(0.45, -0.9)); // detached guest villa down the shore from the ryokan
   let ryokanPos = onGround(ashiShore(0.3));
   for (const along of [0.5, -0.5, 0.7, -0.7, 0.35, -0.35]) { // first dry spot beside the torii with dry ground all round
     const q = ashiShore(0.4, along);
@@ -278,7 +281,7 @@ export function createWorld() {
   ];
   const avoid = [
     { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: 5, tree: 1.15 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
-    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
+    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: toX(135.778), z: toZ(35.0), r: 0.45, tree: 1 }, { x: hakVilla.x, z: hakVilla.z, r: 0.4, tree: 1 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
   ];
   // rivers through the cities (drawn as rippled water ribbons, kept clear of buildings)
   const riverMat = waterMaterial('#3d7593', { roughness: 0.14, metalness: 0.35, freq: 3, amp: 0.1 });
@@ -884,9 +887,62 @@ export function createWorld() {
     }
   }
 
+  // ---------- stays: where each property's rooms sit, and rooms loaded on demand ----------
+  const RS = S * 0.85; // same scale as the hotel tower
+  const face = (from, to) => Math.atan2(-(to.x - from.x), -(to.z - from.z)); // yaw that turns the window wall (-z) toward `to`
+  const high = (base, dx, dz, up) => { const q = base.clone().add(V(dx, 0, dz)); q.y = ground(q.x, q.z) + up; return q; };
+  const kyotoPos = onGround(LL(135.778, 35.0));
+  const STAY = {
+    tokyo: { at: () => high(towerPos, 3.4, 2.2, 2.6), to: towerPos.clone().add(V(0, 3.4, 0)), env: ENV.dusk, ext: [towerPos.clone().add(V(8, 4.5, 6)), towerPos.clone().add(V(2.5, 2.8, 1.6))] },
+    hakone: { onGround: true, at: () => hakVilla.clone(), to: V(ashiC.x, ashiC.y, ashiC.z), env: ENV.golden, ext: [ryokan.localToWorld(V(70, 52, 55)), ryokanPos.clone()] },
+    kawaguchiko: { at: (m) => hotel.localToWorld(V(0, 40, -12 + m.d / 2 + 0.3)), yaw: hotel.rotation.y, env: ENV.day, ext: [hotelEye, hotelLook] },
+    kyoto: { onGround: true, at: () => kyotoPos.clone(), to: kyotoPos.clone().add(V(6, 1, 0)), env: ENV.golden, ext: [kyotoPos.clone().add(V(-1.6, 1.3, 1.6)), kyotoPos.clone()] },
+    osaka: { at: () => high(castlePos, 2.6, 1.4, 1.5), to: castlePos.clone().add(V(0, 0.9, 0)), env: ENV.golden, ext: [castlePos.clone().add(V(5.5, 3.2, 4.5)), castlePos.clone().add(V(1.5, 1.4, 0.8))] },
+  };
+  let roomMeta = null, shownRoom = null;
+  const roomCache = new Map();
+  const gltf = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./draco/'));
+  const stays = {
+    exterior: (id) => ({ pos: STAY[id].ext[0], look: STAY[id].ext[1], env: STAY[id].env, petals: 0.3 }),
+    hideRoom() { if (shownRoom) shownRoom.visible = false; shownRoom = null; },
+    async room(id, roomId) {
+      roomMeta ??= await (await fetch('./rooms/rooms.json')).json();
+      const m = roomMeta[roomId], a = STAY[id];
+      if (!roomCache.has(roomId)) {
+        const g = (await gltf.loadAsync(`./rooms/${roomId}.glb`)).scene;
+        const lamp = new THREE.PointLight('#ffe2c0', 4.5, 14, 1.4); lamp.position.set(0, 2.3, 0); g.add(lamp);
+        const lamp2 = new THREE.PointLight('#fff1dc', 1.8, 10, 1.4); lamp2.position.set(0, 1.6, -m.d / 2 + 1); g.add(lamp2);
+        g.scale.setScalar(RS); scaleLights(g, RS);
+        g.position.copy(a.at(m));
+        g.rotation.y = a.yaw ?? face(g.position, a.to);
+        if (a.onGround) { // sit level on the highest ground under the room and its deck, on a stone plinth
+          g.updateMatrixWorld(true);
+          let top = -Infinity;
+          for (const lx of [-0.5, 0, 0.5]) for (const lz of [-1.2, -0.5, 0, 0.5]) { const q = g.localToWorld(V(lx * (m.w + 1.5), 0, lz * m.d)); top = Math.max(top, ground(q.x, q.z)); }
+          g.position.y = top + 0.012;
+          const plinth = new THREE.Mesh(new THREE.BoxGeometry(m.w + 1.6, 30, m.d + 4.4), std('#8a8378', { roughness: 0.95 }));
+          plinth.position.set(0, -15.2, -1.6); g.add(plinth);
+        }
+        g.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = false; if (o.material.emissiveIntensity > 0 && !o.material.userData.dim) { o.material.userData.dim = true; o.material.emissiveIntensity *= 0.3; } } }); // lit by its own lamps, not the sun through the ceiling
+        scene.add(g); g.updateMatrixWorld(true);
+        roomCache.set(roomId, g);
+      }
+      stays.hideRoom();
+      const g = roomCache.get(roomId); g.visible = true; shownRoom = g;
+      return {
+        meta: m,
+        // eye from the baked preset; the look point is pulled in to 2.2 m so orbiting pivots inside the room
+        view(sec) {
+          const v = m.views[sec], eye = V(...v.eye), dir = V(...v.look).sub(eye).normalize();
+          return { pos: g.localToWorld(eye.clone()), look: g.localToWorld(eye.clone().addScaledVector(dir, 2.2)), env: a.env, petals: 0 };
+        },
+      };
+    },
+  };
+
   if (location.search.includes('debug')) window.__world = { V, Raycaster: THREE.Raycaster, pagoda, scene, fujiMesh, terrain: T.mesh, hotel, hotelEye, hotelLook, suiteEye, toriiPos, ashiC, pagodaPos, fujiTop, H, KEYS, storyPose };
   return {
-    scene, plane, life, update, storyPose, storyEnv, storyInfo, groundAt: ground, EXPLORE, BUILDER, holo, makeEnv: makeEnvState,
+    scene, plane, life, update, storyPose, storyEnv, storyInfo, groundAt: ground, EXPLORE, BUILDER, holo, makeEnv: makeEnvState, stays,
     japanZone: (p) => p.x > -400 && p.z < 400 && p.y < 40,
   };
 }
