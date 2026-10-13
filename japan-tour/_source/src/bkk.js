@@ -220,7 +220,9 @@ const FLIGHTS = [
 const PH = [['approach', 16], ['rollout', 9], ['taxiIn', 32], ['park', 48], ['push', 9], ['taxiOut', 72], ['takeoff', 15], ['away', 5]];
 const CYCLE = PH.reduce((s, p) => s + p[1], 0);
 const STATUS = { approach: 'กำลังร่อนลง', rollout: 'ลงจอดแล้ว', taxiIn: 'แท็กซี่เข้าหลุมจอด', park: 'จอดที่หลุมจอด', push: 'ดันถอย', taxiOut: 'แท็กซี่ไปทางวิ่ง 02R', takeoff: 'ขึ้นบิน', away: 'ออกเดินทางแล้ว' };
-const STEPS = [['ต่อสะพานเทียบ', 0, 4], ['ผู้โดยสารขาเข้าลงเครื่อง', 3, 15], ['ขนกระเป๋าลง–ขึ้น', 5, 34], ['เติมน้ำมันจากท่อใต้ลานจอด', 7, 30], ['ขนอาหารและทำความสะอาด', 9, 28], ['ผู้โดยสารขาออกขึ้นเครื่อง', 29, 43], ['ถอดสะพาน ต่อรถดันถอย', 43, 48]];
+const TURN = 62, M = 48 / TURN; // minutes of a full-service turnaround, and stand-phase seconds per minute
+// [step, from minute, to minute]: derived from Airbus "A350-900 Preliminary Data" via research/bkk-deep-dive-spec.md
+const STEPS = [['ต่อสะพานเทียบ 2 ประตู', 0, 2], ['ผู้โดยสารขาเข้าลงเครื่อง', 2, 8.3], ['ขนตู้สินค้าและกระเป๋าลง–ขึ้น', 2.5, 44.1], ['เติมน้ำมันจากท่อใต้ลานจอด', 3, 26.8], ['ครัวการบิน (งานที่กำหนดเวลารวม)', 0, 45.5], ['ทำความสะอาดห้องโดยสาร', 8.3, 45.5], ['ผู้โดยสารขาออกขึ้นเครื่อง นับจำนวน', 45.5, 60], ['ปิดประตู ถอดสะพาน ต่อรถดันถอย', 60, 62]];
 const gse = {};
 const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./draco/'));
 const gseReady = loader.loadAsync('./models/gse.glb').then((g) => { for (const n of ['Tug', 'Dispenser', 'Catering', 'BaggageTug', 'Cart', 'Bus']) gse[n] = g.scene.getObjectByName(n); });
@@ -277,15 +279,15 @@ function place(p, path, d, back = false) {
   if (back) tan.negate();
   p.g.rotation.set(0, Math.atan2(-tan.z, tan.x), Math.asin(Math.max(-1, Math.min(1, tan.y))) * (back ? -1 : 1), 'YZX');
 }
-const PAX = 180, FUEL_RATE = 650; // simulated: passengers per flight, litres per second through the dispenser
+const PAX = 315, FUEL_RATE = 3400 / M; // seats in the Airbus reference layout; dispenser at 3,400 L/min, per stand-phase second
 const tally = { landed: 0, departed: 0, pax: 0, fuel: 0 };
 let counting = false; // off while the clock is being set by hand
-const fuelling = (p) => p.phase === 'park' && p.pt >= 7 && p.pt < 30;
-const stepNow = (p) => p.phase === 'park' ? [...STEPS].reverse().find(([, a, b]) => p.pt >= a && p.pt < b) : null;
+const fuelling = (p) => p.phase === 'park' && p.pt / M >= 3 && p.pt / M < 26.8;
+const stepNow = (p) => p.phase === 'park' ? [...STEPS].reverse().find(([, a, b]) => p.pt / M >= a && p.pt / M < b) : null;
 // Hurry one flight: its own clock runs 6x until it reaches the wanted phase, so the crew finish what they are doing first.
 // ponytail: the other flights keep their slots, so a hurried flight can close up on one ahead; add slot swapping if that matters.
 function hurry(p) { if (p.phase === 'park') p.rush = 'push'; else if (['takeoff', 'away', 'approach'].includes(p.phase)) p.rush = 'rollout'; }
-const canHurry = (p) => !planes.some((q) => q.rush) && (p.phase === 'park' ? p.pt < 40 : ['takeoff', 'away'].includes(p.phase));
+const canHurry = (p) => !planes.some((q) => q.rush) && (p.phase === 'park' ? p.pt / M < 55 : ['takeoff', 'away'].includes(p.phase));
 function stepOps(T) {
   let di = 0;
   planes.forEach((p) => {
@@ -305,26 +307,26 @@ function stepOps(T) {
     else if (name === 'taxiOut') place(p, out, out.length * ease(u));
     else if (name === 'takeoff') place(p, tko, tko.length * u * u);
     // turnaround at the stand (seconds into the park phase)
-    const s = name === 'park' ? p.pt : -1, on = (a, b) => s >= a && s < b;
-    p.bridge.scale.x = lerp(1, 27, name === 'park' ? Math.min(s / 3, (48 - s) / 4) : 0);
-    p.hose.visible = p.pit.visible = on(7, 30);
+    const s = name === 'park' ? p.pt / M : -1, on = (a, b) => s >= a && s < b; // minutes into the turnaround
+    p.bridge.scale.x = lerp(1, 27, name === 'park' ? Math.min(s / 2, (TURN - s) / 2) : 0);
+    p.hose.visible = p.pit.visible = on(3, 26.8);
     const v = p.veh;
     if (v.Tug) {
       const park = (o, x, z, rot, show, k = 1) => { o.visible = show > 0.01; o.position.set(lerp(x - 70, x, show), 0, lerp(z + 40 * k, z, show)); o.rotation.y = rot; };
-      park(v.Dispenser, -2, 15, Math.PI, Math.min((s - 5) / 3, (32 - s) / 3));
-      park(v.Catering, -11, 9, Math.PI, Math.min((s - 7) / 3, (30 - s) / 3));
-      const shuttle = s < 0 ? 0 : 0.5 + 0.5 * Math.sin(s * 0.5); // baggage train runs between the hold and the sorting hall
-      park(v.BaggageTug, 6 + shuttle * 26, -9 - shuttle * 12, Math.PI / 2, on(5, 34) ? 1 : 0, -1);
-      park(v.Cart1, 2.5 + shuttle * 26, -9 - shuttle * 12, Math.PI / 2, on(5, 34) ? 1 : 0, -1);
-      park(v.Cart2, -1 + shuttle * 26, -9 - shuttle * 12, Math.PI / 2, on(5, 34) ? 1 : 0, -1);
-      const tug = Math.min(1, (s - 42) / 3); // tractor couples to the nose gear just before pushback
+      park(v.Dispenser, -2, 15, Math.PI, Math.min(s / 3, (29.8 - s) / 3));
+      park(v.Catering, -11, 9, Math.PI, Math.min(s / 3, (45.5 - s) / 3));
+      const shuttle = s < 0 ? 0 : 0.5 + 0.5 * Math.sin(s * 0.4); // baggage train runs between the hold and the sorting hall
+      park(v.BaggageTug, 6 + shuttle * 26, -9 - shuttle * 12, Math.PI / 2, on(2.5, 44.1) ? 1 : 0, -1);
+      park(v.Cart1, 2.5 + shuttle * 26, -9 - shuttle * 12, Math.PI / 2, on(2.5, 44.1) ? 1 : 0, -1);
+      park(v.Cart2, -1 + shuttle * 26, -9 - shuttle * 12, Math.PI / 2, on(2.5, 44.1) ? 1 : 0, -1);
+      const tug = Math.min(1, (s - 57) / 3); // tractor couples to the nose gear just before pushback
       v.Tug.visible = tug > 0.01; v.Tug.position.set(lerp(60, 25, tug), 0, 0); v.Tug.rotation.y = -Math.PI / 2;
     }
     // passengers: arrivals walk out (blue), departures walk in (pink)
-    const flow = on(3, 15) ? 1 : on(29, 43) ? -1 : 0;
+    const flow = on(2, 8.3) ? 1 : on(45.5, 56) ? -1 : 0;
     for (let k = 0; k < 36; k++, di++) {
       if (!flow || layer === 'structure') { dm.makeScale(0, 0, 0); dots.setMatrixAt(di, dm); continue; }
-      const w = ((s * 0.035 * flow + k / 36) % 1 + 1) % 1;
+      const w = ((s * 0.027 * flow + k / 36) % 1 + 1) % 1;
       p.walk.at(w * p.walk.length, tmp);
       dm.makeTranslation(tmp.x, tmp.y + 0.01 * Math.sin(k * 2.4), tmp.z); dots.setMatrixAt(di, dm);
       dots.setColorAt(di, col.set(flow > 0 ? '#7fd0ff' : '#f6b6c8'));
@@ -337,9 +339,9 @@ function stepOps(T) {
 const PARTS = [
   { id: 'all', name: 'ทั้งสนามบิน', eye: [-13, 15, 9], at: [5, 0, -7.5], title: 'ท่าอากาศยานสุวรรณภูมิ', text: 'ทางวิ่งขนานสามเส้นวางเหลื่อมกัน อาคารผู้โดยสารอยู่กึ่งกลางระหว่างทางวิ่ง 02R/20L กับ 01/19 เปิดใช้ทางวิ่งเส้นที่สามเมื่อ 1 พ.ย. 2024', facts: [['ทางวิ่ง', '01/19 และ 02L/20R 4,000 ม. · 02R/20L 3,700 ม.'], ['ความกว้าง', '60 ม.'], ['ทิศทางวิ่ง', '014°/194° จริง'], ['ความจุทางวิ่ง', '94 เที่ยวบิน/ชม. (เดิม 68)'], ['ความสูงสนามบิน', '1.5 ม. จากระดับน้ำทะเล']], src: 'Wikipedia · AIP ประเทศไทย' },
   { id: 'mtb', name: 'อาคารหลัก', eye: [15.6, 1.5, -2.2], at: [12.3, 0.15, -6.6], title: 'อาคารผู้โดยสารหลัก', text: 'ห้องโถงกระจกขนาดใหญ่ใต้หลังคาบานเกล็ดที่ลอยอยู่เหนืออาคาร ออกแบบโดย Murphy/Jahn Architects ตอนสร้างเสร็จเป็นอาคารผู้โดยสารที่สร้างในเฟสเดียวที่ใหญ่ที่สุดในโลก', facts: [['ขนาดอาคาร', '444 × 111 ม. · 7 ชั้น'], ['พื้นที่ใช้สอย', '563,000 ตร.ม.'], ['ความจุเดิม', '45 ล้านคน/ปี']], src: 'Structurae · Wikipedia' },
-  { id: 'truss', name: 'โครงถักหลังคา', eye: [13.9, 0.55, -4.1], at: [12.4, 0.22, -6.2], layer: 'structure', title: 'หลังคาและโครงถักหลัก', text: 'หลังคาทั้งผืนวางบนโครงถักเหล็กประกอบขนาดใหญ่ 8 ชุด ยื่นออกสองด้านแบบคานยื่นเป็นรูปคลื่น ทำให้ห้องโถงผู้โดยสารไม่ต้องมีเสากลางอาคาร โหมดโครงสร้างจะลอกหลังคาและกระจกให้เห็นโครงเหล็ก', facts: [['ขนาดหลังคา', '561–567 × 210 ม.'], ['โครงถักหลัก', '8 ชุด ชุดละ 2,710 ตัน'], ['จุดรองรับ', 'เสาคู่ 16 ตำแหน่ง']], src: 'Wikipedia · Werner Sobek (วิศวกรโครงสร้าง)' },
-  { id: 'tube', name: 'คองคอร์ส', eye: [9.2, 0.5, -2.2], at: [10.2, 0.1, -4.2], title: 'อาคารเทียบเครื่องบิน', text: 'ท่อหน้าตัดโค้งยาวต่อเนื่อง โครงเป็นโครงถักโค้งแบบห้าจุดหมุน คลุมด้วยผ้าใบโปร่งแสงสลับช่องกระจก แนวตะวันออก–ตะวันตกตัดกับขาเหนือ–ใต้สองแนวที่จุดต่อ', facts: [['ความยาวรวม', '3,213 ม.'], ['แนวตะวันออก–ตก', '1,350 ม.'], ['ขาเหนือ–ใต้', '932 ม. × 2'], ['ระยะระหว่างผนังกระจก', '27 ม.'], ['หลุมจอดประชิดอาคาร', '51']], src: 'Italian-Thai Development · Wikipedia' },
-  { id: 'stand', name: 'หลุมจอด', eye: [13.1, 0.45, -2.6], at: [12.1, 0.04, -3.77], layer: 'ops', title: 'การบริการภาคพื้นที่หลุมจอด', text: 'ระหว่างจอด เครื่องบินถูกบริการพร้อมกันหลายอย่าง: สะพานเทียบรับ–ส่งผู้โดยสาร รถจ่ายน้ำมันสูบจากหัวจ่ายใต้ลานจอด รถอาหารยกตู้ขึ้นระดับประตู และขบวนรถกระเป๋า ก่อนรถดันถอยจะดันเครื่องออก', facts: [['เติมน้ำมัน', 'ระบบท่อใต้ลานจอด (hydrant)'], ['ลำดับเวลา', 'แบบจำลองโดยประมาณ']], tag: 'จำลอง', src: 'ลำดับงานทั่วไปของการบริการภาคพื้น ไม่ใช่ข้อมูลปฏิบัติการของสนามบิน' },
+  { id: 'truss', name: 'โครงถักหลังคา', eye: [13.9, 0.55, -4.1], at: [12.4, 0.22, -6.2], layer: 'structure', title: 'หลังคาและโครงถักหลัก', text: 'หลังคาทั้งผืนวางบนโครงถักเหล็กประกอบขนาดใหญ่ 8 ชุด ยื่นออกสองด้านแบบคานยื่นเป็นรูปคลื่น ทำให้ห้องโถงผู้โดยสารไม่ต้องมีเสากลางอาคาร โหมดโครงสร้างจะลอกหลังคาและกระจกให้เห็นโครงเหล็ก', facts: [['ขนาดหลังคา', '567 × 210 ม.'], ['โครงถักหลัก', '8 ชุด ช่วง 126 ม. + ยื่น 42 ม. สองข้าง'], ['ระยะห่างโครงถัก', '81 ม.'], ['รูปแบบ', 'โครงถักสามคอร์ดเชื่อมจากเหล็กแผ่นหนา'], ['จุดรองรับ', 'เสาเหล็ก 16 ต้น เป็น 8 คู่ อยู่นอกผนังกระจก'], ['ช่องแสง', '848 ชุด ชุดละ 9 ม.'], ['บานเกล็ดอะลูมิเนียม', '1,304 แผ่น ขนาด 4.5 × 9 ม.'], ['เหล็กหลังคา', '8,300–9,500 ตัน'], ['การติดตั้ง', 'เลื่อนเข้าที่ครั้งละ 9 ม.']], src: 'Architectural Record · Detail · ASI · Werner Sobek · รายการเต็มใน research/bkk-deep-dive-spec.md' },
+  { id: 'tube', name: 'คองคอร์ส', eye: [9.2, 0.5, -2.2], at: [10.2, 0.1, -4.2], title: 'อาคารเทียบเครื่องบิน', text: 'ท่อหน้าตัดโค้งยาวต่อเนื่อง โครงเป็นโครงถักโค้งแบบห้าจุดหมุน คลุมด้วยผ้าใบโปร่งแสงสลับช่องกระจก แนวตะวันออก–ตะวันตกตัดกับขาเหนือ–ใต้สองแนวที่จุดต่อ', facts: [['ความยาวรวม', '3,213 ม.'], ['แนวตะวันออก–ตก', '1,350 ม.'], ['ขาเหนือ–ใต้', '932 ม. × 2'], ['โครงถักโค้ง', '104 ชุด แบบสามคอร์ด ห้าจุดหมุน'], ['ผ้าใบหลังคา', '108 ช่อง ช่องละราว 1,000 ตร.ม.'], ['ชั้นผ้าใบ', 'PTFE-ใยแก้ว / โพลีคาร์บอเนต 6 มม. / ผ้าชั้นในสะท้อนความร้อน'], ['ช่วงผ้าใบ', '27 ม. ระหว่างโครงถัก'], ['หลุมจอดประชิดอาคาร', '51']], src: 'Italian-Thai Development · Detail · Hightex · รายการเต็มใน research/bkk-deep-dive-spec.md' },
+  { id: 'stand', name: 'หลุมจอด', eye: [13.1, 0.45, -2.6], at: [12.1, 0.04, -3.77], layer: 'ops', title: 'การบริการภาคพื้นที่หลุมจอด', text: 'ระหว่างจอด เครื่องบินถูกบริการพร้อมกันหลายอย่าง: สะพานเทียบรับ–ส่งผู้โดยสาร รถจ่ายน้ำมันสูบจากหัวจ่ายใต้ลานจอด รถอาหารยกตู้ขึ้นระดับประตู และขบวนรถกระเป๋า ก่อนรถดันถอยจะดันเครื่องออก', facts: [['บริการเต็มรูปแบบ', '62 นาที (A350-900) · ย่อเป็น 48 วินาทีในแบบจำลอง'], ['งานที่กำหนดเวลา', 'ครัวการบิน 45.5 นาที'], ['เติมน้ำมัน', '81,000 ล. ที่ 3,400 ล./นาที ผ่านหัวจ่ายใต้ลานจอด'], ['หัวจ่ายน้ำมัน', '119 จุดทั่วสนามบิน'], ['หลุมจอด', 'ประชิดอาคาร 51 · ระยะไกล 69 · SAT-1 28'], ['ระยะห่างหลุมจอด', 'ราว 76.5 ม.']], tag: 'ลำดับเวลาจากเอกสารผู้ผลิต', src: 'Airbus A350-900 airport planning data · AIP ประเทศไทย · BAFS · ลำดับเวลาเป็นค่าที่คำนวณจากเอกสาร ไม่ใช่ข้อมูลปฏิบัติการของสนามบิน ตำแหน่งรถบริการเป็นแบบจำลอง' },
   { id: 'rwy', name: 'ทางวิ่ง 02R', eye: [-9, 1.6, -15.6], at: [-3, 0, -13.2], layer: 'ops', title: 'ทางวิ่ง 02R/20L', text: 'ทางวิ่งเส้นกลาง ใช้เป็นทางวิ่งขาออกหลัก เครื่องบินจำลองแท็กซี่ข้ามสนามมาเข้าแถวที่หัวทางวิ่งแล้ววิ่งขึ้นไปทางเหนือ', facts: [['ความยาว', '3,700 ม.'], ['ระยะจาก 02L/20R', '400 ม.'], ['ระยะจาก 01/19', '2,200 ม.']], src: 'AIP ประเทศไทย' },
   { id: 'twr', name: 'หอบังคับการ', eye: [14.9, 1.3, -9.9], at: [13.24, 0.55, -7.99], title: 'หอบังคับการบิน', text: 'ตั้งอยู่ฝั่งผู้โดยสารขาเข้าเมือง ทางเหนือค่อนตะวันตกของอาคารหลัก เคยเป็นหอบังคับการบินแบบตั้งอิสระที่สูงที่สุดในโลกช่วงปี 2006–2014', facts: [['ความสูง', '132.2 ม.']], src: 'Wikipedia' },
   { id: 'sat', name: 'SAT-1', eye: [1.2, 1.5, -2.4], at: [3.9, 0.1, -6.6], title: 'อาคารเทียบเครื่องบินรองหลังที่ 1', text: 'อาคารกลางสนามทางใต้ของอาคารหลัก เชื่อมกันด้วยรถไฟฟ้าไร้คนขับในอุโมงค์ใต้ลานจอด เพิ่มความจุของสนามบินเป็น 60 ล้านคนต่อปี', facts: [['พื้นที่', '251,400 ตร.ม.'], ['หลุมจอด', '28 (8 หลุมรองรับ A380/747-8)'], ['ความยาว', 'ราว 1,019 ม.']], src: 'Wikipedia · OpenStreetMap' },
@@ -383,14 +385,14 @@ function hud() {
     row.querySelector('.rt').textContent = inbound ? `จาก ${p.f.from}` : `ไป ${p.f.route}`;
     row.querySelector('.st').textContent = STATUS[p.phase];
   });
-  const p = planes[focusIdx], s = p.phase === 'park' ? p.pt : p.phase === 'push' ? 99 : -1;
+  const p = planes[focusIdx], s = p.phase === 'park' ? p.pt / M : p.phase === 'push' ? 99 : -1;
   const now = stepNow(p);
   $('#focusName').textContent = `${p.f.no} · ${now ? `${now[0]} (${STEPS.indexOf(now) + 1}/${STEPS.length})` : STATUS[p.phase]}`;
   const air = ['takeoff', 'away', 'approach'].includes(p.phase);
   $('#early').textContent = p.rush ? 'กำลังเร่งงาน…' : air ? 'เรียกเครื่องลง' : 'ปล่อยเครื่องก่อนเวลา'; $('#early').disabled = !canHurry(p);
   $('#tally').textContent = `ลงจอด ${tally.landed} · ออกเดินทาง ${tally.departed} · ผู้โดยสาร ${tally.pax.toLocaleString('th-TH')} คน · น้ำมัน ${Math.round(tally.fuel).toLocaleString('th-TH')} ล.`;
-  $('#busy').value = planes.reduce((n, q) => n + (q.phase === 'park' ? STEPS.filter(([, a, b]) => q.pt >= a && q.pt < b).length : 0), 0);
-  $('#steps').innerHTML = STEPS.map(([n, a, b]) => `<li class="${s >= b ? 'done' : s >= a ? 'now' : ''}"><i></i>${n}<small>${a}–${b}</small></li>`).join('');
+  $('#busy').value = planes.reduce((n, q) => n + (q.phase === 'park' ? STEPS.filter(([, a, b]) => q.pt / M >= a && q.pt / M < b).length : 0), 0);
+  $('#steps').innerHTML = STEPS.map(([n, a, b]) => `<li class="${s >= b ? 'done' : s >= a ? 'now' : ''}"><i></i>${n}<small>${a}–${b} นาที</small></li>`).join('');
   const mm = Math.floor(T / 60) % 60, hh = (6 + Math.floor(T / 3600)) % 24;
   $('#clock').textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
