@@ -19,9 +19,9 @@ export const toZ = (lat) => -(lat - LAT0) * KZ;
 export const toLon = (x) => x / KX + LON0;
 export const toLat = (z) => -z / KZ + LAT0;
 
-// Thailand sits far to the south-west; it is drawn closer than reality so the flight
-// stays short ("skip between countries").
-export const THAI_SHIFT = { x: 1700, z: -1250 };
+// Thailand is drawn at its true position, so the flight follows the real track over
+// Indochina, the South China Sea, Taiwan and Okinawa.
+export const THAI_SHIFT = { x: 0, z: 0 };
 export const thaiXZ = (lon, lat) => [toX(lon) + THAI_SHIFT.x, toZ(lat) + THAI_SHIFT.z];
 
 // ---------- real elevation (baked by scripts/build-dem.mjs from AWS Terrain Tiles) ----------

@@ -11,9 +11,10 @@ from kit import mat, box, cyl, group
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', 'models')
 HOTELS = {
-    # width, depth, floors, floor height, podium floors, accent colour
-    'tokyo': dict(w=58, d=22, floors=38, fh=3.7, podium=3, glass='#7fa8c9', fin='#e9edf2', accent='#c9a24a', crown='sky'),
-    'osaka': dict(w=46, d=20, floors=21, fh=3.5, podium=2, glass='#8fb5a6', fin='#f1ede4', accent='#3f8f7d', crown='step'),
+    # width, depth, floors, floor height, podium floors, accent colour. Heights follow the reference
+    # buildings: about 104 m / 33 storeys in Tokyo and about 75 m / 18 storeys in Osaka.
+    'tokyo': dict(w=58, d=22, floors=30, fh=3.15, podium=2, glass='#7fa8c9', fin='#e9edf2', accent='#c9a24a', crown='sky'),
+    'osaka': dict(w=46, d=20, floors=17, fh=3.8, podium=2, glass='#8fb5a6', fin='#f1ede4', accent='#3f8f7d', crown='step'),
 }
 
 def build(root, h, detail):

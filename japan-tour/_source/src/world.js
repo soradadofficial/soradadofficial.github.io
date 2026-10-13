@@ -119,18 +119,23 @@ export function createWorld() {
   const gyB = 0.055 + GO, gyN = nrtY + GO;
   const apDir = V(Math.sin(337 * Math.PI / 180), 0, -Math.cos(337 * Math.PI / 180));
   const thrN = nw(-NRT_LEN / 2 + 0.35, 0);
-  const J1 = V(120, 40, 228);
-  const cruiseA = brg(52, 200, 40);
+  // Take-off from 02R (the main departure runway), then the track actually flown BKK-NRT as
+  // recorded by ADS-B: right turn out over Isan, Da Nang, IKELA, KAPLI, the southern tip of Taiwan,
+  // Okinawa, up the Pacific side of Japan, then round the Boso peninsula. Cruise FL370 then FL410.
+  const DEP = bkk.userData.dep, br = (lx, lz, ly) => bw(DEP.x + lx, DEP.z + lz, ly);
+  const R = (lat, lon, y) => LL(lon, lat, y);
   const W = {
-    start: bw(-10.4, 0, GO), roll: bw(-4, 0, GO), lift: bw(3.5, 0, GO + 0.03), climb1: bw(13, 0, GO + 1.0), climb2: bw(22, 0, GO + 3.0), // 4 km runway = 24 units here
-    turn: brg(24, 32, 9), climb3: brg(40, 85, 22), cruiseA, cruiseB: LL(130.72, 31.8, 45), cruiseC: LL(135.79, 33.45, 45), // over Taiwan, then the Kagoshima and Kushimoto fixes along the Pacific coast (approximate)
-    J1, J1b: V(225, 30, 176), J2: V(280, 15, 86), IF: thrN.clone().addScaledVector(apDir, -48).setY(nrtY + 6.5), FAF: thrN.clone().addScaledVector(apDir, -20).setY(nrtY + 2.4),
+    start: br(-9.6, 0, GO), roll: br(-4, 0, GO), lift: br(3.2, 0, GO + 0.03), climb1: br(12, 0, GO + 1.0), climb2: br(21, 0, GO + 3.0),
+    dep: R(13.9077, 101.0294, 12), climb3: R(14.6553, 103.2479, 37), r2: R(15.2138, 104.9577, 37), r3: R(15.4924, 108.2258, 37), r4: R(17.4240, 110.6239, 37),
+    ikela: R(18.6617, 112.2450, 37), r6: R(19.8532, 114.6832, 41), kapli: R(21.1745, 117.5346, 41), taiwan: R(21.923, 120.850, 41), iguru: R(23.8093, 123.7741, 41),
+    okinawa: R(26.2102, 127.8470, 41), r11: R(28.6338, 130.7732, 41), r12: R(31.1234, 134.3454, 41), r13: R(33.3419, 138.1078, 41),
+    J1: R(33.8865, 139.0965, 38), J1b: R(34.3852, 140.0089, 26), J2: R(34.9743, 140.6468, 14), IF: thrN.clone().addScaledVector(apDir, -48).setY(nrtY + 6.5), FAF: thrN.clone().addScaledVector(apDir, -20).setY(nrtY + 2.4),
     thr: thrN.clone().setY(gyN + 0.06), touch: nw(-NRT_LEN / 2 + 1.0, 0, GO), roll2: nw(NRT_LEN / 2 - 0.9, 0, GO),
     tx1: nw(NRT_LEN / 2 - 0.45, 0.42, GO), tx2: nw(NRT_LEN / 2 - 0.62, 1.0, GO), tx3: nw(0.85, 1.05, GO), tx4: nw(0.4, 1.45, GO), gate: nw(0.4, 1.95, GO),
   };
   W.start.y = W.roll.y = gyB; W.lift.y = gyB + 0.03;
   W.touch.y = W.roll2.y = W.tx1.y = W.tx2.y = W.tx3.y = W.tx4.y = W.gate.y = gyN;
-  const flight = Path.fromControl(Object.values(W), 0.08, (x, z, p) => p.y);
+  const flight = Path.fromControl(Object.values(W), 0.12, (x, z, p) => p.y);
   const FD = Object.fromEntries(Object.entries(W).map(([k, v]) => [k, flight.closest(v)]));
   FD.start = 0; FD.gate = flight.length;
   const planeDist = monotone([
@@ -233,7 +238,7 @@ export function createWorld() {
   const nara = onGround(LL(135.843, 34.685));
   const castlePos = onGround(LL(135.526, 34.687));
   // the two city hotels stand a short walk from their landmarks, rooms facing them
-  const tokyoHotelPos = onGround(towerPos.clone().add(V(3.4, 0, 2.2))), osakaHotelPos = onGround(castlePos.clone().add(V(2.6, 0, 1.4)));
+  const tokyoHotelPos = onGround(towerPos.clone().add(V(0.87, 0, 3.5))), osakaHotelPos = onGround(castlePos.clone().add(V(2.58, 0, -1.09)));
   const fushimi = onGround(LL(135.772, 34.967));
   const pagodaPos = onGround(LL(138.801, 35.501));
   // Chureito viewpoint: up the hillside beside the pagoda, Fuji behind it
@@ -305,9 +310,9 @@ export function createWorld() {
   // Bangkok's eastern suburbs around the airport: low houses with terracotta and green tile roofs, a few towers
   {
     const off = (lx, lz) => bkk.userData.toWorld(lx, lz);
-    const towns = [[-6, 9, 2.6, 260, 0.5], [7, 9, 2.4, 220, 0.4], [18, -4, 2.6, 220, 0.4], [18, -13, 2.4, 200, 0.5], [-18, -9, 2.4, 190, 0.35], [-18, 1, 2.2, 170, 0.35], [2, 15, 3.6, 340, 1.2], [14, 6, 2.2, 160, 0.4]]
+    const towns = [[-8, 11, 2.6, 260, 0.5], [9, 11, 2.4, 220, 0.4], [23, -4, 2.6, 220, 0.4], [23, -13, 2.4, 200, 0.5], [-18, -9, 2.4, 190, 0.35], [-18, 1, 2.2, 170, 0.35], [4, 17, 3.6, 340, 1.2], [19, 8, 2.2, 160, 0.4]]
       .map(([lx, lz, r, n, maxH]) => { const c = off(lx, lz); return { x: c.x, z: c.z, r, n, maxH, rot: bkk.rotation.y }; });
-    scene.add(createCities(towns, { heightAt: () => 0.055, landAt: () => 1, avoid: [{ x: off(0, -7.5).x, z: off(0, -7.5).z, r: 15.5 }], roofs: ['#b5583a', '#c2643f', '#a54c35', '#8a3f2e', '#3f6b4f', '#c9713f', '#7f858d'] }));
+    scene.add(createCities(towns, { heightAt: () => 0.055, landAt: () => 1, avoid: [{ x: off(2.5, -7.5).x, z: off(2.5, -7.5).z, r: 18.5 }], roofs: ['#b5583a', '#c2643f', '#a54c35', '#8a3f2e', '#3f6b4f', '#c9713f', '#7f858d'] }));
   }
 
   // forests
@@ -334,8 +339,8 @@ export function createWorld() {
     for (const s of [-1, 1]) { const off = 0.2 + rnd() * 1.2; plant(p.x - t.z * off * s, p.z + t.x * off * s); }
   }
   { // trees round the Bangkok airfield, none on it
-    const c = bkk.userData.toWorld(0, -7.5);
-    for (let i = 0; i < 2600; i++) { const a = rnd() * 6.283, d = 16 + rnd() * 16; trees.push({ x: c.x + Math.cos(a) * d, z: c.z + Math.sin(a) * d, y: 0.05, s: 0.05 + rnd() * 0.045, r: rnd(), kind: 1 }); }
+    const c = bkk.userData.toWorld(2.5, -7.5);
+    for (let i = 0; i < 2600; i++) { const a = rnd() * 6.283, d = 19 + rnd() * 16; trees.push({ x: c.x + Math.cos(a) * d, z: c.z + Math.sin(a) * d, y: 0.05, s: 0.05 + rnd() * 0.045, r: rnd(), kind: 1 }); }
   }
   const forest = createForest(trees);
   scene.add(forest);
@@ -487,7 +492,7 @@ export function createWorld() {
       const halfL = a.distanceTo(b) * 0.6, halfW = 75;
       const u = k / (K - 1);
       const dens = THREE.MathUtils.smoothstep(u, 0, 0.12) * (1 - 0.75 * THREE.MathUtils.smoothstep(u, 0.7, 1));
-      seaSegs.push({ center: a.clone().lerp(b, 0.5), dir: b.clone().sub(a), halfL, halfW, y: 24, thick: 2.2, size: [6, 15], count: Math.round(halfL * halfW * 4 / 55 * dens), opacity: 0.92 });
+      seaSegs.push({ center: a.clone().lerp(b, 0.5), dir: b.clone().sub(a), halfL, halfW, y: 24, thick: 2.2, size: [9, 20], count: Math.round(halfL * halfW * 4 / 55 * dens * 0.2), opacity: 0.92 }); // the real route is 2.5x longer: thinner cover, bigger clumps
     }
   }
   const cumulus = [
@@ -621,14 +626,14 @@ export function createWorld() {
   const toriiShore = V(toriiPos.x, 0, toriiPos.z).addScaledVector(toLake, -0.55);
   toriiShore.y = Math.max(ground(toriiShore.x, toriiShore.z) + 0.1, toriiPos.y + 0.16);
   const KEYS = [
-    { t: 0.0, pos: A(bw(0.5, 0.9, 0.85)), look: A(bw(3.6, -6.4, 0.22)) },
-    { t: 0.022, pos: A(bw(-7, 2.2, 1.6)), look: A(bw(-1, -5, 0.2)) }, // whole airfield: runway 01 in front, terminal and concourses beyond
+    { t: 0.0, pos: A(bw(8.7, 0.9, 0.85)), look: A(bw(11.8, -6.4, 0.22)) },
+    { t: 0.022, pos: A(br(-14, -3.8, 1.9)), look: A(br(0, 5, 0.2)) }, // whole airfield: runway 01 in front, terminal and concourses beyond
     { t: 0.045, pos: PR(1.7, 0.32, -1.25), look: PR(-0.3, 0.06, 0) },
     { t: 0.1, pos: PR(2.3, 0.42, 1.3), look: PR(-3, 0.1, 0) },
     { t: 0.155, pos: PR(3.2, 0.9, -1.9), look: PR(-3, 0, 0) },
     { t: 0.205, pos: PR(4.5, 1.6, 2.6), look: PR(-5, 0, 0) },
     { t: 0.26, pos: PR(9, 3.5, -7), look: PR(-8, -1, 0) },
-    { t: 0.33, pos: A(routeMid.clone().add(V(-150, 2100, 1650))), look: A(routeMid.clone().add(V(60, 0, -80))) },
+    { t: 0.33, pos: A(routeMid.clone().add(V(-300, 4300, 3300))), look: A(routeMid.clone().add(V(60, 0, -80))) },
     { t: 0.4, pos: PR(6, 2.2, 4.5), look: PR(-60, -12, 0) },
     // From here on the camera keeps one heading family per scene (chase from behind on the same
     // side, landmarks approached from the direction of travel) so nothing whips round.
@@ -817,7 +822,7 @@ export function createWorld() {
     // fog scales with how high / far the camera is
     scene.fog.color.copy(e.fog);
     scene.fog.near = scale * 3;
-    scene.fog.far = Math.min(12000, scale * 55 + 40 + camH * 12);
+    scene.fog.far = Math.min(400000, scale * 55 + 40 + camH * 12); // high enough for the whole-route view from Bangkok to Tokyo
     hemi.intensity = e.hemi;
     hemi.color.copy(e.top).lerp(white, 0.6);
     sun.color.copy(e.sun); sun.intensity = e.sunI;
@@ -899,7 +904,7 @@ export function createWorld() {
   const kyotoPos = onGround(LL(135.778, 35.0));
   const gltf = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./draco/'));
   // tower hotels (Blender models): placed now, filled in when the file arrives
-  const tower3 = (id, at, to, depth) => {
+  const tower3 = (id, at, to, depth, bay) => {
     const h = new THREE.Group(); h.position.copy(at); h.rotation.y = face(at, to); h.scale.setScalar(RS); scene.add(h); h.updateMatrixWorld(true);
     gltf.loadAsync(`./models/hotel-${id}.glb`).then((g) => {
       const lod = new THREE.LOD();
@@ -907,15 +912,15 @@ export function createWorld() {
       lod.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; if (o.material.name === 'Facade' && !o.material.userData.glow) { o.material.userData.glow = true; o.material.emissive.set('#ffd9a0'); glowMats.push({ mat: o.material, day: 0.02, night: 0.55 }); } });
       h.add(lod);
     });
-    return (m, floorY) => h.localToWorld(V(0, floorY, -depth / 2 + m.d / 2 + 0.3)); // a room just inside the landmark-side facade
+    return (m, floorY) => h.localToWorld(V(bay / 2, floorY, -depth / 2 + m.d / 2 + 0.3)); // a room just inside the landmark-side facade, centred on a glazing bay rather than a fin
   };
-  const tokyoRoom = tower3('tokyo', tokyoHotelPos, towerPos, 22), osakaRoom = tower3('osaka', osakaHotelPos, castlePos, 20);
+  const tokyoRoom = tower3('tokyo', tokyoHotelPos, towerPos, 22, 58 / 14), osakaRoom = tower3('osaka', osakaHotelPos, castlePos, 20, 46 / 12);
   const STAY = {
-    tokyo: { at: (m) => tokyoRoom(m, 15 + 30 * 3.7 + 0.2), yaw: face(tokyoHotelPos, towerPos), env: ENV.dusk, ext: [tokyoHotelPos.clone().add(V(4.2, 2.2, 5.2)), tokyoHotelPos.clone().add(V(-0.6, 1.5, -0.4))] },
+    tokyo: { at: (m) => tokyoRoom(m, 10 + 24 * 3.15 + 0.2), yaw: face(tokyoHotelPos, towerPos), env: ENV.dusk, ext: [tokyoHotelPos.clone().add(V(4.2, 2.2, 5.2)), tokyoHotelPos.clone().add(V(-0.6, 1.5, -0.4))] },
     hakone: { onGround: true, at: () => hakVilla.clone(), to: V(ashiC.x, ashiC.y, ashiC.z), env: ENV.golden, ext: [ryokan.localToWorld(V(70, 52, 55)), ryokanPos.clone()] },
     kawaguchiko: { at: (m) => hotel.localToWorld(V(0, 40, -12 + m.d / 2 + 0.3)), yaw: hotel.rotation.y, env: ENV.day, ext: [hotelEye, hotelLook] },
     kyoto: { onGround: true, at: () => kyotoPos.clone(), to: kyotoPos.clone().add(V(6, 1, 0)), env: ENV.golden, ext: [kyotoPos.clone().add(V(-1.6, 1.3, 1.6)), kyotoPos.clone()] },
-    osaka: { at: (m) => osakaRoom(m, 10 + 15 * 3.5 + 0.2), yaw: face(osakaHotelPos, castlePos), env: ENV.golden, ext: [osakaHotelPos.clone().add(V(3.4, 1.6, 4.2)), osakaHotelPos.clone().add(V(-0.5, 0.9, -0.3))] },
+    osaka: { at: (m) => osakaRoom(m, 10 + 13 * 3.8 + 0.2), yaw: face(osakaHotelPos, castlePos), env: ENV.golden, ext: [osakaHotelPos.clone().add(V(3.4, 1.6, 4.2)), osakaHotelPos.clone().add(V(-0.5, 0.9, -0.3))] },
   };
   let roomMeta = null, shownRoom = null;
   const roomCache = new Map();

@@ -180,9 +180,11 @@ export function createAirport({ x, z, y, bearing, len = 4, width = 0.9, side = 1
 // ---------- Suvarnabhumi (BKK) from its real layout ----------
 // Local frame as createAirport: +x runs up runway 01 (north-north-east), +z is east.
 // One local unit = 1/6 km (BKK_K units per metre), so the 4,000 m runway is 24 units long:
-//   01/19    4,000 m x 60 m (east)          02R/20L  3,700 m, 2.2 km to the west
+//   01/19    4,000 m x 60 m (east)          02R/20L  3,700 m, 2.2 km to the west (main departure runway)
 //   02L/20R  4,000 m, the third runway, a further 400 m west
-// The passenger complex (Blender model, real metres) sits between the two original runways.
+// Positions come from the published threshold coordinates turned into the runway axis (014.4 deg true):
+// the runways are staggered, and the passenger complex (Blender model, real metres) sits midway
+// between 02R and 01, level with the north end of 01/19.
 export const BKK_K = 0.006;
 export function createBkkAirport({ x, z, y, bearing }) {
   const K = BKK_K, g = new THREE.Group();
@@ -190,8 +192,8 @@ export function createBkkAirport({ x, z, y, bearing }) {
   g.rotation.y = Math.PI / 2 - bearing * Math.PI / 180;
   const asphalt = std('#30333a', { roughness: 0.9 }), taxi = std('#44484f', { roughness: 0.9 }), concrete = std('#8b8e93', { roughness: 0.9 });
   const flat = (w, d, mat, px, pz, py = 0.004) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(px, py, pz); m.receiveShadow = true; g.add(m); return m; };
-  const RW = [[24, 0, 0], [22.2, -1.2, -13.2], [24, -3, -15.6]]; // length, centre x, z
-  const CX = 2.0, CZ = -6.6;                                       // centre of the east-west concourse
+  const RW = [[24, 0, 0], [22.2, 5.73, -13.2], [24, 1.78, -15.6]]; // length, centre x, z
+  const CX = 10.18, CZ = -6.6;                                       // centre of the east-west concourse
   flat(6.6, 9.6, concrete, CX - 0.2, CZ, 0.002);                    // terminal apron
   flat(2.4, 7.6, concrete, CX - 6.05, CZ, 0.002);                   // SAT-1 apron
   flat(6.5, 0.22, taxi, CX + 8.2, CZ, 0.003);                       // access road from the motorway
@@ -203,20 +205,21 @@ export function createBkkAirport({ x, z, y, bearing }) {
     for (const e of [-1, 1]) for (let j = 0; j < 8; j++) marks.push(mm.makeTranslation(cx + e * (len / 2 - 0.25), 0.008, rz - 0.14 + j * 0.04).multiply(ms.makeScale(0.9, 1, 0.5)).clone());
   }
   // twin parallel taxiways inside each original runway, with rapid-exit links and two cross-field taxiways
-  for (const [len, cx, rz, s] of [[24, 0, 0, -1], [22.2, -1.2, -13.2, 1]]) {
+  for (const [len, cx, rz, s] of [[24, 0, 0, -1], [22.2, 5.73, -13.2, 1]]) {
     for (const o of [1.1, 1.75]) flat(len - 0.6, 0.16, taxi, cx, rz + s * o, 0.004);
     for (let k = -3; k <= 3; k++) flat(0.14, 1.75, taxi, cx + k * (len / 7), rz + s * 0.875, 0.0035);
   }
   for (const tx of [CX - 3.9, CX - 8.3]) flat(0.16, 9.7, taxi, tx, CZ, 0.0035);
-  flat(0.14, 2.4, taxi, -3 + 9, -14.4, 0.0035); flat(0.14, 2.4, taxi, -3 - 9, -14.4, 0.0035);
+  flat(0.14, 2.4, taxi, 1.78 + 9, -14.4, 0.0035); flat(0.14, 2.4, taxi, 1.78 - 9, -14.4, 0.0035);
   const dashes = new THREE.InstancedMesh(dash, paint, marks.length);
   marks.forEach((m, i) => dashes.setMatrixAt(i, m));
   g.add(dashes);
-  // runway edge and approach lights (east runway, where the story flight departs)
+  // runway edge and approach lights on 02R, where the story flight departs
+  const DEP = { x: 5.73, z: -13.2, len: 22.2 };
   const lightMat = new THREE.MeshBasicMaterial({ color: '#ffe7a8', toneMapped: false });
   const ne = 120, lights = new THREE.InstancedMesh(new THREE.SphereGeometry(0.012, 6, 4), lightMat, ne * 2 + 30);
-  for (let i = 0; i < ne; i++) for (const sd of [0, 1]) { mm.makeTranslation(-12 + i * 0.2, 0.014, (sd ? 1 : -1) * 0.2); lights.setMatrixAt(i * 2 + sd, mm); }
-  for (let i = 0; i < 30; i++) { mm.makeTranslation(-12.2 - (i % 10) * 0.16, 0.02, (Math.floor(i / 10) - 1) * 0.1); lights.setMatrixAt(ne * 2 + i, mm); }
+  for (let i = 0; i < ne; i++) for (const sd of [0, 1]) { mm.makeTranslation(DEP.x - DEP.len / 2 + i * DEP.len / ne, 0.014, DEP.z + (sd ? 1 : -1) * 0.2); lights.setMatrixAt(i * 2 + sd, mm); }
+  for (let i = 0; i < 30; i++) { mm.makeTranslation(DEP.x - DEP.len / 2 - 0.2 - (i % 10) * 0.16, 0.02, DEP.z + (Math.floor(i / 10) - 1) * 0.1); lights.setMatrixAt(ne * 2 + i, mm); }
   g.add(lights);
   g.userData.lights = lightMat;
   // passenger complex: model x = east, -z = north  ->  local z, local x
@@ -236,7 +239,7 @@ export function createBkkAirport({ x, z, y, bearing }) {
     holder.add(lod);
   });
   const bea = new THREE.Mesh(new THREE.SphereGeometry(4, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3a3a' }));
-  bea.position.set(-430, 147, -545); bea.userData.blink = true; holder.add(bea);
+  bea.position.set(-231, 147, -510); bea.userData.blink = true; holder.add(bea);
   // aircraft on the stands: [east m, north m, heading] around the H
   const jets = [];
   const stand = (e, n, rot) => {
@@ -244,11 +247,12 @@ export function createBkkAirport({ x, z, y, bearing }) {
     a.position.set(CX + n * K, a.userData.groundOffset * PL, CZ + e * K); a.rotation.y = rot;
     a.userData.gear.visible = true; g.add(a); jets.push(a);
   };
-  for (const e of [-500, -330, -160, 160, 330, 500]) { stand(e, 66, Math.PI); if (Math.abs(e) > 200) stand(e, -66, 0); }
-  for (const sx of [-1, 1]) for (const n of [-380, -220, 230, 390]) stand(sx * (675 + 66), n, sx * Math.PI / 2);
-  for (const e of [-380, -210, 210, 380]) stand(e, -1010 - 66, 0);
+  for (const e of [-590, -250, -130, 130, 250, 590]) { stand(e, 66, Math.PI); stand(e, -66, 0); }
+  for (const sx of [-1, 1]) for (const n of [-380, -220]) { stand(sx * 405 + 66, n, Math.PI / 2); stand(sx * 405 - 66, n, -Math.PI / 2); }
+  for (const sx of [-1, 1]) for (const n of [150, 320]) stand(sx * (405 + 66), n, sx * Math.PI / 2);
+  for (const e of [-380, -210, 210, 380]) stand(e, -1045 - 66, 0);
   g.userData.jets = jets;
-  g.userData.len = 24;
+  g.userData.dep = DEP;
   g.userData.toWorld = (lx, lz, ly = 0) => { g.updateMatrixWorld(true); return g.localToWorld(V(lx, ly, lz)); };
   return g;
 }

@@ -38,13 +38,13 @@ function rings(f, bbox, tol, minPts = 4) {
   }
   return out;
 }
-const BOX = [118, 26, 152, 48];
+const BOX = [92, 4, 152, 48];
 const japan = countries.find((f) => f.id === '392');
 const thailand = countries.find((f) => f.id === '764');
-const near = countries.filter((f) => ['410', '408', '156', '643', '158'].includes(f.id)); // Korea S/N, China, Russia, Taiwan
+const near = countries.filter((f) => ['410', '408', '156', '643', '158', '704', '418', '116', '104', '608', '458'].includes(f.id)); // Korea S/N, China, Russia, Taiwan + Vietnam, Laos, Cambodia, Myanmar, Philippines, Malaysia under the real flight track
 const data = {
   japan: rings(japan, BOX, 0.006),
-  near: near.flatMap((f) => rings(f, BOX, 0.03, 6)),
+  near: near.flatMap((f) => rings(f, BOX, 0.04, 8)),
   thailand: rings(thailand, [90, 0, 110, 25], 0.02, 6),
 };
 writeFileSync('src/geo-data.json', JSON.stringify(data));

@@ -1,9 +1,11 @@
 # Suvarnabhumi Airport passenger complex, laid out from published figures (real metres):
 #   main terminal 444 m x 111 m under a 567 m x 210 m louvred roof on 8 super-trusses
-#   concourses in an H: east-west section 1,350 m, two north-south legs 932 m, tube section
+#   concourses: east-west line 1,350 m (F - D - B) crossed 405 m either side of centre by two
+#   north-south legs of 932 m (G/E and A/C), tube section
 #   with membrane and glass bays on arch ribs; control tower 132 m; midfield SAT-1 to the south.
 #   (Structurae, Werner Sobek, ITD project pages and Wikipedia; see materials.html.)
-# Positions of the tower, car parks and hotel are approximate. Run:
+# Leg, tower and SAT-1 positions follow threshold and building coordinates (Thai AIP / OpenStreetMap)
+# rotated into the terminal's own axis; car parks and hotel are approximate. Run:
 #   blender -b --python blender/bkk_airport.py
 # Blender frame: X east, Y north, Z up, origin at the centre of the east-west concourse.
 import bpy, bmesh, math, os, sys
@@ -45,16 +47,16 @@ def tube(parent, length, detail):
 def build(root, detail):
     # ---- concourses: H plan ----
     tube(group('BarEW', root), 1350, detail)
-    for sx in (-1, 1): tube(group('Leg', root, (sx * 675, 0, 0), math.pi / 2), 932, detail)
+    for sx in (-1, 1): tube(group('Leg', root, (sx * 405, 0, 0), math.pi / 2), 932, detail)
     tube(group('LinkD', root, (0, 150, 0), math.pi / 2), 300, detail)
     for sx in (-1, 0, 1):   # glazed nodes where the tubes cross
-        lathe('Node', [(34, 0), (36, 14), (30, 26), (16, 32), (0.5, 34)], TGLASS(), root, 24 if detail else 12, loc=(sx * 675, 0, 0))
+        lathe('Node', [(34, 0), (36, 14), (30, 26), (16, 32), (0.5, 34)], TGLASS(), root, 24 if detail else 12, loc=(sx * 405, 0, 0))
     # ---- main terminal: glass hall under the big louvred canopy ----
     MY = 355
     box('Hall', (444, 111, 30), (0, MY, 15), GLASS(), root, 2)
     box('HallBase', (452, 119, 3), (0, MY, 1.5), CONC(), root)
     box('HallRoof', (448, 115, 1.5), (0, MY, 30.8), STEEL(), root)
-    box('Canopy', (567, 210, 3.5), (0, MY + 15, 44), ROOF(), root, 1.2)
+    box('Canopy', (561, 210, 3.5), (0, MY + 15, 44), ROOF(), root, 1.2)
     box('Soffit', (560, 204, 0.8), (0, MY + 15, 41.9), DARK(), root)
     for i in range(8):
         x = -252 + i * 72
@@ -79,17 +81,17 @@ def build(root, detail):
     box('KerbDeck', (500, 26, 1.6), (0, MY + 78, 13), CONC(), root)
     for sx in (-1, 1):
         box('Ramp', (170, 22, 1.4), (sx * 330, MY + 78, 7), CONC(), root, rot=(0, sx * 0.075, 0))
-        box('CarPark', (170, 95, 20), (sx * 190, MY + 200, 10), CONC(), root, 1)
+        box('CarPark', (170, 95, 20), (sx * 190, MY + 260, 10), CONC(), root, 1)
         if detail:
-            for k in range(5): box('ParkSlot', (171, 96, 1.6), (sx * 190, MY + 200, 3 + k * 4), DARK(), root)
+            for k in range(5): box('ParkSlot', (171, 96, 1.6), (sx * 190, MY + 260, 3 + k * 4), DARK(), root)
     HW = lambda: mat('HotelWall', '#ebe6dc', 0.7)
-    box('Hotel', (230, 34, 24), (0, MY + 330, 12), HW(), root, 1)
-    box('HotelB', (230, 34, 24), (0, MY + 400, 12), HW(), root, 1)
-    box('HotelAtrium', (150, 40, 26), (0, MY + 365, 13), GLASS(), root, 2)
+    box('Hotel', (230, 34, 24), (0, MY + 400, 12), HW(), root, 1)
+    box('HotelB', (230, 34, 24), (0, MY + 470, 12), HW(), root, 1)
+    box('HotelAtrium', (150, 40, 26), (0, MY + 435, 13), GLASS(), root, 2)
     if detail:
         for k in range(6):
-            for y in (MY + 312.8, MY + 417.2): box('HotelBand', (228, 0.6, 1.6), (0, y, 3.4 + k * 3.8), GLASS(), root)
-    T = group('Tower', root, (-430, MY + 190, 0))
+            for y in (MY + 382.8, MY + 487.2): box('HotelBand', (228, 0.6, 1.6), (0, y, 3.4 + k * 3.8), GLASS(), root)
+    T = group('Tower', root, (-231, 510, 0))
     nseg = 28 if detail else 14
     lathe('Shaft', [(8.5, 0), (8, 3), (6.2, 14), (5, 45), (4.5, 84), (4.6, 98), (5.8, 106), (9, 112), (13, 115.5), (14, 116.5)], STEEL(), T, nseg)
     lathe('CabGlass', [(14, 116.5), (15.2, 120), (15.4, 124.5), (13.6, 128)], GLASS(), T, nseg)
@@ -97,8 +99,8 @@ def build(root, detail):
     lathe('Gallery', [(14.6, 115.8), (16.6, 115.8), (16.6, 116.6), (14.6, 116.6)], DARK(), T, nseg)
     cyl('Mast', 0.5, 0.2, 14, (0, 0, 139), DARK(), T, 8)
     # ---- midfield satellite SAT-1, about a kilometre south ----
-    S1 = group('SAT1', root, (0, -1010, 0))
-    tube(S1, 1000, detail)
+    S1 = group('SAT1', root, (0, -1045, 0))
+    tube(S1, 1019, detail)
     box('SatHall', (170, 120, 26), (0, 0, 13), GLASS(), S1, 2)
     for k in range(5):   # wave roof over the central hall
         shell('SatRoof', -100 + k * 40, -62 + k * 40, 72, 9 + 3 * math.sin(k * 1.3), ROOF(), S1, seg=10, thick=0.8, nx=1).location = (0, 0, 27)
