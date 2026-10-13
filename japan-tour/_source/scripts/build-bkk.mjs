@@ -54,7 +54,7 @@ for (const w of roads) {
   const k = w.tags.highway, minor = /service|unclassified|residential/.test(k);
   const pts = geom(w, minor ? 4 : 6);
   if (minor && len(pts) < 180) continue; // drop driveways and parking aisles
-  out.roads.push({ k: k.replace('_link', '-l'), up: w.tags.bridge || +w.tags.layer > 0 ? 1 : 0, name: w.tags['name:en'] || w.tags.ref || undefined, p: pts });
+  out.roads.push({ k: k.replace('_link', '-l'), up: w.tags.bridge || +w.tags.layer > 0 ? 1 : 0, name: w.tags.name || w.tags['name:en'] || w.tags.ref || undefined, p: pts });
 }
 console.log('roads', out.roads.length);
 const aero = all.filter((w) => w.tags.aeroway && inField(w));
@@ -76,7 +76,7 @@ console.log('buildings', out.buildings.length);
 const misc = all.filter((w) => /^(rail|light_rail|subway)$/.test(w.tags.railway) || /^(canal|river)$/.test(w.tags.waterway) || (w.tags.natural === 'water' && inField(w)));
 for (const w of misc) {
   if (w.tags.railway) out.rail.push({ up: w.tags.bridge ? 1 : 0, tun: w.tags.tunnel ? 1 : 0, name: w.tags['name:en'] || w.tags.name, p: geom(w, 6) });
-  else if (w.tags.waterway) out.water.push({ line: 1, p: geom(w, 8) });
+  else if (w.tags.waterway) out.water.push({ line: 1, name: w.tags.name || undefined, p: geom(w, 8) });
   else { const p = geom(w, 6); if (len(p) > 300) out.water.push({ p }); }
 }
 console.log('rail', out.rail.length, 'water', out.water.length);

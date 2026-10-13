@@ -42,8 +42,20 @@ const FREE = [11, 16, 18, 22, 23]; // stands used by the simulated flights
 const field = createBkkAirport({ x: 0, z: 0, y: 0, bearing: 14.41, jetScale: K, empty: FREE });
 scene.add(field);
 const { stands, complex, dep } = field.userData;
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), std('#a9c48a', { roughness: 1 }));
+{
+  const mast = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.6 * K, 0.9 * K, 32 * K, 6).translate(0, 16 * K, 0), std('#e9ebee', { metalness: 0.4, roughness: 0.4 }), stands.length);
+  const head = new THREE.InstancedMesh(new THREE.BoxGeometry(7 * K, 1.6 * K, 2.2 * K).translate(0, 32 * K, 0), new THREE.MeshBasicMaterial({ color: '#fff3c4', toneMapped: false }), stands.length);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), lines = [];
+  stands.forEach((st, i) => {
+    const fx = Math.sin(st.rot), fz = Math.cos(st.rot); // nose direction
+    q.setFromAxisAngle(V(0, 1, 0), st.rot); m.compose(V(st.x + fz * 42 * K + fx * 30 * K, 0, st.z - fx * 42 * K + fz * 30 * K), q, V(1, 1, 1)); mast.setMatrixAt(i, m); head.setMatrixAt(i, m);
+    lines.push(new THREE.PlaneGeometry(0.9 * K, 120 * K).rotateX(-Math.PI / 2).translate(0, 0.012, -32 * K).rotateY(st.rot).translate(st.x, 0, st.z));
+  });
+  mast.castShadow = true; field.add(mast, head, new THREE.Mesh(mergeGeometries(lines), new THREE.MeshBasicMaterial({ color: '#f2c230', toneMapped: false })));
+}
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), std('#b3b48c', { roughness: 1 }));
 ground.rotation.x = -Math.PI / 2; ground.position.y = -0.004; ground.receiveShadow = true; scene.add(ground);
+{ const plate = new THREE.Mesh(new THREE.PlaneGeometry(35.5, 22).rotateX(-Math.PI / 2), std('#bcd6a2', { roughness: 1 })); plate.position.set(2.25, -0.002, -8); plate.receiveShadow = true; field.add(plate); } // same bounds as inField() below
 sun.target.position.copy(field.localToWorld(V(complex.x, 0, complex.z)));
 sun.position.copy(sun.target.position).add(V(30, 60, 25));
 // OSM metres (east', north' from the concourse centre) -> field local
@@ -99,16 +111,34 @@ const mapLayer = new THREE.Group(); field.add(mapLayer);
       else diffuseColor.rgb *= 0.86;`);
   };
   merged(walls, wallMat, true);
+  // name flags on poles, as on a museum model: blue for canals, yellow for main roads (longest named ones)
+  const flag = (text, at, bg, fg) => {
+    const c = document.createElement('canvas'), x = c.getContext('2d'); x.font = '600 44px "IBM Plex Sans Thai", Tahoma, sans-serif';
+    c.width = Math.ceil(x.measureText(text).width) + 40; c.height = 72;
+    x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height); x.font = '600 44px "IBM Plex Sans Thai", Tahoma, sans-serif'; x.fillStyle = fg; x.textBaseline = 'middle'; x.fillText(text, 20, 38);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, toneMapped: false })); sp.center.set(0, 0); sp.scale.set(1.1 * c.width / c.height, 1.1, 1); sp.position.set(at.x, 1.25, at.z);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.25, 5), std('#f4f2ec')); pole.position.set(at.x, 0.625, at.z); field.add(sp, pole);
+  };
+  const longest = (list, n) => { // per name: total length and the middle of its longest piece
+    const by = new Map();
+    for (const w of list) { if (!w.name) continue; let l = 0; for (let i = 1; i < w.p.length; i++) l += Math.hypot(w.p[i][0] - w.p[i - 1][0], w.p[i][1] - w.p[i - 1][1]); const e = by.get(w.name) || { name: w.name, sum: 0, best: 0 }; e.sum += l; if (l > e.best) { e.best = l; e.at = w.p[w.p.length >> 1]; } by.set(w.name, e); }
+    return [...by.values()].sort((a, b) => b.sum - a.sum).slice(0, n);
+  };
+  document.fonts.ready.then(() => {
+    for (const w of longest((OSM.water || []).filter((w) => w.line), 9)) flag(w.name, L(w.at), '#1f6fb5', '#ffffff');
+    for (const r of longest((OSM.roads || []).filter((r) => /motorway|trunk|primary/.test(r.k) && !r.k.endsWith('-l')), 7)) flag(r.name, L(r.at), '#f2c230', '#2a2410');
+  });
 }
 // villages and trees outside the fence, as on a scale model
 {
   const inField = (x, z) => x > -15.5 && x < 20 && z > -19 && z < 3;
   let s = 99; const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-  const tree = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.07, 0), std('#6fae5e', { flatShading: true, roughness: 0.95 }), 5200);
+  const tree = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.07, 0), std('#417d4c', { flatShading: true, roughness: 0.95 }), 5200);
   const roof = new THREE.InstancedMesh(new THREE.BoxGeometry(0.16, 0.07, 0.12), std('#ffffff', { roughness: 0.8 }), 2600);
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), c = new THREE.Color(); let nt = 0, nr = 0;
   const tones = ['#c2643f', '#b5583a', '#8f9aa6', '#d9d4c8', '#7f5a48', '#a54c35'];
-  for (let i = 0; i < 9000 && nt < 5200; i++) { const x = -70 + rnd() * 150, z = -75 + rnd() * 140; if (inField(x, z)) continue; const sc = 0.7 + rnd() * 1.1; m.compose(V(x, 0.07 * sc, z), q, V(sc, sc * (0.8 + rnd() * 0.5), sc)); tree.setMatrixAt(nt, m); tree.setColorAt(nt++, c.set('#6fae5e').offsetHSL((rnd() - 0.5) * 0.05, 0, (rnd() - 0.5) * 0.14)); }
+  for (let i = 0; i < 9000 && nt < 5200; i++) { const x = -70 + rnd() * 150, z = -75 + rnd() * 140; if (inField(x, z)) continue; const sc = 0.7 + rnd() * 1.1; m.compose(V(x, 0.07 * sc, z), q, V(sc, sc * (0.8 + rnd() * 0.5), sc)); tree.setMatrixAt(nt, m); tree.setColorAt(nt++, c.set('#417d4c').offsetHSL((rnd() - 0.5) * 0.05, 0, (rnd() - 0.5) * 0.14)); }
   for (let k = 0; k < 60; k++) { const cx = -65 + rnd() * 140, cz = -70 + rnd() * 130; for (let i = 0; i < 44 && nr < 2600; i++) { const x = cx + (rnd() - 0.5) * 5, z = cz + (rnd() - 0.5) * 5; if (inField(x, z)) continue; q.setFromAxisAngle(V(0, 1, 0), rnd() * 3); m.compose(V(x, 0.035, z), q, V(0.7 + rnd(), 1, 0.7 + rnd())); roof.setMatrixAt(nr, m); roof.setColorAt(nr++, c.set(tones[Math.floor(rnd() * tones.length)])); } }
   tree.count = nt; roof.count = nr; tree.castShadow = roof.castShadow = true; field.add(tree, roof);
 }
