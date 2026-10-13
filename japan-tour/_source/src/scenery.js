@@ -186,7 +186,7 @@ export function createAirport({ x, z, y, bearing, len = 4, width = 0.9, side = 1
 // the runways are staggered, and the passenger complex (Blender model, real metres) sits midway
 // between 02R and 01, level with the north end of 01/19.
 export const BKK_K = 0.006;
-export function createBkkAirport({ x, z, y, bearing }) {
+export function createBkkAirport({ x, z, y, bearing, jetScale = PL, empty = [] }) { // empty: stand indexes left free (the airport page parks its own animated aircraft there)
   const K = BKK_K, g = new THREE.Group();
   g.position.set(x, y, z);
   g.rotation.y = Math.PI / 2 - bearing * Math.PI / 180;
@@ -241,10 +241,12 @@ export function createBkkAirport({ x, z, y, bearing }) {
   const bea = new THREE.Mesh(new THREE.SphereGeometry(4, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3a3a' }));
   bea.position.set(-231, 147, -510); bea.userData.blink = true; holder.add(bea);
   // aircraft on the stands: [east m, north m, heading] around the H
-  const jets = [];
+  const jets = [], stands = [];
   const stand = (e, n, rot) => {
-    const a = createAirliner(); a.scale.setScalar(PL);
-    a.position.set(CX + n * K, a.userData.groundOffset * PL, CZ + e * K); a.rotation.y = rot;
+    stands.push({ x: CX + n * K, z: CZ + e * K, rot, e, n });
+    if (empty.includes(stands.length - 1)) return;
+    const a = createAirliner(); a.scale.setScalar(jetScale);
+    a.position.set(CX + n * K, a.userData.groundOffset * jetScale, CZ + e * K); a.rotation.y = rot;
     a.userData.gear.visible = true; g.add(a); jets.push(a);
   };
   for (const e of [-590, -250, -130, 130, 250, 590]) { stand(e, 66, Math.PI); stand(e, -66, 0); }
@@ -252,6 +254,8 @@ export function createBkkAirport({ x, z, y, bearing }) {
   for (const sx of [-1, 1]) for (const n of [150, 320]) stand(sx * (405 + 66), n, sx * Math.PI / 2);
   for (const e of [-380, -210, 210, 380]) stand(e, -1045 - 66, 0);
   g.userData.jets = jets;
+  g.userData.stands = stands;
+  g.userData.complex = { x: CX, z: CZ, holder };
   g.userData.dep = DEP;
   g.userData.toWorld = (lx, lz, ly = 0) => { g.updateMatrixWorld(true); return g.localToWorld(V(lx, ly, lz)); };
   return g;
