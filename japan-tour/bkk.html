@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สุวรรณภูมิเชิงลึก · โครงสร้างและการทำงานของสนามบิน</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<meta name="description" content="แบบจำลอง 3 มิติของท่าอากาศยานสุวรรณภูมิ: โครงสร้างอาคาร ทางวิ่ง และการจำลองเที่ยวบิน การบริการภาคพื้น และการไหลของผู้โดยสาร">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=Noto+Serif+Thai:wght@500;700&display=swap">
+<style>
+  :root { --ink: #0e1330; --panel: rgba(14, 19, 48, 0.78); --line: rgba(244, 239, 230, 0.16); --washi: #f4efe6; --dim: rgba(244, 239, 230, 0.68); --sakura: #f6b6c8; --teal: #7fd0ff; --amber: #ffc46b; --green: #7dffb0;
+    --f-body: "IBM Plex Sans Thai", Thonburi, "Leelawadee UI", Tahoma, system-ui, Arial, sans-serif; --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace; --f-display: "Noto Serif Thai", Thonburi, Georgia, serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--washi); font: 400 15px/1.6 var(--f-body); }
+  canvas#gl { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; }
+  :focus-visible { outline: 2px solid var(--sakura); outline-offset: 2px; border-radius: 6px; }
+  .ui { position: fixed; inset: 0; pointer-events: none; display: grid; grid-template-columns: minmax(280px, 360px) 1fr minmax(280px, 360px); grid-template-rows: auto 1fr auto; gap: 12px; padding: 12px; }
+  .ui > * { pointer-events: auto; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; backdrop-filter: blur(10px); }
+  header.panel { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 16px; }
+  header h1 { font: 700 1.15rem/1.2 var(--f-display); margin: 0; } header p { margin: 0; color: var(--dim); font-size: 0.85rem; }
+  header a { margin-left: auto; color: var(--sakura); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+  .left { grid-row: 2; align-self: start; display: grid; gap: 12px; max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
+  .right { grid-row: 2; grid-column: 3; align-self: start; display: grid; gap: 12px; max-height: 100%; overflow-y: auto; scrollbar-width: thin; }
+  .bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 8px 16px; }
+  h2 { font: 600 0.78rem/1 var(--f-mono); letter-spacing: 0.12em; color: var(--sakura); margin: 0 0 8px; text-transform: uppercase; }
+  .seg, .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; color: var(--washi); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); border-radius: 999px; padding: 0.35rem 0.85rem; min-height: 40px; cursor: pointer; }
+  button:hover { border-color: var(--sakura); } button:disabled { opacity: 0.45; cursor: default; border-color: var(--line); }
+  button[aria-pressed="true"] { background: var(--sakura); color: #2a0f1c; border-color: var(--sakura); font-weight: 600; }
+  .card h3 { font: 700 1.1rem/1.3 var(--f-display); margin: 0 0 6px; } .card p { margin: 0 0 8px; color: var(--dim); }
+  .card dl { margin: 0; display: grid; gap: 4px; } .card dl div { display: grid; grid-template-columns: 8.5rem 1fr; gap: 8px; font-size: 0.88rem; border-top: 1px solid var(--line); padding-top: 4px; }
+  .card dt { color: var(--dim); } .card dd { margin: 0; font-family: var(--f-mono); font-size: 0.84rem; }
+  .card .src { font-size: 0.74rem; color: var(--dim); margin-top: 8px; } .card .tag { display: inline-block; font: 500 0.7rem var(--f-mono); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--amber); color: var(--amber); margin-bottom: 6px; }
+  table.board { width: 100%; border-collapse: collapse; font-size: 0.84rem; } .board th { text-align: left; color: var(--dim); font-weight: 400; font-size: 0.74rem; padding: 2px 4px; }
+  .board td { padding: 5px 4px; border-top: 1px solid var(--line); } .board td:first-child { font-family: var(--f-mono); } .board tr[data-focus="true"] td { color: var(--green); }
+  .board button { min-height: 32px; padding: 0 0.5rem; font-size: 0.74rem; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 0.84rem; }
+  .steps li { display: grid; grid-template-columns: 14px 1fr auto; gap: 8px; align-items: center; color: var(--dim); } .steps li i { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--dim); }
+  .steps li.now { color: var(--washi); } .steps li.now i { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px var(--green); } .steps li.done i { background: var(--dim); }
+  .steps small { font-family: var(--f-mono); font-size: 0.72rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.78rem; color: var(--dim); } .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+  .bar .clock { font: 500 1rem var(--f-mono); } .bar label { color: var(--dim); font-size: 0.85rem; } .note { color: var(--dim); font-size: 0.76rem; margin-left: auto; }
+  .attr { font-size: 0.72rem; color: var(--dim); } .attr a { color: var(--dim); }
+  @media (max-width: 899px) {
+    .ui { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto; padding: 8px; gap: 8px; }
+    .left { grid-row: 3; max-height: 26dvh; gap: 8px; } .right { grid-row: 4; grid-column: 1; max-height: 13dvh; gap: 8px; } .bar { grid-row: 5; } header p, .note { display: none; }
+    .panel { padding: 8px 12px; } .seg, .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } button { flex: none; white-space: nowrap; }
+  }
+</style>
+  <script type="module" crossorigin src="./assets/bkk-Ct7MnzmZ.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/three-ClqwQeIC.js">
+  <link rel="modulepreload" crossorigin href="./assets/path-BEOEH_fs.js">
+</head>
+<body>
+<canvas id="gl" aria-label="แบบจำลอง 3 มิติของท่าอากาศยานสุวรรณภูมิ ลากเพื่อหมุน เลื่อนเพื่อซูม"></canvas>
+<div class="ui">
+  <header class="panel">
+    <div><h1>สุวรรณภูมิเชิงลึก</h1><p>โครงสร้างอาคาร ทางวิ่ง และการทำงานของสนามบิน · แบบจำลองเพื่อการนำเสนอ</p></div>
+    <a href="./">← กลับเส้นทางทัวร์ญี่ปุ่น</a>
+  </header>
+  <div class="left">
+    <section class="panel"><h2>มุมมอง</h2><div class="seg" id="layers" role="group" aria-label="ชั้นข้อมูล"></div></section>
+    <section class="panel"><h2>ไปยังส่วนต่าง ๆ</h2><div class="chips" id="parts"></div></section>
+    <section class="panel card" id="card" aria-live="polite"></section>
+  </div>
+  <div class="right">
+    <section class="panel"><h2>เที่ยวบินจำลอง</h2><table class="board"><thead><tr><th>เที่ยวบิน</th><th>เส้นทาง</th><th>สถานะ</th><th></th></tr></thead><tbody id="board"></tbody></table></section>
+    <section class="panel"><h2>บริการภาคพื้น · <span id="focusName"></span></h2><p id="typeNote" style="margin:0 0 8px;color:var(--dim);font-size:0.78rem"></p><ol class="steps" id="steps"></ol>
+      <button type="button" id="early" style="margin-top:10px">ปล่อยเครื่องก่อนเวลา</button>
+      <p class="legend" style="margin:10px 0 0"><span><i style="background:#7fd0ff"></i>ผู้โดยสารขาเข้า</span><span><i style="background:#f6b6c8"></i>ผู้โดยสารขาออก</span><span><i style="background:#ffc46b"></i>แนวท่อน้ำมัน</span></p></section>
+  </div>
+  <div class="panel bar">
+    <span class="clock" id="clock">00:00</span>
+    <button type="button" id="play" aria-pressed="true">หยุดชั่วคราว</button>
+    <button type="button" id="night" aria-pressed="false">กลางคืน · เปิดไฟ</button>
+    <label>ความเร็ว <span class="seg" id="speed" style="display:inline-flex;margin-left:6px"></span></label>
+    <span id="tally" aria-live="off" style="font:500 0.82rem var(--f-mono)"></span>
+    <label>งานที่กำลังทำ <meter id="busy" min="0" max="12" value="0"></meter></label>
+    <span class="attr"><a href="https://www.openstreetmap.org/copyright">แผนที่ © OpenStreetMap contributors</a> · <a href="./materials.html">เครดิต</a></span>
+    <span class="note">ลำดับเวลา ตำแหน่งอาคารรอบข้าง และเที่ยวบินเป็นแบบจำลองโดยประมาณ ไม่ใช่ข้อมูลปฏิบัติการจริง</span>
+  </div>
+</div>
+</body>
+</html>

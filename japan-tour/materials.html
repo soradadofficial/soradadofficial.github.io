@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เครดิตและสัญญาอนุญาต · Tour Test Japan Journeys</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<style>
+  body { margin: 0; background: #0e1330; color: #f4efe6; font: 400 16px/1.7 "IBM Plex Sans Thai", Thonburi, "Leelawadee UI", Tahoma, system-ui, Arial, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 20px 80px; }
+  h1 { font-size: 1.8rem; margin: 0 0 8px; } h2 { font-size: 1.15rem; margin: 36px 0 8px; color: #f6b6c8; }
+  a { color: #9fd8ff; } a:focus-visible { outline: 2px solid #f6b6c8; outline-offset: 3px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; } th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(244,239,230,.15); vertical-align: top; }
+  th { font-weight: 600; color: rgba(244,239,230,.7); font-size: .85rem; } .muted { color: rgba(244,239,230,.65); font-size: .92rem; }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./">← กลับหน้าหลัก</a></p>
+  <h1>เครดิตและสัญญาอนุญาต</h1>
+  <p class="muted">Tour Test · Japan Journeys เป็นเว็บตัวอย่างสำหรับนำเสนอ ราคาและรายการทัวร์เป็นข้อมูลสมมติ โมเดล 3 มิติ พื้นผิว และเอฟเฟกต์ทั้งหมดสร้างด้วยโค้ดภายในโปรเจกต์ ไม่มีไฟล์โมเดลจากภายนอก</p>
+
+  <h2>ข้อมูลแผนที่และภูมิประเทศ</h2>
+  <table>
+    <tr><th>ข้อมูล</th><th>แหล่งที่มา</th><th>สัญญาอนุญาต</th></tr>
+    <tr><td>ความสูงภูมิประเทศญี่ปุ่น</td><td><a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles on AWS</a> (Mapzen/Tilezen: SRTM, GSI Japan และอื่น ๆ)</td><td>ตาม<a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">ประกาศที่มาของ Tilezen</a></td></tr>
+    <tr><td>เส้นทางถนนและแนวรางชินคันเซ็น</td><td>© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a> · คำนวณเส้นทางด้วย <a href="https://project-osrm.org/">OSRM</a> · ดึงข้อมูลผ่าน Overpass API</td><td>ODbL 1.0</td></tr>
+    <tr><td>แนวชายฝั่งและเขตประเทศ</td><td><a href="https://www.naturalearthdata.com/">Natural Earth</a> ผ่านแพ็กเกจ world-atlas</td><td>Public domain</td></tr>
+  </table>
+
+  <h2>ข้อมูลอ้างอิงของสิ่งก่อสร้างและเที่ยวบิน</h2>
+  <table>
+    <tr><th>เรื่อง</th><th>ค่าที่ใช้</th><th>แหล่งอ้างอิง</th></tr>
+    <tr><td>อาคารผู้โดยสารสุวรรณภูมิ</td><td>444 × 111 ม. หลังคา 567 × 210 ม. บนโครงถักหลัก 8 ชุด</td><td><a href="https://structurae.net/en/structures/suvarnabhumi-airport-passenger-terminal-complex">Structurae</a>, <a href="https://www.wernersobek.com/projects/bangkok-airport/">Werner Sobek</a></td></tr>
+    <tr><td>อาคารเทียบเครื่องบิน</td><td>ผังรูปตัว H: ช่วงตะวันออก–ตะวันตก 1,350 ม. ขาเหนือ–ใต้ 2 ข้าง ข้างละ 932 ม.</td><td><a href="https://itd.co.th/our-capabilities-detail.php?project=78">Italian-Thai Development</a></td></tr>
+    <tr><td>ทางวิ่ง หอบังคับการ SAT-1</td><td>01/19 และ 02L/20R ยาว 4,000 ม. 02R/20L ยาว 3,700 ม. กว้าง 60 ม. หอบังคับการ 132 ม.</td><td><a href="https://en.wikipedia.org/wiki/Suvarnabhumi_Airport">Wikipedia</a></td></tr>
+    <tr><td>ตำแหน่งทางวิ่งและอาคารสุวรรณภูมิ</td><td>พิกัดหัวทางวิ่ง 02L/20R, 02R/20L, 01/19 (ทิศจริง 014.4°) ตำแหน่งขาคองคอร์ส หอบังคับการ และ SAT-1</td><td>AIP ประเทศไทย และ © OpenStreetMap contributors (รวบรวมโดยการค้นคว้าของโครงการ)</td></tr>
+    <tr><td>เที่ยวบิน BKK–NRT</td><td>แนวบินจริงจากข้อมูลติดตามเที่ยวบิน (ADS-B) วงกลมใหญ่ 4,649 กม. บินจริงราว 4,900 กม. ระดับบิน FL370 แล้ว FL410</td><td>ข้อมูลติดตามเที่ยวบินสาธารณะ และ <a href="https://www.airmilescalculator.com/distance/bkk-to-nrt/">Air Miles Calculator</a></td></tr>
+  </table>
+  <p class="muted">ตำแหน่งอาคารจอดรถและโรงแรมสนามบินเป็นค่าประมาณ สนามบินถูกขยาย 6 เท่าเทียบภูมิประเทศให้เห็นรายละเอียด ไม่ใช่แบบก่อสร้าง</p>
+
+  <h2>ซอฟต์แวร์ที่ใช้</h2>
+  <table>
+    <tr><th>ไลบรารี</th><th>ใช้ทำอะไร</th><th>สัญญาอนุญาต</th></tr>
+    <tr><td><a href="https://threejs.org/">three.js</a></td><td>เรนเดอร์ 3 มิติ</td><td>MIT</td></tr>
+    <tr><td><a href="https://gsap.com/">GSAP</a></td><td>การเคลื่อนกล้อง</td><td>GSAP Standard License (ใช้ฟรี)</td></tr>
+    <tr><td><a href="https://google.github.io/draco/">Draco</a> (ตัวถอดรหัสโมเดล)</td><td>เปิดไฟล์โมเดล 3 มิติแบบบีบอัด</td><td>Apache 2.0</td></tr>
+    <tr><td><a href="https://vite.dev/">Vite</a></td><td>เครื่องมือ build</td><td>MIT</td></tr>
+    <tr><td>topojson-client, world-atlas, pngjs</td><td>สคริปต์เตรียมข้อมูล (ไม่อยู่ในเว็บที่เผยแพร่)</td><td>ISC / ISC / MIT</td></tr>
+  </table>
+
+  <h2>ฟอนต์</h2>
+  <p>IBM Plex Sans Thai, IBM Plex Mono, Noto Serif Thai และ Shippori Mincho จาก Google Fonts ภายใต้ SIL Open Font License 1.1</p>
+</main>
+</body>
+</html>
