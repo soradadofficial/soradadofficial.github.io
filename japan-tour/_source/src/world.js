@@ -297,6 +297,13 @@ export function createWorld() {
   }
   const cities = createCities(cityList, { heightAt: ground, landAt: (x, z) => (nearRoute(x, z, 0.22) ? 0 : T.landAt(x, z)), avoid, lakeAt });
   scene.add(cities);
+  // Bangkok's eastern suburbs around the airport: low houses with terracotta and green tile roofs, a few towers
+  {
+    const off = (lx, lz) => bkk.userData.toWorld(lx, lz);
+    const towns = [[-1, 7.5, 2.6, 260, 0.5], [5.5, 6, 2.2, 190, 0.4], [-7, 4, 2.4, 200, 0.4], [1, -6, 2.8, 240, 0.5], [8, -3, 2, 150, 0.35], [-6, -5, 2, 150, 0.35], [3, 12, 3.4, 330, 1.2]]
+      .map(([lx, lz, r, n, maxH]) => { const c = off(lx, lz); return { x: c.x, z: c.z, r, n, maxH, rot: bkk.rotation.y }; });
+    scene.add(createCities(towns, { heightAt: () => 0.055, landAt: () => 1, avoid: [{ x: bx, z: bz, r: 4.2 }], roofs: ['#b5583a', '#c2643f', '#a54c35', '#8a3f2e', '#3f6b4f', '#c9713f', '#7f858d'] }));
+  }
 
   // forests
   const trees = [];
@@ -496,7 +503,7 @@ export function createWorld() {
   const petals = createPetals(650); scene.add(petals);
 
   // ---------- labels ----------
-  const labels = [];
+  const labels = [], lblV = V(0, 0, 0);
   const label = (text, sub, pos, near, far, cond = null) => { const l = createLabel(text, sub); l.position.copy(pos); l.userData = { near, far, cond }; scene.add(l); labels.push(l); return l; };
   label('สุวรรณภูมิ', 'BKK · กรุงเทพฯ', V(bx, 1.2, bz), 4, 5000, (c) => c.position.y > 300 || c.position.distanceTo(V(bx, 0, bz)) < 80);
   label('นาริตะ', 'NRT · 成田', nrtC.clone().setY(nrtY + 1.2), 7, 5000, (c) => c.position.y > 300 || c.position.distanceTo(nrtC) < 80);
@@ -849,6 +856,18 @@ export function createWorld() {
       const k = smooth(l.userData.near, l.userData.near * 1.8, d) * (1 - smooth(l.userData.far * 0.7, l.userData.far, d)) * (l.userData.cond && !l.userData.cond(camera) ? 0 : 1);
       l.material.opacity = k * (storyWeight * 0.9 + 0.1 * (1 - storyWeight)) * (1 - 0.6 * (1 - storyWeight));
       l.visible = l.material.opacity > 0.02;
+      l.userData.d = d;
+    }
+    // keep labels sparse: where two would overlap on screen, only the nearer one stays
+    const shown = labels.filter((l) => l.visible).sort((a, b) => a.userData.d - b.userData.d);
+    for (const l of shown) l.userData.ndc = lblV.copy(l.position).project(camera).clone();
+    for (let i = 0; i < shown.length; i++) {
+      const a = shown[i].userData.ndc;
+      if (a.z > 1) { shown[i].visible = false; continue; }
+      for (let j = 0; j < i; j++) {
+        const b = shown[j].userData.ndc;
+        if (shown[j].visible && Math.abs(a.x - b.x) < 0.34 && Math.abs(a.y - b.y) < 0.13) { shown[i].visible = false; break; }
+      }
     }
   }
 

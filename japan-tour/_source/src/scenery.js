@@ -176,7 +176,7 @@ export function createAirport({ x, z, y, bearing, len = 4, width = 0.9, side = 1
 }
 
 // ---------- instanced city blocks ----------
-export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
+export function createCities(list, { heightAt, landAt, avoid = [], lakeAt, roofs }) {
   const total = list.reduce((s, c) => s + c.n, 0);
   // facade tile: 4 x 4 windows; colour map (glass bands) + emissive map (lit windows at night)
   const lit = [];
@@ -231,7 +231,7 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = V(1, 1, 1), p = V(0, 0, 0), off = V(0, 0, 0);
   const col = new THREE.Color();
   const tones = ['#f1ede5', '#dfe3e8', '#d3d8de', '#efe7da', '#c9d1da', '#e6dccb', '#bcc6d1', '#f6f3ee', '#e9d9c6'];
-  const roofTones = ['#59606e', '#6e4a3d', '#3f4a5a', '#7f858d', '#4f5f6e', '#8a5a44', '#2f3c4c'];
+  const roofTones = roofs || ['#59606e', '#6e4a3d', '#3f4a5a', '#7f858d', '#4f5f6e', '#8a5a44', '#2f3c4c', '#a8553a'];
   // street grid for the larger cities
   const streets = [];
   let i = 0, nG = 0, nT = 0, nS = 0;
@@ -268,10 +268,18 @@ export function createCities(list, { heightAt, landAt, avoid = [], lakeAt }) {
         const half = Math.max(w, d) * 0.6 + 0.025;
         if (SP / 2 - fu < half || SP / 2 - fv < half) continue;
       }
-      const y = heightAt(x, z) - 0.03;
       const yaw = SP ? rot : (rot + (rnd() < 0.7 ? 0 : rnd() * 1.5));
       q.setFromAxisAngle(V(0, 1, 0), yaw);
-      m.compose(p.set(x, y, z), q, s.set(w, h + 0.03, d));
+      // foundation: the floor sits level at the highest corner and the walls run down to the lowest
+      const cy = Math.cos(yaw), sy = Math.sin(yaw);
+      let lo = Infinity, hi = -Infinity;
+      for (const [ax, az] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
+        const gy = heightAt(x + ax * w * cy + az * d * sy, z - ax * w * sy + az * d * cy);
+        if (gy < lo) lo = gy; if (gy > hi) hi = gy;
+      }
+      if (hi - lo > 0.35) continue; // too steep to build on
+      const y = hi - 0.03;
+      m.compose(p.set(x, lo - 0.02, z), q, s.set(w, h + 0.03 + (y - lo + 0.02), d));
       mesh.setMatrixAt(i, m);
       mesh.setColorAt(i, col.set(tones[Math.floor(rnd() * tones.length)]));
       const house = !big && h < 0.1;

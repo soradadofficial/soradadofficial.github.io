@@ -9,9 +9,9 @@
   --sakura-deep: #e2799b;
   --kin: #e0bd72;         /* gold for prices */
   --shu: #e2522f;         /* torii vermilion, used sparingly */
-  --f-display: "Noto Serif Thai", "Shippori Mincho", Georgia, serif;
+  --f-display: "Noto Serif Thai", "Shippori Mincho", Thonburi, "Leelawadee UI", Georgia, serif;
   --f-jp: "Shippori Mincho", "Noto Serif Thai", serif;
-  --f-body: "IBM Plex Sans Thai", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "IBM Plex Sans Thai", Thonburi, "Leelawadee UI", Tahoma, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --r: 18px;
   color-scheme: dark;
