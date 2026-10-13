@@ -3,6 +3,8 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { glowMats, textTexture } from './models.js';
 import { LD } from './fx.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 // Merge every static mesh under `root` into one geometry per material (in root space) and
 // remove the originals: a 50-part model becomes a handful of draw calls.
@@ -433,7 +435,38 @@ export function createBeacon(color = '#7dffb0') {
 
 // ---------- Suvarnabhumi (BKK): louvred canopy on trusses, glass hall, elliptical concourse tube, tower ----------
 // Built in metres; front (airside) faces +z, gates at x = -25, 0, 25 like the generic terminal.
+// Trial: the same terminal modelled in Blender (blender/suvarnabhumi.py), Draco-compressed,
+// with two levels of detail and baked ambient occlusion. Enabled with ?glb=1 for comparison.
+function loadSuvarnabhumi(label) {
+  const g = new THREE.Group();
+  const base = location.pathname.includes('/tools/') ? '/' : './';
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(24, 3.6), new THREE.MeshBasicMaterial({ map: textTexture(label, { font: '700 66px sans-serif', color: '#ffffff', bg: '#4c2a7a' }), toneMapped: false }));
+  sign.position.set(0, 14.6, 4.3); g.add(sign);
+  const bea = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3a3a' }));
+  bea.position.set(70, 68.7, 6); bea.userData.blink = true; g.add(bea);
+  g.userData.ready = new Promise((done) => {
+    new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath(base + 'draco/')).load(base + 'models/suvarnabhumi.glb', (gltf) => {
+      const lod = new THREE.LOD();
+      [['LOD0', 0], ['LOD1', location.search.includes('lod0') ? 1e9 : 22]].forEach(([name, dist]) => lod.addLevel(gltf.scene.getObjectByName(name), dist)); // distances in world units (km)
+      lod.traverse((o) => {
+        if (!o.isMesh) return;
+        o.castShadow = o.receiveShadow = true;
+        const glow = { Glass: ['#ffd9a0', 0.04, 0.9], TubeGlass: ['#7fd0ff', 0.02, 1.2] }[o.material.name];
+        if (glow && !o.material.userData.glow) {
+          o.material.userData.glow = true;
+          o.material.emissive.set(glow[0]); o.material.emissiveIntensity = glow[1];
+          glowMats.push({ mat: o.material, day: glow[1], night: glow[2] });
+        }
+      });
+      g.add(lod);
+      done();
+    });
+  });
+  return g;
+}
+
 export function createSuvarnabhumi(label = 'BKK') {
+  if (location.search.includes('glb=1')) return loadSuvarnabhumi(label);
   const g = new THREE.Group();
   const steel = std('#eef1f4', { roughness: 0.4, metalness: 0.35 });
   const dark = std('#39424d', { roughness: 0.6, metalness: 0.3 });

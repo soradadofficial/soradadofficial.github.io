@@ -19,6 +19,7 @@ else if (name === 'createLanterns') obj = fn([new THREE.Vector3(0, 0, 0), new TH
 else if (name === 'createDeerGeometry') obj = new THREE.Mesh(fn(), new THREE.MeshStandardMaterial({ color: '#a0703e', flatShading: true }));
 else obj = q.get('arg') ? fn(JSON.parse(q.get('arg'))) : fn();
 scene.add(obj);
+if (obj.userData.ready) await obj.userData.ready; // models loaded from a file
 obj.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } });
 M1.updateGlow(+(q.get('night') || 0));
 const box = new THREE.Box3().setFromObject(obj);
