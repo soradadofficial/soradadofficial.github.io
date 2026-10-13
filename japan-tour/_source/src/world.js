@@ -288,7 +288,7 @@ export function createWorld() {
   ];
   const avoid = [
     { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: 5, tree: 1.15 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
-    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: toX(135.778), z: toZ(35.0), r: 0.45, tree: 1 }, { x: tokyoHotelPos.x, z: tokyoHotelPos.z, r: 1.1 }, { x: osakaHotelPos.x, z: osakaHotelPos.z, r: 0.95 }, { x: hakVilla.x, z: hakVilla.z, r: 0.4, tree: 1 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
+    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: toX(135.778), z: toZ(35.0), r: 0.45, tree: 1 }, { x: tokyoHotelPos.x, z: tokyoHotelPos.z, r: 1.1 }, { x: tokyoHotelPos.x + (towerPos.x - tokyoHotelPos.x) * 0.45, z: tokyoHotelPos.z + (towerPos.z - tokyoHotelPos.z) * 0.45, r: 1.25 }, /* Shiba Park lies between the hotel and Tokyo Tower: no blocks there, so the floor picker sees the low floors */ { x: osakaHotelPos.x, z: osakaHotelPos.z, r: 0.95 }, { x: hakVilla.x, z: hakVilla.z, r: 0.4, tree: 1 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
   ];
   // rivers through the cities (drawn as rippled water ribbons, kept clear of buildings)
   const riverMat = waterMaterial('#3d7593', { roughness: 0.14, metalness: 0.35, freq: 3, amp: 0.1 });
@@ -980,7 +980,9 @@ export function createWorld() {
     showFloor(id, k) { // light one storey of the tower (k = null: none)
       for (const T of Object.values(TOWER)) T.band.visible = T.unit.visible = false;
       const T = TOWER[id]; if (!T || k == null) return;
-      T.band.scale.set(T.w + 1.6, T.fh * 0.9, T.d + 1.6); T.band.position.set(0, T.y(k) + T.fh / 2, 0); T.band.visible = true;
+      if (k < 0) { T.band.scale.set(T.w + 27.6, 4.5, T.d + 23.6); T.band.position.set(0, 10 + k * 5 + 2.5, 4); } // podium storeys (lobby, dining): 5 m each, wider than the tower and set 4 m toward the entrance, as in blender/hotels.py
+      else { T.band.scale.set(T.w + 1.6, T.fh * 0.9, T.d + 1.6); T.band.position.set(0, T.y(k) + T.fh / 2, 0); }
+      T.band.visible = true;
     },
     showUnit(id, u) { // light one unit on that storey: where it sits and which way it faces
       const T = TOWER[id]; if (!T) return; T.unit.visible = !!u; if (!u) return;
