@@ -6,10 +6,10 @@ import {
 } from './models.js';
 import { createAirliner, createCoach, createCastle, createPirateShip, createBeacon } from './models2.js';
 import { createSky, createClouds, createPetals, createTrail, ENV, lerpEnv, makeEnvState } from './fx.js';
-import { VERT, MODEL_SCALE as S, toX, toZ, thaiXZ, FUJI, LAKES, buildTerrain, buildFuji, buildThailand, buildNear, lakeMeshes } from './geo.js';
+import { VERT, MODEL_SCALE as S, PLANE_SCALE as PL, toX, toZ, thaiXZ, FUJI, LAKES, buildTerrain, buildFuji, buildThailand, buildNear, lakeMeshes } from './geo.js';
 import { Path, monotone, linear } from './path.js';
 import {
-  ribbon, roadMaterial, waterMaterial, waterTime, viaduct, createAirport, createCities, createForest, createToriiTunnel, drapedDisc,
+  ribbon, roadMaterial, waterMaterial, waterTime, viaduct, createAirport, createBkkAirport, createCities, createForest, createToriiTunnel, drapedDisc,
   createLabel, routeLine, rnd,
 } from './scenery.js';
 import { createHoloMap } from './mapholo.js';
@@ -92,7 +92,7 @@ export function createWorld() {
 
   // ---------- airports ----------
   const [bx, bz] = thaiXZ(100.75, 13.69);
-  const bkk = createAirport({ x: bx, z: bz, y: 0.055, bearing: 15, len: 4, side: 1, thai: true, label: 'BKK  สุวรรณภูมิ', termX: -0.9, parked: 3 });
+  const bkk = createBkkAirport({ x: bx, z: bz, y: 0.055, bearing: 13 }); // runway 01/19 lies at about 013 degrees true
   scene.add(bkk);
   const nrtC = LL(140.386, 35.765);
   const nrtY = Math.max(H(nrtC.x, nrtC.z), 0.05) + 0.01;
@@ -109,9 +109,9 @@ export function createWorld() {
 
   // ---------- story flight path ----------
   const plane = createAirliner();
-  plane.scale.setScalar(S);
+  plane.scale.setScalar(PL);
   scene.add(plane);
-  const GO = plane.userData.groundOffset * S;
+  const GO = plane.userData.groundOffset * PL;
   const bw = (lx, lz, ly = 0) => bkk.userData.toWorld(lx, lz, ly);
   const nw = (lx, lz, ly = 0) => nrt.userData.toWorld(lx, lz, ly);
   const B0 = V(bx, 0, bz);
@@ -122,7 +122,7 @@ export function createWorld() {
   const J1 = V(120, 40, 228);
   const cruiseA = brg(52, 200, 40);
   const W = {
-    start: bw(-1.65, 0, GO), roll: bw(-0.6, 0, GO), lift: bw(0.7, 0, GO + 0.03), climb1: bw(3.4, 0, GO + 0.5), climb2: bw(9, 0, GO + 2.4),
+    start: bw(-10.4, 0, GO), roll: bw(-4, 0, GO), lift: bw(3.5, 0, GO + 0.03), climb1: bw(13, 0, GO + 1.0), climb2: bw(22, 0, GO + 3.0), // 4 km runway = 24 units here
     turn: brg(24, 32, 9), climb3: brg(40, 85, 22), cruiseA, cruiseB: cruiseA.clone().lerp(J1, 0.4).setY(45), cruiseC: cruiseA.clone().lerp(J1, 0.75).setY(45),
     J1, J1b: V(225, 30, 176), J2: V(280, 15, 86), IF: thrN.clone().addScaledVector(apDir, -48).setY(nrtY + 6.5), FAF: thrN.clone().addScaledVector(apDir, -20).setY(nrtY + 2.4),
     thr: thrN.clone().setY(gyN + 0.06), touch: nw(-NRT_LEN / 2 + 1.0, 0, GO), roll2: nw(NRT_LEN / 2 - 0.9, 0, GO),
@@ -303,9 +303,9 @@ export function createWorld() {
   // Bangkok's eastern suburbs around the airport: low houses with terracotta and green tile roofs, a few towers
   {
     const off = (lx, lz) => bkk.userData.toWorld(lx, lz);
-    const towns = [[-1, 7.5, 2.6, 260, 0.5], [5.5, 6, 2.2, 190, 0.4], [-7, 4, 2.4, 200, 0.4], [1, -6, 2.8, 240, 0.5], [8, -3, 2, 150, 0.35], [-6, -5, 2, 150, 0.35], [3, 12, 3.4, 330, 1.2]]
+    const towns = [[-6, 9, 2.6, 260, 0.5], [7, 9, 2.4, 220, 0.4], [18, -4, 2.6, 220, 0.4], [18, -13, 2.4, 200, 0.5], [-18, -9, 2.4, 190, 0.35], [-18, 1, 2.2, 170, 0.35], [2, 15, 3.6, 340, 1.2], [14, 6, 2.2, 160, 0.4]]
       .map(([lx, lz, r, n, maxH]) => { const c = off(lx, lz); return { x: c.x, z: c.z, r, n, maxH, rot: bkk.rotation.y }; });
-    scene.add(createCities(towns, { heightAt: () => 0.055, landAt: () => 1, avoid: [{ x: bx, z: bz, r: 4.2 }], roofs: ['#b5583a', '#c2643f', '#a54c35', '#8a3f2e', '#3f6b4f', '#c9713f', '#7f858d'] }));
+    scene.add(createCities(towns, { heightAt: () => 0.055, landAt: () => 1, avoid: [{ x: off(0, -7.5).x, z: off(0, -7.5).z, r: 15.5 }], roofs: ['#b5583a', '#c2643f', '#a54c35', '#8a3f2e', '#3f6b4f', '#c9713f', '#7f858d'] }));
   }
 
   // forests
@@ -331,8 +331,11 @@ export function createWorld() {
     const p = road.at(d), t = road.tangent(d);
     for (const s of [-1, 1]) { const off = 0.2 + rnd() * 1.2; plant(p.x - t.z * off * s, p.z + t.x * off * s); }
   }
-  for (let i = 0; i < 2400; i++) { const a = rnd() * 6.283, d = 2 + rnd() * 9; trees.push({ x: bx + Math.cos(a) * d, z: bz + Math.sin(a) * d * 0.7 + 3, y: 0.05, s: 0.05 + rnd() * 0.045, r: rnd(), kind: 1 }); }
-  const forest = createForest(trees.filter((t) => !(Math.abs(t.x - bx) < 4 && Math.abs(t.z - bz) < 4.5 && t.y < 0.1)));
+  { // trees round the Bangkok airfield, none on it
+    const c = bkk.userData.toWorld(0, -7.5);
+    for (let i = 0; i < 2600; i++) { const a = rnd() * 6.283, d = 16 + rnd() * 16; trees.push({ x: c.x + Math.cos(a) * d, z: c.z + Math.sin(a) * d, y: 0.05, s: 0.05 + rnd() * 0.045, r: rnd(), kind: 1 }); }
+  }
+  const forest = createForest(trees);
   scene.add(forest);
 
   // Fushimi Inari: shrine hall + torii tunnel up the hill
@@ -616,7 +619,8 @@ export function createWorld() {
   const toriiShore = V(toriiPos.x, 0, toriiPos.z).addScaledVector(toLake, -0.55);
   toriiShore.y = Math.max(ground(toriiShore.x, toriiShore.z) + 0.1, toriiPos.y + 0.16);
   const KEYS = [
-    { t: 0.0, pos: A(bw(-4.6, -2.4, 1.3)), look: A(bw(-1.0, 1.1, 0.1)) },
+    { t: 0.0, pos: A(bw(0.5, 0.9, 0.85)), look: A(bw(3.6, -6.4, 0.22)) },
+    { t: 0.022, pos: A(bw(-7, 2.2, 1.6)), look: A(bw(-1, -5, 0.2)) }, // whole airfield: runway 01 in front, terminal and concourses beyond
     { t: 0.045, pos: PR(1.7, 0.32, -1.25), look: PR(-0.3, 0.06, 0) },
     { t: 0.1, pos: PR(2.3, 0.42, 1.3), look: PR(-3, 0.1, 0) },
     { t: 0.155, pos: PR(3.2, 0.9, -1.9), look: PR(-3, 0, 0) },
@@ -721,7 +725,7 @@ export function createWorld() {
   const roadKm = (a, b) => Math.round(b - a);
   const LEGS = [
     { t0: 0, t1: 0.06, kind: 'ground', title: 'สนามบินสุวรรณภูมิ', sub: 'เช็คอินกลุ่ม · เกต D4', dest: bkk.position, stats: [['เที่ยวบิน', 'CV 101'], ['ขึ้นเครื่อง', '07:15'], ['ผู้เดินทาง', '24 ท่าน']] },
-    { t0: 0.06, t1: 0.552, kind: 'flight', title: 'กรุงเทพฯ → โตเกียว', sub: 'BKK ✈ NRT · บินตรง', dest: nw(0.4, 1.95), stats: [['ระยะทาง', '4,600 กม.'], ['เวลาบิน', '6 ชม. 10 น.'], ['เครื่องบิน', 'Wide-body'], ['ระดับบิน', '37,000 ฟุต']] },
+    { t0: 0.06, t1: 0.552, kind: 'flight', title: 'กรุงเทพฯ → โตเกียว', sub: 'BKK ✈ NRT · บินตรง', dest: nw(0.4, 1.95), stats: [['ระยะทาง', '4,650 กม.'], ['เวลาบิน', '6 ชม. 30 น.'], ['เครื่องบิน', 'Wide-body'], ['ระดับบิน', '37,000 ฟุต']] },
     { t0: 0.552, t1: 0.62, kind: 'ground', title: 'พบไกด์ที่นาริตะ', sub: 'ประตูขาออก B · ธงสีชมพู', dest: guidePos, stats: [['ไกด์', 'มิกิ'], ['ภาษา', 'ไทย · ญี่ปุ่น'], ['รถ', 'โค้ช 40 ที่นั่ง']] },
     { t0: 0.62, t1: 0.722, kind: 'bus', title: 'นาริตะ → โตเกียว', sub: 'ทางด่วน Higashi-Kanto', d0: 0, d1: BD.tokyo, dest: busPath.at(BD.tokyo), stats: [['ระยะทาง', `${roadKm(0, BD.tokyo)} กม.`], ['เวลา', '~1 ชม. 10 น.'], ['แวะ', 'โตเกียวทาวเวอร์']] },
     { t0: 0.722, t1: 0.83, kind: 'bus', title: 'โตเกียว → ฮาโกเน่', sub: 'ทางด่วนโทเม · ทะเลสาบอาชิ', d0: BD.tokyo, d1: BD.hakone, dest: busPath.at(BD.hakone), stats: [['ระยะทาง', `${roadKm(BD.tokyo, BD.hakone)} กม.`], ['เวลา', '~1 ชม. 45 น.'], ['แวะ', 'เรือโจรสลัด · เรียวกัง']] },
@@ -745,7 +749,7 @@ export function createWorld() {
       const p = plane.position, gy = actors.planeD < FD.climb3 ? gyB : gyN;
       alt = `${(Math.round(clamp01((p.y - gy) / 45) * 37000 / 100) * 100).toLocaleString('en-US')} ฟุต`;
       speed = `${Math.round(planeSpeed(t))} กม./ชม.`;
-      remain = `${Math.round(4600 * (1 - clamp01(actors.planeD / FD.touch))).toLocaleString('en-US')} กม.`;
+      remain = `${Math.round(4650 * (1 - clamp01(actors.planeD / FD.touch))).toLocaleString('en-US')} กม.`;
     } else if (leg.kind === 'bus' && t >= 0.592) {
       const dd = actors.busD;
       busSpeed = Math.abs(busDist(t + 0.0015) - busDist(t - 0.0015)) / 0.003 * 0.085;
@@ -755,7 +759,7 @@ export function createWorld() {
       remain = `${Math.max(0, leg.d1 - dd).toFixed(1)} กม.`;
     } else {
       alt = leg === LEGS[0] ? '2 ม.' : `${Math.round(nrtY / VERT * 1000)} ม.`;
-      speed = '0 กม./ชม.'; remain = leg === LEGS[0] ? '4,600 กม.' : '63 กม.';
+      speed = '0 กม./ชม.'; remain = leg === LEGS[0] ? '4,650 กม.' : '63 กม.';
     }
     return { index: li, count: LEGS.length, leg, alt, altLabel, speed, remain, time, zone: thai ? 'เวลาไทย' : 'เวลาญี่ปุ่น', day };
   }

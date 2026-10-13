@@ -113,6 +113,36 @@ def plane(name, sx, sy, loc, material, parent, rot=(0, 0, 0), wave=0.0, cuts=0):
     o.location = loc; o.rotation_euler = rot
     return o
 
+def shell(name, x0, x1, a, b, material, parent, seg=20, bulge=0.0, thick=0.4, nx=None):
+    # elliptical arch skin along X from x0 to x1 (half-width a, height b); bulge pillows the bay
+    bm = bmesh.new(); nx = nx or (4 if bulge else 1); rows = []
+    for i in range(nx + 1):
+        u = i / nx; k = 1 + bulge * math.sin(u * math.pi)
+        rows.append([bm.verts.new((x0 + (x1 - x0) * u, a * k * math.cos(math.pi * j / seg), b * k * math.sin(math.pi * j / seg))) for j in range(seg + 1)])
+    for i in range(nx):
+        for j in range(seg):
+            bm.faces.new((rows[i][j], rows[i + 1][j], rows[i + 1][j + 1], rows[i][j + 1]))
+    if thick: bmesh.ops.solidify(bm, geom=bm.faces[:], thickness=thick)
+    return obj_from_bm(name, bm, material, parent, recalc=True)
+
+def arc_rib(name, x, a, b, r, material, parent, seg=20):
+    # steel rib following the ellipse at station x
+    bm = bmesh.new(); rings = []; n = 5
+    for j in range(seg + 1):
+        t = math.pi * j / seg
+        c = Vector((x, a * math.cos(t), b * math.sin(t)))
+        nrm = Vector((0, b * math.cos(t), a * math.sin(t))).normalized()
+        rings.append([bm.verts.new(c + nrm * (r * math.cos(2 * math.pi * k / n)) + Vector((r * math.sin(2 * math.pi * k / n), 0, 0))) for k in range(n)])
+    for j in range(seg):
+        for k in range(n):
+            bm.faces.new((rings[j][k], rings[j][(k + 1) % n], rings[j + 1][(k + 1) % n], rings[j + 1][k]))
+    return obj_from_bm(name, bm, material, parent, recalc=True)
+
+def group(name, parent, loc=(0, 0, 0), rot_z=0.0):
+    e = bpy.data.objects.new(name, None); scene.collection.objects.link(e); e.parent = parent
+    e.location = loc; e.rotation_euler = (0, 0, rot_z)
+    return e
+
 def join_by_material(root):
     bpy.context.view_layer.update()
     groups = {}
@@ -131,7 +161,10 @@ def join_by_material(root):
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
         j.name = f'{root.name}_{name}'; j.parent = root
         out.append(j)
-    for o in [o for o in scene.objects if o.type == 'EMPTY' and o is not root]:
+    def under(o):
+        while o.parent: o = o.parent
+        return o is root
+    for o in [o for o in scene.objects if o.type == 'EMPTY' and o is not root and under(o)]:
         bpy.data.objects.remove(o)
     return out
 

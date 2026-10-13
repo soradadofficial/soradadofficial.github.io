@@ -10,6 +10,7 @@ import demKyoto from './dem/kyoto.png';
 // a miniature-diorama exaggeration so trains, buses and buildings stay visible.
 export const VERT = 3;
 export const MODEL_SCALE = 0.02;
+export const PLANE_SCALE = MODEL_SCALE * 0.6; // aircraft: smaller than buildings so they sit right on the real-layout airfield
 const LON0 = 137.5, LAT0 = 35.5;
 const KX = 111.32 * Math.cos(LAT0 * Math.PI / 180), KZ = 110.95;
 

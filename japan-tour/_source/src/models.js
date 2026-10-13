@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { bakeInto, createSuvarnabhumi } from './models2.js';
+import { bakeInto } from './models2.js';
 
 // Materials whose glow follows the time of day: { mat, day, night }
 export const glowMats = [];
@@ -201,7 +201,6 @@ export function createRunway(length, width) {
 
 // ---------- Terminal building ----------
 export function createTerminal({ thai = false, label = 'BKK', towerX = 60 } = {}) {
-  if (thai) return createSuvarnabhumi(label);
   const g = new THREE.Group();
   const glass = new THREE.MeshStandardMaterial({ color: '#7fa7c9', roughness: 0.1, metalness: 0.6, emissive: '#ffcf88', emissiveIntensity: 0.05 });
   glowMats.push({ mat: glass, day: 0.05, night: 0.9 });

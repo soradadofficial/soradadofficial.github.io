@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { createAirliner, createCoach, createShinkansenCar, createPirateShip, createDeerGeometry, bakeParts } from './models2.js';
-import { MODEL_SCALE as S, toX, toZ } from './geo.js';
+import { MODEL_SCALE as S, PLANE_SCALE as PL, toX, toZ } from './geo.js';
 import { Path } from './path.js';
 
 // Ambient motion that keeps the map alive: Shinkansen on the real Tokaido line,
@@ -106,7 +106,7 @@ export function createLife(scene, w) {
   // ---------- planes around the airports ----------
   const addPlane = (fn) => {
     const p = createAirliner();
-    p.scale.setScalar(S);
+    p.scale.setScalar(PL);
     p.userData.gear.visible = false;
     p.userData.info = 'plane';
     scene.add(p); pickables.push(p);

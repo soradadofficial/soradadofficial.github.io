@@ -5,7 +5,9 @@ import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { glowMats, createTerminal } from './models.js';
 import { createAirliner } from './models2.js';
-import { MODEL_SCALE as S, landMaterial } from './geo.js';
+import { MODEL_SCALE as S, PLANE_SCALE as PL, landMaterial } from './geo.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
 // Builders for the km-scale world: roads, rail, airports, cities, forests, labels, route lines.
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -163,14 +165,90 @@ export function createAirport({ x, z, y, bearing, len = 4, width = 0.9, side = 1
   const jets = [];
   for (let i = 0; i < Math.min(parked, 3); i++) {
     const a = createAirliner();
-    a.scale.setScalar(S);
-    a.position.set(gates[i], a.userData.groundOffset * S, side * 1.95);
+    a.scale.setScalar(PL);
+    a.position.set(gates[i], a.userData.groundOffset * PL, side * 2.1);
     a.rotation.y = -side * Math.PI / 2;
     a.userData.gear.visible = true;
     g.add(a); jets.push(a);
   }
   g.userData.gates = gates;
   g.userData.jets = jets;
+  g.userData.toWorld = (lx, lz, ly = 0) => { g.updateMatrixWorld(true); return g.localToWorld(V(lx, ly, lz)); };
+  return g;
+}
+
+// ---------- Suvarnabhumi (BKK) from its real layout ----------
+// Local frame as createAirport: +x runs up runway 01 (north-north-east), +z is east.
+// One local unit = 1/6 km (BKK_K units per metre), so the 4,000 m runway is 24 units long:
+//   01/19    4,000 m x 60 m (east)          02R/20L  3,700 m, 2.2 km to the west
+//   02L/20R  4,000 m, the third runway, a further 400 m west
+// The passenger complex (Blender model, real metres) sits between the two original runways.
+export const BKK_K = 0.006;
+export function createBkkAirport({ x, z, y, bearing }) {
+  const K = BKK_K, g = new THREE.Group();
+  g.position.set(x, y, z);
+  g.rotation.y = Math.PI / 2 - bearing * Math.PI / 180;
+  const asphalt = std('#30333a', { roughness: 0.9 }), taxi = std('#44484f', { roughness: 0.9 }), concrete = std('#8b8e93', { roughness: 0.9 });
+  const flat = (w, d, mat, px, pz, py = 0.004) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(px, py, pz); m.receiveShadow = true; g.add(m); return m; };
+  const RW = [[24, 0, 0], [22.2, -1.2, -13.2], [24, -3, -15.6]]; // length, centre x, z
+  const CX = 2.0, CZ = -6.6;                                       // centre of the east-west concourse
+  flat(6.6, 9.6, concrete, CX - 0.2, CZ, 0.002);                    // terminal apron
+  flat(2.4, 7.6, concrete, CX - 6.05, CZ, 0.002);                   // SAT-1 apron
+  flat(6.5, 0.22, taxi, CX + 8.2, CZ, 0.003);                       // access road from the motorway
+  const paint = new THREE.MeshBasicMaterial({ color: '#e9e9e4' }), dash = new THREE.PlaneGeometry(0.3, 0.03).rotateX(-Math.PI / 2);
+  const marks = [], mm = new THREE.Matrix4(), ms = new THREE.Matrix4();
+  for (const [len, cx, rz] of RW) {
+    flat(len, 0.36, asphalt, cx, rz, 0.005);
+    for (let i = 0; i < Math.floor((len - 1.2) / 0.6); i++) marks.push(mm.makeTranslation(cx - len / 2 + 0.9 + i * 0.6, 0.008, rz).clone());
+    for (const e of [-1, 1]) for (let j = 0; j < 8; j++) marks.push(mm.makeTranslation(cx + e * (len / 2 - 0.25), 0.008, rz - 0.14 + j * 0.04).multiply(ms.makeScale(0.9, 1, 0.5)).clone());
+  }
+  // twin parallel taxiways inside each original runway, with rapid-exit links and two cross-field taxiways
+  for (const [len, cx, rz, s] of [[24, 0, 0, -1], [22.2, -1.2, -13.2, 1]]) {
+    for (const o of [1.1, 1.75]) flat(len - 0.6, 0.16, taxi, cx, rz + s * o, 0.004);
+    for (let k = -3; k <= 3; k++) flat(0.14, 1.75, taxi, cx + k * (len / 7), rz + s * 0.875, 0.0035);
+  }
+  for (const tx of [CX - 3.9, CX - 8.3]) flat(0.16, 9.7, taxi, tx, CZ, 0.0035);
+  flat(0.14, 2.4, taxi, -3 + 9, -14.4, 0.0035); flat(0.14, 2.4, taxi, -3 - 9, -14.4, 0.0035);
+  const dashes = new THREE.InstancedMesh(dash, paint, marks.length);
+  marks.forEach((m, i) => dashes.setMatrixAt(i, m));
+  g.add(dashes);
+  // runway edge and approach lights (east runway, where the story flight departs)
+  const lightMat = new THREE.MeshBasicMaterial({ color: '#ffe7a8', toneMapped: false });
+  const ne = 120, lights = new THREE.InstancedMesh(new THREE.SphereGeometry(0.012, 6, 4), lightMat, ne * 2 + 30);
+  for (let i = 0; i < ne; i++) for (const sd of [0, 1]) { mm.makeTranslation(-12 + i * 0.2, 0.014, (sd ? 1 : -1) * 0.2); lights.setMatrixAt(i * 2 + sd, mm); }
+  for (let i = 0; i < 30; i++) { mm.makeTranslation(-12.2 - (i % 10) * 0.16, 0.02, (Math.floor(i / 10) - 1) * 0.1); lights.setMatrixAt(ne * 2 + i, mm); }
+  g.add(lights);
+  g.userData.lights = lightMat;
+  // passenger complex: model x = east, -z = north  ->  local z, local x
+  const base = location.pathname.includes('/tools/') ? '/' : './';
+  const holder = new THREE.Group();
+  holder.position.set(CX, 0.004, CZ); holder.rotation.y = -Math.PI / 2; holder.scale.setScalar(K);
+  g.add(holder);
+  g.userData.ready = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath(base + 'draco/')).loadAsync(base + 'models/suvarnabhumi.glb').then((gltf) => {
+    const lod = new THREE.LOD();
+    [['LOD0', 0], ['LOD1', 55]].forEach(([name, dist]) => lod.addLevel(gltf.scene.getObjectByName(name), dist));
+    lod.traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = o.receiveShadow = true;
+      const glow = { Glass: ['#ffd9a0', 0.04, 0.9], TubeGlass: ['#7fd0ff', 0.02, 1.2] }[o.material.name];
+      if (glow && !o.material.userData.glow) { o.material.userData.glow = true; o.material.emissive.set(glow[0]); o.material.emissiveIntensity = glow[1]; glowMats.push({ mat: o.material, day: glow[1], night: glow[2] }); }
+    });
+    holder.add(lod);
+  });
+  const bea = new THREE.Mesh(new THREE.SphereGeometry(4, 10, 8), new THREE.MeshBasicMaterial({ color: '#ff3a3a' }));
+  bea.position.set(-430, 147, -545); bea.userData.blink = true; holder.add(bea);
+  // aircraft on the stands: [east m, north m, heading] around the H
+  const jets = [];
+  const stand = (e, n, rot) => {
+    const a = createAirliner(); a.scale.setScalar(PL);
+    a.position.set(CX + n * K, a.userData.groundOffset * PL, CZ + e * K); a.rotation.y = rot;
+    a.userData.gear.visible = true; g.add(a); jets.push(a);
+  };
+  for (const e of [-500, -330, -160, 160, 330, 500]) { stand(e, 66, Math.PI); if (Math.abs(e) > 200) stand(e, -66, 0); }
+  for (const sx of [-1, 1]) for (const n of [-380, -220, 230, 390]) stand(sx * (675 + 66), n, sx * Math.PI / 2);
+  for (const e of [-380, -210, 210, 380]) stand(e, -1010 - 66, 0);
+  g.userData.jets = jets;
+  g.userData.len = 24;
   g.userData.toWorld = (lx, lz, ly = 0) => { g.updateMatrixWorld(true); return g.localToWorld(V(lx, ly, lz)); };
   return g;
 }
