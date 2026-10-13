@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { createCloudField } from './clouds.js';
 import {
   createGuide, createPerson, createTorii, createPagoda, createSakuraTrees, createLanterns, createTower,
-  createHotel, createRyokan, SUITE, updateGlow,
+  createHotel, createRyokan, SUITE, updateGlow, glowMats,
 } from './models.js';
 import { createAirliner, createCoach, createCastle, createPirateShip, createBeacon } from './models2.js';
 import { createSky, createClouds, createPetals, createTrail, ENV, lerpEnv, makeEnvState } from './fx.js';
@@ -232,6 +232,8 @@ export function createWorld() {
   scene.add(tower);
   const nara = onGround(LL(135.843, 34.685));
   const castlePos = onGround(LL(135.526, 34.687));
+  // the two city hotels stand a short walk from their landmarks, rooms facing them
+  const tokyoHotelPos = onGround(towerPos.clone().add(V(3.4, 0, 2.2))), osakaHotelPos = onGround(castlePos.clone().add(V(2.6, 0, 1.4)));
   const fushimi = onGround(LL(135.772, 34.967));
   const pagodaPos = onGround(LL(138.801, 35.501));
   // Chureito viewpoint: up the hillside beside the pagoda, Fuji behind it
@@ -281,7 +283,7 @@ export function createWorld() {
   ];
   const avoid = [
     { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: 5, tree: 1.15 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
-    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: toX(135.778), z: toZ(35.0), r: 0.45, tree: 1 }, { x: hakVilla.x, z: hakVilla.z, r: 0.4, tree: 1 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
+    { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: toX(135.778), z: toZ(35.0), r: 0.45, tree: 1 }, { x: tokyoHotelPos.x, z: tokyoHotelPos.z, r: 1.1 }, { x: osakaHotelPos.x, z: osakaHotelPos.z, r: 0.95 }, { x: hakVilla.x, z: hakVilla.z, r: 0.4, tree: 1 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
   ];
   // rivers through the cities (drawn as rippled water ribbons, kept clear of buildings)
   const riverMat = waterMaterial('#3d7593', { roughness: 0.14, metalness: 0.35, freq: 3, amp: 0.1 });
@@ -894,18 +896,29 @@ export function createWorld() {
   // ---------- stays: where each property's rooms sit, and rooms loaded on demand ----------
   const RS = S * 0.85; // same scale as the hotel tower
   const face = (from, to) => Math.atan2(-(to.x - from.x), -(to.z - from.z)); // yaw that turns the window wall (-z) toward `to`
-  const high = (base, dx, dz, up) => { const q = base.clone().add(V(dx, 0, dz)); q.y = ground(q.x, q.z) + up; return q; };
   const kyotoPos = onGround(LL(135.778, 35.0));
+  const gltf = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./draco/'));
+  // tower hotels (Blender models): placed now, filled in when the file arrives
+  const tower3 = (id, at, to, depth) => {
+    const h = new THREE.Group(); h.position.copy(at); h.rotation.y = face(at, to); h.scale.setScalar(RS); scene.add(h); h.updateMatrixWorld(true);
+    gltf.loadAsync(`./models/hotel-${id}.glb`).then((g) => {
+      const lod = new THREE.LOD();
+      [['LOD0', 0], ['LOD1', 30]].forEach(([n, dist]) => lod.addLevel(g.scene.getObjectByName(n), dist));
+      lod.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; if (o.material.name === 'Facade' && !o.material.userData.glow) { o.material.userData.glow = true; o.material.emissive.set('#ffd9a0'); glowMats.push({ mat: o.material, day: 0.02, night: 0.55 }); } });
+      h.add(lod);
+    });
+    return (m, floorY) => h.localToWorld(V(0, floorY, -depth / 2 + m.d / 2 + 0.3)); // a room just inside the landmark-side facade
+  };
+  const tokyoRoom = tower3('tokyo', tokyoHotelPos, towerPos, 22), osakaRoom = tower3('osaka', osakaHotelPos, castlePos, 20);
   const STAY = {
-    tokyo: { at: () => high(towerPos, 3.4, 2.2, 2.6), to: towerPos.clone().add(V(0, 3.4, 0)), env: ENV.dusk, ext: [towerPos.clone().add(V(8, 4.5, 6)), towerPos.clone().add(V(2.5, 2.8, 1.6))] },
+    tokyo: { at: (m) => tokyoRoom(m, 15 + 30 * 3.7 + 0.2), yaw: face(tokyoHotelPos, towerPos), env: ENV.dusk, ext: [tokyoHotelPos.clone().add(V(4.2, 2.2, 5.2)), tokyoHotelPos.clone().add(V(-0.6, 1.5, -0.4))] },
     hakone: { onGround: true, at: () => hakVilla.clone(), to: V(ashiC.x, ashiC.y, ashiC.z), env: ENV.golden, ext: [ryokan.localToWorld(V(70, 52, 55)), ryokanPos.clone()] },
     kawaguchiko: { at: (m) => hotel.localToWorld(V(0, 40, -12 + m.d / 2 + 0.3)), yaw: hotel.rotation.y, env: ENV.day, ext: [hotelEye, hotelLook] },
     kyoto: { onGround: true, at: () => kyotoPos.clone(), to: kyotoPos.clone().add(V(6, 1, 0)), env: ENV.golden, ext: [kyotoPos.clone().add(V(-1.6, 1.3, 1.6)), kyotoPos.clone()] },
-    osaka: { at: () => high(castlePos, 2.6, 1.4, 1.5), to: castlePos.clone().add(V(0, 0.9, 0)), env: ENV.golden, ext: [castlePos.clone().add(V(5.5, 3.2, 4.5)), castlePos.clone().add(V(1.5, 1.4, 0.8))] },
+    osaka: { at: (m) => osakaRoom(m, 10 + 15 * 3.5 + 0.2), yaw: face(osakaHotelPos, castlePos), env: ENV.golden, ext: [osakaHotelPos.clone().add(V(3.4, 1.6, 4.2)), osakaHotelPos.clone().add(V(-0.5, 0.9, -0.3))] },
   };
   let roomMeta = null, shownRoom = null;
   const roomCache = new Map();
-  const gltf = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./draco/'));
   const stays = {
     exterior: (id) => ({ pos: STAY[id].ext[0], look: STAY[id].ext[1], env: STAY[id].env, petals: 0.3 }),
     hideRoom() { if (shownRoom) shownRoom.visible = false; shownRoom = null; },

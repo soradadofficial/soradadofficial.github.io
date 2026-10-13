@@ -11,8 +11,8 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'public', '
 
 ROOMS = {
     # Tokyo skyline hotel
-    'tk-deluxe': dict(style='western', pal='city', w=5.2, d=6.4, bed='king'),
-    'tk-twin': dict(style='western', pal='city', w=5.6, d=6.8, bed='twin'),
+    'tk-deluxe': dict(style='western', pal='city', w=4.2, d=7.8, bed='king'),
+    'tk-twin': dict(style='western', pal='city', w=4.6, d=8.2, bed='twin'),
     'tk-corner': dict(style='western', pal='city', w=8.4, d=8.2, bed='king', living=True),
     'tk-sky': dict(style='western', pal='city', w=10.4, d=10.2, bed='king', living=True, tub_view=True),
     # Hakone lakeside ryokan
@@ -21,18 +21,18 @@ ROOMS = {
     'hk-wayo': dict(style='washitsu', w=7.6, d=7.2, sleep='lowbed', bath='onsen'),
     'hk-hanare': dict(style='washitsu', w=9.6, d=8.6, sleep='lowbed', bath='onsen_large', living=True),
     # Kawaguchiko Fuji-view resort
-    'kw-superior': dict(style='western', pal='resort', w=5.4, d=6.6, bed='twin'),
-    'kw-deluxe': dict(style='western', pal='resort', w=6.0, d=7.4, bed='king', balcony=True),
+    'kw-superior': dict(style='western', pal='resort', w=4.5, d=8.0, bed='twin'),
+    'kw-deluxe': dict(style='western', pal='resort', w=5.0, d=9.0, bed='king', balcony=True),
     'kw-onsen': dict(style='western', pal='resort', w=8.2, d=8.6, bed='king', living=True, balcony=True, tub_view=True),
     'kw-sky': dict(style='western', pal='resort', w=11.0, d=10.6, bed='king', living=True, balcony=True, tub_view=True),
     # Kyoto machiya inn
-    'ky-kura': dict(style='machiya', w=4.6, d=6.0),
-    'ky-niwa': dict(style='machiya', w=5.8, d=7.2, living=True),
-    'ky-maisonette': dict(style='machiya', w=8.2, d=9.0, living=True, big=True),
+    'ky-kura': dict(style='machiya', w=5.4, d=5.4),
+    'ky-niwa': dict(style='machiya', w=5.6, d=7.6, living=True),
+    'ky-maisonette': dict(style='machiya', w=6.0, d=12.5, living=True, big=True),
     # Osaka castle-view hotel
-    'os-standard': dict(style='western', pal='castle', w=4.6, d=5.8, bed='queen'),
-    'os-castle': dict(style='western', pal='castle', w=5.2, d=6.6, bed='king'),
-    'os-family': dict(style='western', pal='castle', w=6.6, d=7.2, bed='family'),
+    'os-standard': dict(style='western', pal='castle', w=3.8, d=6.9, bed='queen'),
+    'os-castle': dict(style='western', pal='castle', w=4.2, d=8.0, bed='king'),
+    'os-family': dict(style='western', pal='castle', w=5.6, d=8.6, bed='family'),
     'os-suite': dict(style='western', pal='castle', w=8.6, d=9.0, bed='king', living=True),
 }
 PAL = {
@@ -140,6 +140,24 @@ def shell_room(w, d, h, P, floor_mat, window=True, wall='wall'):
             box('Mullion', (0.06, 0.08, h), (-w / 2 + i * w / n, d / 2, h / 2), M('frameDark', '#2a2d33', 0.4, 0.6), G)
         box('Head', (w, 0.1, 0.08), (0, d / 2, h - 0.04), M('frameDark', '#2a2d33', 0.4, 0.6), G)
         box('Sill', (w, 0.1, 0.06), (0, d / 2, 0.03), M('frameDark', '#2a2d33', 0.4, 0.6), G)
+
+def gable_roof(w, d, h, over=0.9, cy=0.0, rise=0.42):
+    # ridge along X; dark tile slopes with rolled tile rows, plastered gable ends
+    Tm = M('rooftile', '#3f444c', 0.6, 0.1); half = d / 2 + over; top = half * rise
+    ang = math.atan2(top, half); L = math.hypot(half, top)
+    for s in (-1, 1):
+        box('RoofSlope', (w + over * 2, L + 0.1, 0.14), (0, cy + s * half / 2, h + 0.22 + top / 2), Tm, G, rot=(-s * ang, 0, 0))
+        for i in range(int((w + over * 2) / 0.45) + 1):
+            x = -w / 2 - over + i * 0.45
+            beam('TileRow', (x, cy + s * half, h + 0.3), (x, cy, h + 0.32 + top), 0.05, Tm, G, 5)
+        box('Eave', (w + over * 2, 0.1, 0.16), (0, cy + s * (half - 0.03), h + 0.2), M('hinokiDark', '#6b4430', 0.6), G)
+    beam('Ridge', (-w / 2 - over, cy, h + 0.38 + top), (w / 2 + over, cy, h + 0.38 + top), 0.11, Tm, G, 8)
+    import bmesh as _bm
+    for sx in (-1, 1):
+        bm = _bm.new(); x = sx * (w / 2 + 0.05)
+        vs = [bm.verts.new((x, cy - d / 2 - 0.05, h + 0.1)), bm.verts.new((x, cy + d / 2 + 0.05, h + 0.1)), bm.verts.new((x, cy, h + 0.1 + top * (d / 2) / half))]
+        bm.faces.new(vs if sx > 0 else vs[::-1])
+        kit.obj_from_bm('Gable', bm, M('plaster', '#e9dfc9', 0.9), G, smooth=False)
 
 # ---------------- room styles ----------------
 def western(r):
@@ -345,6 +363,7 @@ def washitsu(r):
     cyl('LanternCap', 0.26, 0.02, 0.16, (lx, ly, 0.92), M('rock', '#7d776c', 0.9), G, 6)
     for k in range(3): ball('Pine', 0.3 - k * 0.05, (-w / 2 + 0.5, d / 2 + dk - 0.4, 0.5 + k * 0.32), M('leaf', '#4f7a4a', 0.8), G, 1, scale=(1.3, 1.3, 0.6))
     cyl('PineTrunk', 0.04, 0.05, 1.1, (-w / 2 + 0.5, d / 2 + dk - 0.4, 0.5), M('bark', '#4a3526', 0.9), G, 6)
+    gable_roof(w, d + 1.2, h, over=1.0, cy=0.6)
     has = r['bath'] != 'none'
     return dict(
         bed=dict(eye=(fx + 2.6, -d / 2 + 3.6, 1.35), look=(fx, -d / 2 + 1.5, 0.3)),
@@ -425,6 +444,7 @@ def machiya(r):
         a = k * 1.1
         ball('Maple', 0.32, (-w / 4 - 0.2 + 0.4 * math.cos(a), d / 2 + 1.7 + 0.4 * math.sin(a), 1.5 + 0.12 * (k % 3)), M('maple', '#c2452d', 0.8), G, 1, scale=(1, 1, 0.6))
     cyl('Tsukubai', 0.24, 0.2, 0.3, (w / 4 + 0.7, d / 2 + 0.8, 0.15), M('rock', '#7d776c', 0.9), G, 12)
+    gable_roof(w, d, h, over=0.6)
     return dict(
         bed=dict(eye=(px0 + pw * 0.5 + 1.6, -d / 2 + pd + 1.9, 1.5), look=(px0 + 1.25, -d / 2 + 1.0, 0.45)),
         bath=dict(eye=bath_eye, look=bath_look),
