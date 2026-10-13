@@ -284,6 +284,7 @@ stays = initStays({
   setOrbit: (on) => { controls.minDistance = on ? 0.004 : 0.05; setFree(on); },
   onSelect: (action) => { builder.apply(action); scrollToY(M.builderTop + 2); },
 });
+world.stays.warm = (o) => renderer.compileAsync(o, camera, scene).catch(() => {}); // shaders for a room build in parallel, not on the frame it opens
 if (location.search.includes('debug')) window.__stays = stays;
 
 // ---------- Click objects in the scene ----------

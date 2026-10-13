@@ -51,7 +51,7 @@ export function unitsOn(stay, tower, k) { // every unit on storey k (0 = lowest 
 
 export function initStays({ world, fly, setOrbit, onSelect }) {
   const card = $('#infoCard'), tabs = $('#stayTabs');
-  let current = null, meta = null, pick = { k: null, type: '' }; // pick: floor and room-type filter chosen on a tower
+  let current = null, meta = null, pick = { k: null, type: '' }, preT = 0; // pick: floor and room-type filter chosen on a tower
   STAYS.forEach((s) => {
     const b = document.createElement('button');
     b.type = 'button'; b.role = 'tab'; b.dataset.stay = s.id; b.id = `stay-${s.id}`;
@@ -71,6 +71,7 @@ export function initStays({ world, fly, setOrbit, onSelect }) {
     const s = STAYS.find((x) => x.id === id);
     if (current !== s || !keepFloor) pick = { k: keepFloor ? pick.k : null, type: '' };
     current = s; mark(id);
+    clearTimeout(preT); preT = setTimeout(() => world.stays.preload(id, s.rooms.map((r) => r.id)), 2400); // after the fly settles: the rooms load and compile while the sheet is read
     world.stays.hideRoom(); world.stays.showFloor(id, null);
     if (!keepFloor || pick.k == null) fly(world.stays.exterior(id));
     swap(`

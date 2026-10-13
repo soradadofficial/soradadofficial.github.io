@@ -939,11 +939,42 @@ export function createWorld() {
   const lampRig = new THREE.Group(), lamp = new THREE.PointLight('#ffe2c0', 4.5, 14, 1.4), lamp2 = new THREE.PointLight('#fff1dc', 1.8, 10, 1.4);
   lamp.position.set(0, 2.3, 0); lampRig.add(lamp, lamp2); lampRig.scale.setScalar(RS); scaleLights(lampRig, RS); scene.add(lampRig);
   const LAMP = [lamp.intensity, lamp2.intensity]; lamp.intensity = lamp2.intensity = 0;
-  const roomCache = new Map();
+  // Room models load once, placed and hidden, then their shaders are compiled off the frame (warm, set by main.js),
+  // so the first time a room opens there is nothing left to build. preload() fetches a stay's rooms while its sheet is read.
+  const roomLoads = new Map();
+  let metaP = null;
+  function loadRoom(id, roomId) {
+    if (!roomLoads.has(roomId)) roomLoads.set(roomId, (async () => {
+      roomMeta ??= await (metaP ??= fetch('./rooms/rooms.json').then((r) => r.json()));
+      const m = roomMeta[roomId], a = STAY[id];
+      const g = (await gltf.loadAsync(`./rooms/${roomId}.glb`)).scene;
+      g.scale.setScalar(RS);
+      g.position.copy(a.at(m));
+      g.rotation.y = a.yaw ?? face(g.position, a.to);
+      if (a.onGround) { // sit level on the highest ground under the room and its deck, on a stone plinth
+        g.updateMatrixWorld(true);
+        let top = -Infinity;
+        for (const lx of [-0.5, 0, 0.5]) for (const lz of [-1.2, -0.5, 0, 0.5]) { const q = g.localToWorld(V(lx * (m.w + 1.5), 0, lz * m.d)); top = Math.max(top, ground(q.x, q.z)); }
+        g.position.y = top + 0.012;
+        const plinth = new THREE.Mesh(new THREE.BoxGeometry(m.w + 1.6, 30, m.d + 4.4), std('#8a8378', { roughness: 0.95 }));
+        plinth.position.set(0, -15.2, -1.6); g.add(plinth);
+      }
+      g.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = false; if (o.material.emissiveIntensity > 0 && !o.material.userData.dim) { o.material.userData.dim = true; o.material.emissiveIntensity *= 0.3; } } }); // lit by its own lamps, not the sun through the ceiling
+      g.visible = false; scene.add(g); g.updateMatrixWorld(true);
+      await stays.warm?.(g);
+      return g;
+    })().catch((e) => { roomLoads.delete(roomId); metaP = roomMeta ? metaP : null; throw e; })); // a failed load can be retried
+    return roomLoads.get(roomId);
+  }
   const stays = {
     exterior: (id) => ({ pos: STAY[id].ext[0], look: STAY[id].ext[1], env: STAY[id].env, petals: 0.3 }),
     hideRoom() { if (shownRoom) shownRoom.visible = false; shownRoom = null; lamp.intensity = lamp2.intensity = 0; },
     hasRoom: () => !!shownRoom,
+    warm: null, // (object) => Promise: compile its materials ahead of the first render
+    async preload(id, roomIds) { // one at a time, quietly; the floor and unit glows of a tower are warmed too
+      const T = TOWER[id]; if (T && !T.warmed) { T.warmed = true; await stays.warm?.(T.h); }
+      for (const r of roomIds) await loadRoom(id, r).catch(() => {});
+    },
     // tower stays: floor and unit pickers
     tower: (id) => TOWER[id] && { n: TOWER[id].n, bays: TOWER[id].bays, first: TOWER[id].first, fh: TOWER[id].fh },
     showFloor(id, k) { // light one storey of the tower (k = null: none)
@@ -957,27 +988,9 @@ export function createWorld() {
     },
     floorView(id, k, side = -1) { const T = TOWER[id]; return { pos: T.h.localToWorld(V(T.w * 0.9 * -side, T.y(k) + 34, side * (T.d / 2 + 135))), look: T.h.localToWorld(V(0, T.y(k) - 4, 0)), env: STAY[id].env, petals: 0 }; },
     async room(id, roomId, unit) {
-      roomMeta ??= await (await fetch('./rooms/rooms.json')).json();
-      const m = roomMeta[roomId], a = STAY[id];
-      if (!roomCache.has(roomId)) {
-        const g = (await gltf.loadAsync(`./rooms/${roomId}.glb`)).scene;
-        g.scale.setScalar(RS);
-        g.position.copy(a.at(m));
-        g.rotation.y = a.yaw ?? face(g.position, a.to);
-        if (a.onGround) { // sit level on the highest ground under the room and its deck, on a stone plinth
-          g.updateMatrixWorld(true);
-          let top = -Infinity;
-          for (const lx of [-0.5, 0, 0.5]) for (const lz of [-1.2, -0.5, 0, 0.5]) { const q = g.localToWorld(V(lx * (m.w + 1.5), 0, lz * m.d)); top = Math.max(top, ground(q.x, q.z)); }
-          g.position.y = top + 0.012;
-          const plinth = new THREE.Mesh(new THREE.BoxGeometry(m.w + 1.6, 30, m.d + 4.4), std('#8a8378', { roughness: 0.95 }));
-          plinth.position.set(0, -15.2, -1.6); g.add(plinth);
-        }
-        g.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = false; if (o.material.emissiveIntensity > 0 && !o.material.userData.dim) { o.material.userData.dim = true; o.material.emissiveIntensity *= 0.3; } } }); // lit by its own lamps, not the sun through the ceiling
-        scene.add(g); g.updateMatrixWorld(true);
-        roomCache.set(roomId, g);
-      }
+      const g = await loadRoom(id, roomId), m = roomMeta[roomId], a = STAY[id];
       stays.hideRoom();
-      const g = roomCache.get(roomId); g.visible = true; shownRoom = g;
+      g.visible = true; shownRoom = g;
       if (TOWER[id]) { const u = unit || DEF[id]; g.position.copy(a.at(m, u)); g.rotation.y = a.yaw + (u.side > 0 ? Math.PI : 0); g.updateMatrixWorld(true); } // the same room model serves every unit of its type
       lampRig.position.copy(g.position); lampRig.rotation.copy(g.rotation); lamp2.position.set(0, 1.6, -m.d / 2 + 1); lamp.intensity = LAMP[0]; lamp2.intensity = LAMP[1];
       return {
