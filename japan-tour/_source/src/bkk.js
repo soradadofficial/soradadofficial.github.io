@@ -74,6 +74,7 @@ function strip(pts, halfW, y) { // flat ribbon along a polyline, no smoothing: t
 }
 const merged = (geos, mat, shadow = false) => { if (!geos.length) return null; const m = new THREE.Mesh(mergeGeometries(geos.map((g) => { g.computeVertexNormals(); for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k); return g.index ? g.toNonIndexed() : g; })), mat); m.receiveShadow = true; m.castShadow = shadow; field.add(m); return m; };
 const mapLayer = new THREE.Group(); field.add(mapLayer);
+const flags = []; // [sprite, pole] pairs, faded out when the camera is low
 {
   const W = { motorway: 14, trunk: 11, primary: 9, secondary: 7, tertiary: 6, 'motorway-l': 6, 'trunk-l': 5, 'primary-l': 5, 'secondary-l': 4, service: 3.5, unclassified: 4 };
   const big = [], small = [], lit = [];
@@ -117,16 +118,17 @@ const mapLayer = new THREE.Group(); field.add(mapLayer);
     c.width = Math.ceil(x.measureText(text).width) + 40; c.height = 72;
     x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height); x.font = '600 44px "IBM Plex Sans Thai", Tahoma, sans-serif'; x.fillStyle = fg; x.textBaseline = 'middle'; x.fillText(text, 20, 38);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, toneMapped: false })); sp.center.set(0, 0); sp.scale.set(1.1 * c.width / c.height, 1.1, 1); sp.position.set(at.x, 1.25, at.z);
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.25, 5), std('#f4f2ec')); pole.position.set(at.x, 0.625, at.z); field.add(sp, pole);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, toneMapped: false, transparent: true })); sp.center.set(0, 0); sp.scale.set(1.1 * c.width / c.height, 1.1, 1); sp.position.set(at.x, 1.25, at.z);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.25, 5), std('#f4f2ec')); pole.position.set(at.x, 0.625, at.z); pole.material.transparent = true; field.add(sp, pole); flags.push([sp, pole]);
   };
   const longest = (list, n) => { // per name: total length and the middle of its longest piece
     const by = new Map();
     for (const w of list) { if (!w.name) continue; let l = 0; for (let i = 1; i < w.p.length; i++) l += Math.hypot(w.p[i][0] - w.p[i - 1][0], w.p[i][1] - w.p[i - 1][1]); const e = by.get(w.name) || { name: w.name, sum: 0, best: 0 }; e.sum += l; if (l > e.best) { e.best = l; e.at = w.p[w.p.length >> 1]; } by.set(w.name, e); }
-    return [...by.values()].sort((a, b) => b.sum - a.sum).slice(0, n);
+    const named = (e) => /สำโรง|บางโฉลง/.test(e.name) ? 1 : 0; // the canals the museum model labels come first
+    return [...by.values()].sort((a, b) => named(b) - named(a) || b.sum - a.sum).slice(0, n);
   };
   document.fonts.ready.then(() => {
-    for (const w of longest((OSM.water || []).filter((w) => w.line), 9)) flag(w.name, L(w.at), '#1f6fb5', '#ffffff');
+    for (const w of longest((OSM.water || []).filter((w) => w.line), 10)) flag(w.name, L(w.at), '#1f6fb5', '#ffffff');
     for (const r of longest((OSM.roads || []).filter((r) => /motorway|trunk|primary/.test(r.k) && !r.k.endsWith('-l')), 7)) flag(r.name, L(r.at), '#f2c230', '#2a2410');
   });
 }
@@ -320,6 +322,7 @@ function frame() {
   const dt = Math.min(0.05, clock.getDelta());
   if (playing) T += dt * speed * 60 / 60; // one simulated second per real second at 1x
   stepOps(T);
+  for (const [sp, pole] of flags) { const o = THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); // map labels: shown from above, gone in low close-ups sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
   if (focus && focus.g.visible) { // chase the chosen flight; the user can still orbit and zoom around it
     focus.g.getWorldPosition(tmp); const d = camera.position.distanceTo(tmp);
     camera.position.add(tmp.clone().sub(controls.target)); controls.target.copy(tmp);
