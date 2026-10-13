@@ -372,3 +372,10 @@ td:not(:first-child) { font-family: var(--f-mono); font-size: 0.84rem; }
   body.stay-open .side-col { margin-top: auto; }
   .info-card.stay-sheet { max-height: 46svh; width: 100%; border-radius: 18px 18px 0 0; }
 }
+
+/* route simulation caption */
+.sim-hud { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 3; padding: 0.7rem 1.2rem; display: grid; gap: 0.1rem; text-align: center; max-width: min(92vw, 560px); pointer-events: auto; justify-items: center; }
+.sim-hud[hidden] { display: none; }
+.sim-hud span { font-family: var(--f-mono); font-size: 0.72rem; color: #7dffb0; letter-spacing: 0.1em; } .sim-hud b { font-weight: 600; }
+body.simulating .builder-panel, body.simulating .summary { opacity: 0.08; pointer-events: none; transition: opacity .4s; }
+.builder-panel, .summary { transition: opacity .4s; }

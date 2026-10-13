@@ -72,7 +72,7 @@ export function computePlan() {
 
 function opt(v, label) { const o = document.createElement('option'); o.value = v; o.textContent = label; return o; }
 
-export function initBuilder({ onChange }) {
+export function initBuilder({ onChange, onSimulate }) {
   const dep = $('#dep'), arr = $('#arr'), ret = $('#ret'), room = $('#room');
   DEPARTURES.forEach((c) => dep.append(opt(c, `${c} · ${AIRPORTS[c].name}`)));
   ARRIVALS.forEach((c) => arr.append(opt(c, `${c} · ${AIRPORTS[c].name}`)));
@@ -161,8 +161,10 @@ export function initBuilder({ onChange }) {
       <ol class="days">${plan.days.map((d, i) => `<li><span>${dayLabel(i)}</span>${d}</li>`).join('')}</ol>
       <div class="breakdown">${plan.lines.map(([n, v]) => `<div><span>${n}</span><span>฿${fmt(Math.round(v))}</span></div>`).join('')}</div>
       <div class="total"><span>รวม ${plan.pax} ท่าน</span><strong>฿${fmt(Math.round(plan.total))}</strong></div>
+      <button class="btn btn-ghost" type="button" id="simBtn">▶ จำลองเส้นทาง</button>
       <button class="btn" type="button" id="bookBtn">ยืนยันการจอง (เดโม)</button>`;
     $('#bookBtn').addEventListener('click', () => openBooking(plan));
+    $('#simBtn').addEventListener('click', () => onSimulate(plan));
     onChange(plan);
   }
 

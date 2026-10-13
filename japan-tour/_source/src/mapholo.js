@@ -78,8 +78,44 @@ export function createHoloMap({ ground, thaiXZ }) {
     return out;
   };
 
-  let revealStart = 0;
+  let revealStart = 0, legs = null, sim = null;
+  const walker = new THREE.Sprite(new THREE.SpriteMaterial({ map: dotTex, color: '#ffffff', transparent: true, depthWrite: false, depthTest: false, sizeAttenuation: false, toneMapped: false, fog: false, blending: THREE.AdditiveBlending }));
+  walker.scale.set(0.06, 0.06, 1); walker.renderOrder = 23; walker.visible = false; g.add(walker);
+  const along = (pts, u) => { // point at fraction u of a polyline
+    const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + pts[i].distanceTo(pts[i - 1]));
+    const d = u * cum[cum.length - 1]; let i = 0; while (i < cum.length - 2 && cum[i + 1] < d) i++;
+    return pts[i].clone().lerp(pts[i + 1], Math.min(1, Math.max(0, (d - cum[i]) / Math.max(1e-6, cum[i + 1] - cum[i]))));
+  };
+  const endSim = () => { if (sim) { sim.say(null); sim = null; walker.visible = false; } };
+  // Play the trip leg by leg: flight in, each road leg with a pause at the stop, flight home.
+  // `say(text, i, n)` receives the caption for the current step, and null when it ends.
+  function simulate(plan, now, say) {
+    if (!legs) return;
+    const nDays = plan.nights + 1, middle = Math.max(1, nDays - 2), perDay = Math.max(1, Math.ceil(plan.stopObjs.length / middle));
+    const dayOf = (k) => Math.min(nDays - 1, 2 + Math.floor(k / perDay));
+    const steps = [{ pts: legs.out, dur: 5, off: [0, 620, 480], text: `วันที่ 1 · บิน ${plan.dep} → ${plan.arr} · เข้าพัก ${plan.hotel.name}` }];
+    legs.road.forEach((pts, k) => {
+      const stop = plan.stopObjs[k];
+      steps.push({ pts, dur: 3.6, hold: stop ? 1.6 : 0.4, off: [0, 150, 170], text: stop ? `วันที่ ${dayOf(k)} · รถโค้ชไป ${stop.name}` : `วันที่ ${nDays} · ไปสนามบิน ${plan.ret}` });
+    });
+    steps.push({ pts: legs.back, dur: 5, off: [0, 620, 480], text: `วันที่ ${nDays} · บิน ${plan.ret} → ${plan.dep} กลับบ้าน` });
+    sim = { steps, i: -1, t0: now, say, pos: new THREE.Vector3(), look: new THREE.Vector3(), started: false };
+  }
+  function stepSim(t) {
+    let s = sim.steps[sim.i];
+    if (!s || t - sim.t0 > s.dur + (s.hold || 0)) {
+      sim.i++; sim.t0 = t; s = sim.steps[sim.i];
+      if (!s) return endSim();
+      sim.say(s.text, sim.i, sim.steps.length);
+    }
+    const u = Math.min(1, (t - sim.t0) / s.dur), e = u * u * (3 - 2 * u), p = along(s.pts, e);
+    walker.visible = true; walker.position.copy(p);
+    const want = p.clone().add(new THREE.Vector3(...s.off));
+    if (!sim.started) { sim.pos.copy(want); sim.look.copy(p); sim.started = true; }
+    sim.pos.lerp(want, 0.04); sim.look.lerp(p, 0.06); // calm follow: the camera eases after the marker
+  }
   function setRoute(plan, now) {
+    endSim();
     clearRoutes();
     revealStart = now;
     for (const m of Object.values(markers)) m.userData.active = false;
@@ -87,15 +123,17 @@ export function createHoloMap({ ground, thaiXZ }) {
     addRoute(arc(a, b, a.distanceTo(b) * 0.1 + 20, 120), '#7fe3ff', 3, 1.0);
     addRoute(arc(c, a, c.distanceTo(a) * 0.07 + 20, 120), '#ffd27a', 2.5, 0.8);
     const stops = [b, ...plan.stops.map((id) => posOf(PLACES.find((x) => x.id === id))), c];
-    const pts = [];
-    for (let i = 0; i < stops.length - 1; i++) { const seg = draped(stops[i], stops[i + 1]); if (i) seg.shift(); pts.push(...seg); }
+    const pts = [], road = [];
+    for (let i = 0; i < stops.length - 1; i++) { const seg = draped(stops[i], stops[i + 1]); road.push(seg.slice()); if (i) seg.shift(); pts.push(...seg); }
+    legs = { out: arc(a, b, a.distanceTo(b) * 0.1 + 20, 120), back: arc(c, a, c.distanceTo(a) * 0.07 + 20, 120), road };
     if (pts.length > 1) addRoute(pts, '#ff8fb8', 3, 1.4);
     for (const id of [plan.dep, plan.arr, plan.ret, ...plan.stops]) if (markers[id]) markers[id].userData.active = true;
   }
 
   function update(t, camera, weight = 1) {
     g.visible = weight > 0.02;
-    if (!g.visible) return;
+    if (!g.visible) return endSim();
+    if (sim) stepSim(t);
     const rv = Math.min(1, (t - revealStart) / 1.8);
     for (const c of comets) {
       const total = c.cum[c.cum.length - 1];
@@ -120,6 +158,6 @@ export function createHoloMap({ ground, thaiXZ }) {
     }
   }
 
-  g.userData = { setRoute, update, markers };
+  g.userData = { setRoute, update, markers, simulate, stopSim: endSim, get sim() { return sim; } };
   return g;
 }

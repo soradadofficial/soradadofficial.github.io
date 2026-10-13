@@ -214,7 +214,18 @@ function renderInfo(key) {
 
 // ---------- Builder ----------
 let lastPlanKey = '';
+const simHud = $('#simHud');
 builder = initBuilder({
+  onSimulate: (plan) => {
+    const h = world.holo.userData;
+    if (h.sim) return h.stopSim();
+    h.simulate(plan, clock.elapsedTime, (text, i, n) => {
+      simHud.hidden = text === null;
+      document.body.classList.toggle('simulating', text !== null); // panels step back so the map is visible
+      if (text !== null) { simHud.innerHTML = `<span>ขั้นที่ ${i + 1}/${n}</span><b>${text}</b><button class="btn btn-small btn-ghost" type="button">■ หยุดจำลอง</button>`; simHud.querySelector('button').addEventListener('click', () => h.stopSim()); }
+      const b = document.getElementById('simBtn'); if (b) b.textContent = text === null ? '▶ จำลองเส้นทาง' : '■ หยุดจำลอง';
+    });
+  },
   onChange: (plan) => {
     const k = [plan.dep, plan.arr, plan.ret, ...plan.stops].join(',');
     if (k !== lastPlanKey) { lastPlanKey = k; world.holo.userData.setRoute(plan, clock.elapsedTime); }
@@ -395,9 +406,10 @@ function frame() {
 
   const B = world.BUILDER;
   const narrow = camera.aspect < 0.9;
-  const bPos = narrow ? B.posNarrow : B.pos;
-  const bLook = narrow ? B.lookNarrow : B.look;
-  const drift = new THREE.Vector3(Math.sin(time * 0.12) * 18, 0, Math.cos(time * 0.1) * 14);
+  const simCam = world.holo.userData.sim?.started ? world.holo.userData.sim : null; // route simulation follows its marker
+  const bPos = simCam ? simCam.pos : narrow ? B.posNarrow : B.pos;
+  const bLook = simCam ? simCam.look : narrow ? B.lookNarrow : B.look;
+  const drift = simCam ? new THREE.Vector3() : new THREE.Vector3(Math.sin(time * 0.12) * 18, 0, Math.cos(time * 0.1) * 14);
 
   pos.copy(storyPose.pos).lerp(exploreCur.pos, we).lerp(bPos.clone().add(drift), wb);
   look.copy(storyPose.look).lerp(exploreCur.look, we).lerp(bLook, wb);
