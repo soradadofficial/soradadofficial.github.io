@@ -387,8 +387,8 @@ function frame() {
     camPos.copy(camera.position); camLook.copy(controls.target);
   } else {
     if (first || instant) { camPos.copy(pos); camLook.copy(look); first = false; }
-    camPos.lerp(pos, 1 - Math.exp(-dt * 8));
-    camLook.lerp(look, 1 - Math.exp(-dt * 8));
+    camPos.lerp(pos, 1 - Math.exp(-dt * 4.5)); // glide: quick scrolls do not jerk the view
+    camLook.lerp(look, 1 - Math.exp(-dt * 4.5));
     camera.position.copy(camPos);
     camera.lookAt(camLook);
   }

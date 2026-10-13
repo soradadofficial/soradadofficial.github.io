@@ -579,6 +579,9 @@ export function createWorld() {
   // ---------- story camera ----------
   const ctx = { P: V(0, 0, 0), PF: V(1, 0, 0), B: V(0, 0, 0), BF: V(0, 0, -1) };
   const PR = (back, upY, side) => () => { const r = V(-ctx.PF.z, 0, ctx.PF.x); return ctx.P.clone().addScaledVector(ctx.PF, -back).add(V(0, upY, 0)).addScaledVector(r, side); };
+  // follow the coach from a fixed compass direction: it moves fast along a winding real road, and a
+  // camera that turned with every bend would spin
+  const BW = (dir, back, upY, ahead = null) => () => (ahead === null ? ctx.B.clone().addScaledVector(dir, -back).add(V(0, upY, 0)) : ctx.B.clone().addScaledVector(dir, ahead).add(V(0, upY, 0)));
   const BR = (back, upY, side) => () => { const r = V(-ctx.BF.z, 0, ctx.BF.x); return ctx.B.clone().addScaledVector(ctx.BF, -back).add(V(0, upY, 0)).addScaledVector(r, side); };
   const A = (v) => () => v.clone();
   const mixF = (a, b, k) => () => a().lerp(b(), k);
@@ -598,8 +601,17 @@ export function createWorld() {
   const fushiEye = fushiPath.at(0.02).add(V(0, 0.065, 0));
   const fushiLook = fushiPath.at(0.32).add(V(0, 0.05, 0));
   const nrtGateEye = nw(1.5, 1.0, 1.7), nrtGateLook = nw(0.4, 2.0, 0.12);
-  const guideEye = nw(0.6, 3.8, 0), guideLook = guidePos.clone().add(V(0, 0.016, 0));
-  guideEye.y = guidePos.y + 0.045;
+  // guide close-up from the terminal side, looking the way the camera is already travelling
+  const guideEye = nw(0.6, 3.5, 0), guideLook = guidePos.clone().add(V(0, 0.016, 0));
+  guideEye.y = guidePos.y + 0.05;
+  // Tokyo is entered along the bus's own heading; Hakone and the ryokan are seen from across the lake
+  const tokIn = towerPos.clone().sub(nrtC).setY(0).normalize();
+  const hakEye = V(toriiPos.x, toriiPos.y, toriiPos.z).addScaledVector(toLake, -7).add(V(-toLake.z * 2, 5.5, toLake.x * 2));
+  const ryoEye = ryokanPos.clone().addScaledVector(toLake, -2.2).add(V(-toLake.z * 1.0, 1.0, toLake.x * 1.0));
+  const hakIn = V(toriiPos.x - towerPos.x, 0, toriiPos.z - towerPos.z).normalize();
+  // through the torii from the shore, out over the lake
+  const toriiShore = V(toriiPos.x, 0, toriiPos.z).addScaledVector(toLake, -0.55);
+  toriiShore.y = Math.max(ground(toriiShore.x, toriiShore.z) + 0.1, toriiPos.y + 0.16);
   const KEYS = [
     { t: 0.0, pos: A(bw(-4.6, -2.4, 1.3)), look: A(bw(-1.0, 1.1, 0.1)) },
     { t: 0.045, pos: PR(1.7, 0.32, -1.25), look: PR(-0.3, 0.06, 0) },
@@ -609,26 +621,27 @@ export function createWorld() {
     { t: 0.26, pos: PR(9, 3.5, -7), look: PR(-8, -1, 0) },
     { t: 0.33, pos: A(routeMid.clone().add(V(-150, 2100, 1650))), look: A(routeMid.clone().add(V(60, 0, -80))) },
     { t: 0.4, pos: PR(6, 2.2, 4.5), look: PR(-60, -12, 0) },
+    // From here on the camera keeps one heading family per scene (chase from behind on the same
+    // side, landmarks approached from the direction of travel) so nothing whips round.
     { t: 0.455, pos: PR(3.6, 1.1, -2.6), look: PR(-14, -3, 0) },
-    { t: 0.5, pos: A(nw(-NRT_LEN / 2 + 0.3, -1.25, 0.55)), look: PR(0, 0, 0) },
-    { t: 0.527, pos: PR(1.9, 0.33, 1.35), look: PR(-0.6, 0.02, 0) },
+    { t: 0.5, pos: PR(2.8, 0.75, -1.9), look: PR(-6, -0.4, 0) },
+    { t: 0.527, pos: A(nw(1.0, 1.7, 0.75)), look: PR(0, 0, 0) }, // fixed camera on the apron tracks the roll-out and taxi
     { t: 0.556, pos: A(nrtGateEye), look: A(nrtGateLook) },
-    { t: 0.572, pos: A(nw(1.1, 3.0, 1.7)), look: A(guideLook) }, // over the terminal roof, not through it
-    { t: 0.588, pos: A(guideEye), look: A(guideLook) },
-    { t: 0.603, pos: BR(0.5, 0.2, 0.32), look: BR(-0.4, 0.03, 0) },
-    { t: 0.622, pos: BR(0.7, 0.26, -0.4), look: BR(-1.3, 0.04, 0) },
-    { t: 0.645, pos: BR(1.9, 1.3, -0.5), look: BR(-3, 0, 0) },
-    { t: 0.675, pos: A(towerPos.clone().add(V(6.5, 3.6, 8))), look: A(towerPos.clone().add(V(0, 3.2, 0))) },
-    { t: 0.705, pos: A(towerPos.clone().add(V(-7.5, 6.8, 4.5))), look: A(towerPos.clone().add(V(0, 2.2, 0))) },
-    { t: 0.737, pos: BR(-2.6, 2.2, 1.6), look: BR(0, 0.1, 0) },
-    { t: 0.765, pos: A(ashiTop.clone().add(V(7, 8, 10))), look: A(ashiTop.clone().add(V(0, 0, -1))) },
-    { t: 0.795, pos: A(toriiEye), look: A(V(toriiPos.x, toriiPos.y + 0.12, toriiPos.z).addScaledVector(toLake, -0.2)) },
-    { t: 0.818, pos: A(ryokan.localToWorld(V(70, 52, 55))), look: A(ryokan.localToWorld(V(0, 0, 0))) },
-    { t: 0.85, pos: BR(2.2, 1.8, -1.4), look: mixF(BR(-3, 0, 0), A(fujiLook), 0.6) },
-    { t: 0.878, pos: A(pagodaEye), look: A(pagodaLook) },
-    { t: 0.905, pos: A(LL(138.80, 35.545, 0).setY(H(toX(138.80), toZ(35.545)) + 1.6)), look: A(fujiLook) },
-    { t: 0.935, pos: BR(1.5, 1.1, 0.9), look: A(hotelLook) },
-    { t: 0.965, pos: A(hotel.localToWorld(V(-30, 40, -55))), look: A(hotel.localToWorld(V(0, 16, 0))) },
+    { t: 0.585, pos: A(nw(0.95, 2.3, 1.15)), look: A(guideLook) }, // over the terminal roof to the guide and group at the kerb
+    { t: 0.61, pos: A(nw(0.95, 3.0, 1.0)), look: A(nw(0.4, 4.9, 0)) }, // coach pulls out below; no chase round the airport loop
+    { t: 0.635, pos: BW(tokIn, 3.2, 1.9), look: BW(tokIn, 0, 0.1, 2) },
+    { t: 0.655, pos: BW(tokIn, 2.4, 1.3), look: mixF(BW(tokIn, 0, 0.1, 2), A(towerPos.clone().add(V(0, 3, 0))), 0.5) },
+    { t: 0.68, pos: A(towerPos.clone().addScaledVector(tokIn, -9.5).add(V(0, 3.6, 0))), look: A(towerPos.clone().add(V(0, 3.2, 0))) },
+    { t: 0.71, pos: A(towerPos.clone().addScaledVector(tokIn, -8).add(V(-tokIn.z * 4.5, 5.6, tokIn.x * 4.5))), look: A(towerPos.clone().add(V(0, 2.6, 0))) },
+    { t: 0.74, pos: BW(hakIn, 3.4, 2.2), look: BW(hakIn, 0, 0.1, 2.5) },
+    { t: 0.772, pos: A(hakEye), look: A(V(toriiPos.x, toriiPos.y, toriiPos.z)) },
+    { t: 0.8, pos: A(toriiShore), look: A(V(toriiPos.x, toriiPos.y + 0.1, toriiPos.z).addScaledVector(toLake, 1.5)) },
+    { t: 0.855, pos: A(LL(138.92, 35.51, 0).setY(H(toX(138.92), toZ(35.51)) + 3)), look: A(fujiLook) },
+    { t: 0.883, pos: A(pagodaEye), look: A(pagodaLook) },
+    { t: 0.912, pos: A(LL(138.80, 35.545, 0).setY(H(toX(138.80), toZ(35.545)) + 1.6)), look: A(fujiLook) },
+    { t: 0.94, pos: A(hotel.localToWorld(V(30, 60, 150))), look: A(hotel.localToWorld(V(0, 50, 0))) },
+    { t: 0.967, pos: A(hotel.localToWorld(V(6, SUITE.y + 16, 62))), look: A(suiteLook) },
+    { t: 0.986, pos: A(hotel.localToWorld(V(-2.5, SUITE.y + 3.2, 9.5))), look: A(suiteLook) },
     { t: 1.0, pos: A(suiteEye), look: A(suiteLook) },
   ];
   const cr = (p0, p1, p2, p3, s) => {
@@ -643,7 +656,7 @@ export function createWorld() {
   const hb = new THREE.Box3().setFromObject(hotel), pb = new THREE.Box3().setFromObject(pagoda);
   const obstacles = [
     { c: towerPos, r: 2.4, top: towerPos.y + 7.2 },
-    { c: hotel.position, r: Math.max(hb.max.x - hb.min.x, hb.max.z - hb.min.z) * 0.62, top: hb.max.y + 0.15, until: 0.972 },
+    { c: hotel.position, r: Math.max(hb.max.x - hb.min.x, hb.max.z - hb.min.z) * 0.62, top: hb.max.y + 0.15, until: 0.955 },
     { c: pagodaPos, r: Math.max(pb.max.x - pb.min.x, pb.max.z - pb.min.z) * 0.55, top: pb.max.y + 0.1 },
   ];
   function storyPose(t, out) {
@@ -871,7 +884,7 @@ export function createWorld() {
     }
   }
 
-  if (location.search.includes('debug')) window.__world = { V, Raycaster: THREE.Raycaster, pagoda, scene, fujiMesh, terrain: T.mesh, hotel, hotelEye, hotelLook, suiteEye, toriiPos, ashiC, pagodaPos, fujiTop, H, KEYS };
+  if (location.search.includes('debug')) window.__world = { V, Raycaster: THREE.Raycaster, pagoda, scene, fujiMesh, terrain: T.mesh, hotel, hotelEye, hotelLook, suiteEye, toriiPos, ashiC, pagodaPos, fujiTop, H, KEYS, storyPose };
   return {
     scene, plane, life, update, storyPose, storyEnv, storyInfo, groundAt: ground, EXPLORE, BUILDER, holo, makeEnv: makeEnvState,
     japanZone: (p) => p.x > -400 && p.z < 400 && p.y < 40,
