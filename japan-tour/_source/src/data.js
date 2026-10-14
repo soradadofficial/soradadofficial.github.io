@@ -36,10 +36,10 @@ const A = { wifi: 'WiFi ความเร็วสูง', bf: 'อาหาร
 export const STAYS = [
   {
     id: 'tokyo', area: 'โตเกียว', short: 'ตึกสูงวิวทาวเวอร์', name: 'Akane Sky Tokyo', jp: '茜スカイ東京', stars: 5, score: 9.2, lon: 139.745, lat: 35.659,
-    note: 'ห้องกระจกสูงจรดเพดาน วิวโตเกียวทาวเวอร์', text: 'โรงแรมตึกสูงย่านมินาโตะ ทุกห้องเป็นผนังกระจกหันเข้าหาโตเกียวทาวเวอร์ เดินถึงสถานีได้ในไม่กี่นาที เหมาะเป็นคืนแรกหลังลงเครื่อง',
+    note: 'ห้องกระจกสูงจรดเพดาน วิวโตเกียวทาวเวอร์', text: 'โรงแรมตึกสูงย่านมินาโตะ ผนังกระจกจรดเพดานทุกห้อง ห้องฝั่งหน้าตึกหันเข้าหาโตเกียวทาวเวอร์ เดินถึงสถานีได้ในไม่กี่นาที เหมาะเป็นคืนแรกหลังลงเครื่อง',
     highlights: ['วิวโตเกียวทาวเวอร์', 'สกายบาร์ชั้นบนสุด', 'ใกล้สถานีรถไฟ', 'ไกด์ไทยรับที่ล็อบบี้'],
     rooms: [
-      { id: 'tk-deluxe', name: 'Deluxe King', size: 32, bed: 'เตียงคิง 1 เตียง', guests: 2, view: 'วิวเมืองและโตเกียวทาวเวอร์', bathText: 'อ่างอาบน้ำ ผนังกระจกเห็นห้องนอน', price: 5900, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.safe, A.desk] },
+      { id: 'tk-deluxe', name: 'Deluxe King', size: 32, bed: 'เตียงคิง 1 เตียง', guests: 2, view: 'วิวเมืองย่านมินาโตะ', bathText: 'อ่างอาบน้ำ ผนังกระจกเห็นห้องนอน', price: 5900, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.safe, A.desk] },
       { id: 'tk-twin', name: 'Premier Twin', size: 38, bed: 'เตียงเดี่ยว 2 เตียง', guests: 2, view: 'วิวโตเกียวทาวเวอร์เต็มบาน', bathText: 'อ่างอาบน้ำ ผนังกระจก', price: 6800, cancel: C.free, amenities: [A.wifi, A.bf, A.tub, A.tv, A.coffee, A.minibar, A.safe] },
       { id: 'tk-corner', name: 'Corner Suite', size: 68, bed: 'เตียงคิง 1 เตียง + โซฟา', guests: 3, living: true, view: 'วิวมุม 2 ด้าน ทาวเวอร์และอ่าวโตเกียว', bathText: 'อ่างอาบน้ำแยกฝักบัว อ่างล้างหน้าคู่', price: 11500, cancel: C.flex, amenities: [A.wifi, A.bf, A.lounge, A.tub, A.rain, A.tv, A.coffee, A.minibar, A.desk] },
       { id: 'tk-sky', name: 'Sky Suite', size: 110, bed: 'เตียงคิง 1 เตียง + ห้องนั่งเล่น', guests: 4, living: true, view: 'พาโนรามาโตเกียวจากชั้นสูงสุด', bathText: 'อ่างอาบน้ำริมหน้าต่าง เรนชาวเวอร์', price: 19800, cancel: C.strict, amenities: [A.wifi, A.bf, A.lounge, A.butler, A.tub, A.rain, A.tv, A.coffee, A.minibar, A.desk] },

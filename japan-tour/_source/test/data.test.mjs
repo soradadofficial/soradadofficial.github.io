@@ -47,3 +47,37 @@ test('Shinkansen track runs Tokyo to Shin-Osaka without jumps', () => {
   const km = lengthKm(r);
   assert.ok(km > 480 && km < 540, `rail ${km.toFixed(0)} km (real line: 515 km)`);
 });
+
+test('tower floors: units fill every bay once on both sides, with unique room numbers', async () => {
+  const { STAYS } = await import('../src/data.js'), { unitsOn } = await import('../src/stays.js');
+  for (const [id, tower] of [['tokyo', { n: 30, bays: 14, first: 3 }], ['osaka', { n: 17, bays: 12, first: 3 }]]) {
+    const stay = STAYS.find((s) => s.id === id), seen = new Set();
+    for (let k = 0; k < tower.n; k++) {
+      const units = unitsOn(stay, tower, k);
+      for (const side of [-1, 1]) {
+        const row = units.filter((u) => u.side === side);
+        assert.equal(row.reduce((n, u) => n + u.bays, 0), tower.bays, `${id} floor ${k} side ${side} fills the facade`);
+        row.reduce((next, u) => { assert.equal(u.bay, next, `${id} floor ${k}: no gap or overlap`); return next + u.bays; }, 0);
+      }
+      for (const u of units) { assert.ok(u.room, 'every unit has a room type'); assert.ok(!seen.has(u.no), `room number ${u.no} is unique`); seen.add(u.no); }
+    }
+  }
+});
+
+test('tower sample rooms sit where their type is, and the two towers do not share one availability pattern', async () => {
+  const { STAYS } = await import('../src/data.js'), { unitsOn, sampleUnit } = await import('../src/stays.js');
+  const towers = { tokyo: { n: 30, bays: 14, first: 3 }, osaka: { n: 17, bays: 12, first: 3 } };
+  for (const [id, tower] of Object.entries(towers)) {
+    const stay = STAYS.find((s) => s.id === id);
+    for (const r of stay.rooms) {
+      const u = sampleUnit(stay, tower, r.id);
+      assert.ok(u && u.room.id === r.id, `${id}: a sample unit for ${r.id}`);
+    }
+  }
+  const t = STAYS.find((s) => s.id === 'tokyo'), o = STAYS.find((s) => s.id === 'osaka');
+  assert.equal(sampleUnit(t, towers.tokyo, 'tk-deluxe').side, 1, 'Deluxe King units face the city');
+  assert.equal(sampleUnit(t, towers.tokyo, 'tk-twin').side, -1, 'Premier Twin units face Tokyo Tower');
+  const pattern = (stay, tower) => Array.from({ length: 10 }, (_, k) => unitsOn(stay, tower, k).slice(0, 12).map((u) => +u.free).join('')).join('|');
+  assert.notEqual(pattern(t, towers.tokyo), pattern(o, towers.osaka), 'availability differs between the towers');
+});
+

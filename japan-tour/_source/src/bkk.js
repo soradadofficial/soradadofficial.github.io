@@ -33,13 +33,15 @@ const hemi = new THREE.HemisphereLight('#eaf4ff', '#7c8a66', 1.15); scene.add(he
 const sun = new THREE.DirectionalLight('#fff6e6', 2.1);
 sun.position.set(30, 60, 25); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32, near: 1, far: 160 }); sun.shadow.bias = -0.0004;
+sun.shadow.autoUpdate = false; // refreshed every other frame in the loop: half the shadow cost, and a one-frame lag nobody sees
 scene.add(sun, sun.target);
 const controls = new OrbitControls(camera, renderer.domElement);
 Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, minDistance: 0.25, maxDistance: 140, maxPolarAngle: Math.PI * 0.49 });
 
 // Night mode: every lamp is a point in one of these lists (field-local), drawn as additive glows.
 const LAMPS = { road: [], runway: [], taxi: [], green: [], red: [], apron: [], home: [] };
-const uNight = { value: 0 };
+const uNight = { value: 0 }, uTime = { value: 0 };
+const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
 
 // ---------- airfield (same builder as the tour, aircraft at true scale) ----------
 const FREE = [11, 16, 18, 22, 23]; // stands used by the simulated flights
@@ -201,8 +203,7 @@ const flags = []; // [sprite, pole] pairs, faded out when the camera is low
 }
 
 // ---------- night mode ----------
-const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,0.55)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
-const glows = Object.entries({ road: ['#ffc98a', 0.2], runway: ['#ffffff', 0.16], taxi: ['#5a8cff', 0.1], green: ['#4dff9a', 0.1], red: ['#ff4a3d', 0.14], apron: ['#fff1cf', 0.75], home: ['#ffb870', 0.16] }).map(([k, [color, size]]) => {
+const glows = Object.entries({ road: ['#ffc98a', 0.12], runway: ['#ffffff', 0.08], taxi: ['#5a8cff', 0.05], green: ['#4dff9a', 0.05], red: ['#ff4a3d', 0.07], apron: ['#fff1cf', 0.6], home: ['#ffb870', 0.1] }).map(([k, [color, size]]) => {
   const pts = new THREE.Points(new THREE.BufferGeometry().setFromPoints(LAMPS[k]), new THREE.PointsMaterial({ color, size, map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: false }));
   pts.frustumCulled = false; pts.visible = false; pts.userData.size = size; field.add(pts); return pts;
 });
@@ -327,6 +328,77 @@ const planes = FLIGHTS.map((f, i) => {
   const walk = curve([[s.x + nose.x * 0.12, s.z + nose.z * 0.12, 0.17], onBar ? [complex.x, s.z, 0.17] : [s.x, legZ, 0.17], [complex.x, legZ, 0.17], [complex.x, complex.z, 0.17], [complex.x + 1.6, complex.z, 0.17], [complex.x + 2.13, complex.z, 0.22], [complex.x + 2.75, complex.z, 0.1]], 0.03);
   return { f, ty, gy, N, SP, stop, g, s, bay, bridge, hose, pit, veh, walk, off: i * (CYCLE / FLIGHTS.length) + 30, phase: 'park', pt: 0, paths: { arr, split, push, out, tko } };
 });
+// ---------- airspace: the approach and departure corridors, traffic overhead, trails, clouds ----------
+const air = new THREE.Group(); field.add(air);
+function corridor(path, d0, d1, color) { // a ribbon along the flight path with a flowing dash, and a faint curtain down to the ground
+  const n = 90, W = 120 * K, // drawn wider than a real corridor so it reads from far away
+     pos = [], flow = [], idx = [], a = V(0, 0, 0), t = V(0, 0, 0), hoops = [];
+  for (let i = 0; i <= n; i++) {
+    const d = d0 + (d1 - d0) * i / n, u = (d - d0) / (1000 * K); path.at(d, a); path.tangent(d, t, 0.2);
+    const l = Math.hypot(t.x, t.z) || 1, sx = -t.z / l * W, sz = t.x / l * W;
+    pos.push(a.x + sx, a.y, a.z + sz, a.x - sx, a.y, a.z - sz, a.x, a.y, a.z, a.x, 0.02, a.z); flow.push(u, 0, u, 1, u, 2, u, 3);
+    if (i) { const q = (i - 1) * 4; idx.push(q, q + 4, q + 1, q + 1, q + 4, q + 5, q + 2, q + 6, q + 3, q + 3, q + 6, q + 7); }
+    if (i % 9 === 4 && a.y > 0.3) { const h = 0.3, x0 = a.x + sx * 2.4, z0 = a.z + sz * 2.4, x1 = a.x - sx * 2.4, z1 = a.z - sz * 2.4; // gates along the way
+      hoops.push(V(x0, a.y - h, z0), V(x1, a.y - h, z1), V(x1, a.y - h, z1), V(x1, a.y + h, z1), V(x1, a.y + h, z1), V(x0, a.y + h, z0), V(x0, a.y + h, z0), V(x0, a.y - h, z0)); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('flow', new THREE.Float32BufferAttribute(flow, 2)); g.setIndex(idx);
+  const m = new THREE.MeshBasicMaterial({ color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false, toneMapped: false });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = uTime;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute vec2 flow; varying vec2 vFlow;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvFlow = flow;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vFlow; uniform float uTime;').replace('#include <color_fragment>', `#include <color_fragment>
+      if (vFlow.y < 1.5) diffuseColor.a *= (0.22 + 0.78 * smoothstep(0.3, 0.5, fract(vFlow.x * 1.1 - uTime * 0.4)) * smoothstep(1.0, 0.8, fract(vFlow.x * 1.1 - uTime * 0.4))) * (1.0 - abs(vFlow.y - 0.5) * 1.3);
+      else diffuseColor.a *= 0.2 * (3.0 - vFlow.y);`);
+  };
+  const mesh = new THREE.Mesh(g, m); mesh.frustumCulled = false;
+  air.add(mesh, new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(hoops), new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false })));
+}
+corridor(planes[0].paths.arr, 0, planes[0].paths.split[0], '#63d2ff');   // final approach to 02L
+corridor(planes[0].paths.tko, planes[0].paths.tko.length * 0.12, planes[0].paths.tko.length, '#ffc46b'); // climb-out from 02R
+// Traffic passing overhead on straight tracks: one glow and one fading streak each. Positions are for effect, not real airways.
+const OVER = Array.from({ length: 7 }, (_, i) => { const a = i * 2.4 + 0.7, r = 95; return { ox: 5 + Math.cos(a) * r, oz: -5 + Math.sin(a) * r, dx: -Math.cos(a + 0.5), dz: -Math.sin(a + 0.5), y: 12.5 + (i % 3) * 1.6, sp: 2.2 + (i % 4) * 0.45, t0: i * 17 }; });
+const overPos = new Float32Array(OVER.length * 3), streakPos = new Float32Array(OVER.length * 6);
+const overPts = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ color: '#ffffff', size: 0.55, map: glowTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+overPts.geometry.setAttribute('position', new THREE.BufferAttribute(overPos, 3)); overPts.frustumCulled = false;
+const streaks = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+streaks.geometry.setAttribute('position', new THREE.BufferAttribute(streakPos, 3)); streaks.geometry.setAttribute('color', new THREE.Float32BufferAttribute(OVER.flatMap(() => [0.85, 0.92, 1, 0, 0, 0]), 3)); streaks.frustumCulled = false;
+air.add(overPts, streaks);
+// A fading trail behind each simulated aircraft while it is in the air: a fixed ring of points, moved in place.
+const TRAIL = 40;
+for (const p of planes) {
+  p.trail = new Float32Array(TRAIL * 3); p.trailOn = false;
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p.trail, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(Array.from({ length: TRAIL }, (_, i) => { const f = (1 - i / (TRAIL - 1)) ** 1.6; return [f, f, f]; }).flat(), 3));
+  p.trailLine = new THREE.Line(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); p.trailLine.frustumCulled = false; air.add(p.trailLine);
+  p.lamp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#fff3d0', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); p.lamp.position.set(20.5, -1, 0); p.lamp.scale.setScalar(9); p.g.add(p.lamp); // landing light
+  p.puff = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: '#d8dce2', transparent: true, depthWrite: false, opacity: 0 })); p.puff.visible = false; p.puffT = 9; ops.add(p.puff); // tyre smoke at touchdown
+}
+// soft cloud layer, seen from below and from the side; it clears when the camera climbs above it
+const cloudMat = new THREE.SpriteMaterial({ map: glowTex, color: '#ffffff', transparent: true, opacity: 0.2, depthWrite: false, fog: false });
+const clouds = Array.from({ length: 16 }, (_, i) => { const c = new THREE.Sprite(cloudMat); c.position.set(-70 + (i * 37) % 150, 9.5 + (i * 7) % 5, -75 + (i * 53) % 140); c.scale.set(16 + (i * 5) % 14, 4.5 + (i * 3) % 4, 1); air.add(c); return c; });
+function stepAir(dt, sim) { // called once a frame; writes into existing buffers only
+  uTime.value += dt;
+  OVER.forEach((o, i) => {
+    const d = ((uTime.value + o.t0) * o.sp) % 190, x = o.ox + o.dx * d, z = o.oz + o.dz * d;
+    overPos[i * 3] = x; overPos[i * 3 + 1] = o.y; overPos[i * 3 + 2] = z;
+    streakPos[i * 6] = x; streakPos[i * 6 + 1] = o.y; streakPos[i * 6 + 2] = z; streakPos[i * 6 + 3] = x - o.dx * 7; streakPos[i * 6 + 4] = o.y; streakPos[i * 6 + 5] = z - o.dz * 7;
+  });
+  overPts.geometry.attributes.position.needsUpdate = streaks.geometry.attributes.position.needsUpdate = true;
+  for (const p of planes) {
+    const pos = p.g.position, t = p.trail, flying = p.g.visible && pos.y > p.gy + 0.04;
+    if (flying) {
+      if (!p.trailOn) { for (let i = 0; i < TRAIL; i++) { t[i * 3] = pos.x; t[i * 3 + 1] = pos.y; t[i * 3 + 2] = pos.z; } p.trailOn = true; }
+      if (Math.hypot(pos.x - t[3], pos.y - t[4], pos.z - t[5]) > 0.22) t.copyWithin(3, 0, (TRAIL - 1) * 3); // a new point every 0.22 units flown
+      t[0] = pos.x; t[1] = pos.y; t[2] = pos.z; p.trailLine.geometry.attributes.position.needsUpdate = true;
+    } else if (p.trailOn) { p.trailOn = false; }
+    p.trailLine.visible = flying;
+    const lit = ['approach', 'rollout', 'takeoff'].includes(p.phase); p.lamp.visible = lit || p.phase === 'taxiIn' || p.phase === 'taxiOut'; p.lamp.material.opacity = (lit ? 0.55 : 0.2) + 0.45 * night; p.lamp.scale.setScalar(lit ? 9 : 5);
+    if (p.puffT < 1.6) { p.puffT += sim; const k = p.puffT / 1.6; p.puff.scale.setScalar(0.12 + k * 0.5); p.puff.material.opacity = 0.5 * (1 - k); p.puff.visible = k < 1; }
+  }
+  cloudMat.opacity = 0.2 * (1 - THREE.MathUtils.smoothstep(camera.position.y, 7, 12)) * (1 - 0.55 * night);
+  for (const c of clouds) { c.position.x += dt * 0.12; if (c.position.x > 82) c.position.x = -72; }
+}
+
 // hydrant main: fuel farm -> under the apron -> each simulated stand (schematic route)
 const hydrant = new THREE.Group(); ops.add(hydrant);
 {
@@ -364,6 +436,7 @@ function stepOps(T) {
     const was = p.phase;
     for (const [n, dur] of PH) { if (t < dur) { name = n; p.pt = t; p.pu = t / dur; break; } t -= dur; }
     p.phase = name;
+    if (was === 'approach' && name === 'rollout' && p.puff) { p.puffT = 0; p.puff.position.set(p.g.position.x, 0.05, p.g.position.z); }
     if (counting && was !== name) { if (name === 'rollout') { tally.landed++; tally.pax += p.ty.pax; } else if (name === 'away') { tally.departed++; tally.pax += p.ty.pax; } }
     const { arr, split, push, out, tko } = p.paths, u = p.pu;
     p.g.visible = name !== 'away';
@@ -418,6 +491,7 @@ const PARTS = [
   { id: 'twr', name: 'หอบังคับการ', eye: [14.9, 1.3, -9.9], at: [13.24, 0.55, -7.99], title: 'หอบังคับการบิน', text: 'ตั้งอยู่ฝั่งผู้โดยสารขาเข้าเมือง ทางเหนือค่อนตะวันตกของอาคารหลัก เคยเป็นหอบังคับการบินแบบตั้งอิสระที่สูงที่สุดในโลกช่วงปี 2006–2014', facts: [['ความสูง', '132.2 ม.']], src: 'Wikipedia' },
   { id: 'sat', name: 'SAT-1', eye: [1.2, 1.5, -2.4], at: [3.9, 0.1, -6.6], title: 'อาคารเทียบเครื่องบินรองหลังที่ 1', text: 'อาคารกลางสนามทางใต้ของอาคารหลัก เชื่อมกันด้วยรถไฟฟ้าไร้คนขับในอุโมงค์ใต้ลานจอด เพิ่มความจุของสนามบินเป็น 60 ล้านคนต่อปี', facts: [['พื้นที่', '251,400 ตร.ม.'], ['หลุมจอด', '28 (8 หลุมรองรับ A380/747-8)'], ['ความยาว', 'ราว 1,019 ม.']], src: 'Wikipedia · OpenStreetMap' },
   { id: 'soil', name: 'ชั้นดิน', eye: [5, 0.5, 81.5], at: [5, -3.5, 68], title: 'หน้าตัดชั้นดินใต้สนามบิน', text: 'สนามบินสร้างบนหนองงูเห่าเดิม ซึ่งเป็นดินเหนียวอ่อนมากหนาราว 8 ม. จึงต้องปรับปรุงดินก่อนสร้างทางวิ่ง: ปูทรายหนา 1.5 ม. ระหว่างแผ่นใยสังเคราะห์สองชั้น ปักแผ่นระบายน้ำแนวดิ่ง (PVD) แล้วถมดินกดทับไว้ 6–11 เดือนให้ดินทรุดตัวล่วงหน้า อาคารผู้โดยสารตั้งบนเสาเข็มที่ปลายหยั่งถึงชั้นทราย', facts: [['ดินเหนียวอ่อนมาก', 'ลึก 2–10 ม. · ความชื้น 92–95%'], ['PVD', 'ยาว 10 ม. ระยะ 1 ม. ตารางสี่เหลี่ยม'], ['ดินถมกดทับ', 'สูง 3.8–4.2 ม. นาน 6–11 เดือน'], ['ทางวิ่งเส้นที่ 3', 'PVD รวมกว่า 8,000 กม. ทรุดตัวราว 0.70 ม.'], ['เสาเข็มอาคาร', '25,437 ต้น ปลาย −26 ถึง −42 ม.'], ['เสาหลังคาแต่ละต้น', 'รับน้ำหนักถึง 15,000 ตัน'], ['ลานจอด', 'แผ่นคอนกรีตหนา 450 มม.'], ['คันกั้นน้ำ', 'ยาว 23.5 กม. สูง 3.5 ม.'], ['บ่อพักน้ำ', '6 บ่อ ลึกราว 2 ม.'], ['มาตราส่วนแนวดิ่ง', 'ขยายราว 19 เท่า']], tag: 'แผนภาพ', src: 'Fellenius 2009 (ASCE) · SEAGS–AGSSEA Journal · AIP ประเทศไทย · JSCE · รายการเต็มใน research/bkk-subsoil-spec.md · บางแหล่งระบุดินเหนียวแข็งลึกถึง 30 ม.' },
+  { id: 'air', name: 'น่านฟ้า', eye: [3, 11, -70], at: [3, 4.2, -14], layer: 'ops', title: 'น่านฟ้าเหนือสนามบิน', text: 'แถบสีฟ้าคือแนวร่อนลงสู่ทางวิ่ง 02L แถบสีเหลืองคือแนวไต่ขึ้นจากทางวิ่ง 02R ช่องสี่เหลี่ยมคือประตูนำทางตามแนวบิน เส้นแสงด้านบนคือเครื่องบินที่บินผ่าน ทั้งหมดเป็นภาพจำลอง: ในแบบจำลองแนวบินชันกว่าจริงเพื่อให้เห็นในกรอบเดียว และเส้นทางบินผ่านไม่ใช่เส้นทางบินจริง', facts: [['มุมร่อนจริง', '3° (ไฟ PAPI อยู่ด้านซ้าย)'], ['ระยะห่างขาเข้า', '4–5 ไมล์ทะเล ราว 96–120 วินาที'], ['ระยะห่างขาออก', '2 นาทีหลังเครื่องขนาดหนัก'], ['มุมไต่เริ่มต้น', 'ราว 8° (787)'], ['ความจุที่ประกาศ', '85 เที่ยวบิน/ชม.'], ['ปี 2025', '370,823 เที่ยวบิน ราว 1,016 เที่ยว/วัน']], tag: 'แนวบินเป็นภาพจำลอง', src: 'AIP ประเทศไทย · Skybrary · CAAT · รายการเต็มใน research/bkk-deep-dive-spec.md' },
   { id: 'apm', name: 'รถไฟฟ้า APM', ...view(PLACES.apmA.clone().lerp(PLACES.apmB, 0.5), 3.2), layer: 'ops', title: 'รถไฟฟ้าไร้คนขับไป SAT-1', text: 'ผู้โดยสารที่ขึ้นเครื่องที่อาคาร SAT-1 นั่งรถไฟฟ้าไร้คนขับลอดอุโมงค์ใต้ลานจอดจากอาคารหลัก เส้นประสีเขียวคือแนวอุโมงค์ ขบวนรถในแบบจำลองวาดใหญ่กว่าจริงและวิ่งบนผิวดินเพื่อให้มองเห็น', facts: [['ระยะทาง', '1.02 กม.'], ['เวลาเดินทาง', 'ราว 2 นาที'], ['ความจุ', '210 คน/ขบวน · 6 ขบวน ขบวนละ 2 ตู้'], ['อุโมงค์', 'ยาวราว 1 กม. 8 ช่องทาง (รถไฟฟ้า 4)']], tag: 'ขบวนรถเป็นแบบจำลอง', src: 'AOT · Wikipedia · รายการเต็มใน research/bkk-deep-dive-spec.md' },
   { id: 'fuel', name: 'คลังน้ำมัน', ...view(PLACES.fuel), layer: 'ops', title: 'คลังน้ำมันอากาศยานและสถานีสูบจ่าย', text: 'น้ำมัน Jet A-1 เก็บในถังทางตะวันออกของสนามบิน แล้วสูบเข้าท่อใต้ลานจอดไปยังหัวจ่ายที่หลุมจอด รถจ่ายน้ำมันจึงไม่ต้องบรรทุกน้ำมันเอง เส้นประสีเหลืองคือแนวท่อแบบแผนภาพ', facts: [['ถังเก็บ', '6 ถัง ถังละราว 15,000 ลบ.ม.'], ['หัวจ่ายที่หลุมจอด', '119 จุด'], ['รถจ่ายน้ำมัน', '42 คัน · รุ่นใหม่จ่าย 3,400 ล./นาที']], tag: 'แนวท่อเป็นแผนภาพ', src: 'AIP ประเทศไทย · BAFS · รายการเต็มใน research/bkk-deep-dive-spec.md' },
   { id: 'hangar', name: 'โรงซ่อม', ...view(PLACES.hangar), title: 'โรงซ่อมอากาศยาน', text: 'โรงซ่อมอากาศยานของการบินไทยทางเหนือของสนามบิน โครงหลังคาช่วงกว้างไม่มีเสากลาง รองรับเครื่องบินลำตัวกว้างขนาดใหญ่ได้พร้อมกันหลายลำ', facts: [['ช่วงกว้างหลังคา', '270 ม.'], ['พื้นที่', '24,300 ตร.ม.'], ['ช่องจอด', 'A380 ได้ 3 ลำ']], src: 'AIP ประเทศไทย · รายการเต็มใน research/bkk-deep-dive-spec.md' },
@@ -430,9 +504,11 @@ function setLayer(id) {
   layer = id;
   document.querySelectorAll('#layers button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.id === id));
   for (const m of skins) { m.opacity = id === 'structure' ? 0.1 : 1; m.depthWrite = id !== 'structure'; }
-  hydrant.visible = id !== 'structure';
+  hydrant.visible = air.visible = id !== 'structure';
 }
+let part = ''; // the view last chosen; the airspace view hides the map flags
 function goto(id) {
+  part = id;
   const p = PARTS.find((x) => x.id === id);
   document.querySelectorAll('#parts button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.id === id));
   if (p.layer) setLayer(p.layer);
@@ -451,7 +527,7 @@ let playing = !matchMedia('(prefers-reduced-motion: reduce)').matches; // starts
 $('#play').setAttribute('aria-pressed', playing); $('#play').textContent = playing ? 'หยุดชั่วคราว' : 'เล่นต่อ';
 $('#early').addEventListener('click', () => { const p = planes[focusIdx]; if (canHurry(p)) { hurry(p); hud(); } });
 $('#board').innerHTML = FLIGHTS.map((f, i) => `<tr data-i="${i}"><td>${f.no}</td><td class="rt"></td><td class="st"></td><td><button type="button" data-follow="${i}" aria-label="ตามดูเที่ยวบิน ${f.no}">ตามดู</button></td></tr>`).join('');
-document.querySelectorAll('[data-follow]').forEach((b) => b.addEventListener('click', () => { focusIdx = +b.dataset.follow; focus = planes[focusIdx]; followFresh = true; gsap.killTweensOf(camera.position); gsap.killTweensOf(controls.target); setLayer('ops'); document.querySelectorAll('#parts button').forEach((x) => x.setAttribute('aria-pressed', 'false')); }));
+document.querySelectorAll('[data-follow]').forEach((b) => b.addEventListener('click', () => { part = ''; focusIdx = +b.dataset.follow; focus = planes[focusIdx]; followFresh = true; gsap.killTweensOf(camera.position); gsap.killTweensOf(controls.target); setLayer('ops'); document.querySelectorAll('#parts button').forEach((x) => x.setAttribute('aria-pressed', 'false')); }));
 [1, 4, 12].forEach((v) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = v + '×'; b.setAttribute('aria-pressed', v === 1); b.addEventListener('click', () => { speed = v; document.querySelectorAll('#speed button').forEach((x) => x.setAttribute('aria-pressed', x === b)); }); $('#speed').append(b); });
 $('#play').addEventListener('click', (e) => { playing = !playing; e.currentTarget.setAttribute('aria-pressed', playing); e.currentTarget.textContent = playing ? 'หยุดชั่วคราว' : 'เล่นต่อ'; });
 function hud() {
@@ -470,7 +546,8 @@ function hud() {
   $('#busy').value = planes.reduce((n, q) => n + (q.phase === 'park' ? STEPS.filter(([, a, b]) => q.pt / M >= a && q.pt / M < b).length : 0), 0);
   const k = p.ty.turn / TURN, fmt = (v) => String(Math.round(v * 10) / 10); // the narrowbody's steps are the same schedule scaled to its estimated turnaround
   $('#typeNote').textContent = `${p.ty.name} · ${p.ty.pax} ที่นั่ง · ${p.f.wide ? 'ลำดับเวลาอ้างอิง A350-900 (62 นาที)' : 'ลำดับเวลาโดยประมาณ (40 นาที)'}`;
-  $('#steps').innerHTML = STEPS.map(([n, a, b]) => `<li class="${s >= b ? 'done' : s >= a ? 'now' : ''}"><i></i>${n}<small>${fmt(a * k)}–${fmt(b * k)} นาที</small></li>`).join('');
+  const html = STEPS.map(([n, a, b]) => `<li class="${s >= b ? 'done' : s >= a ? 'now' : ''}"><i></i>${n}<small>${fmt(a * k)}–${fmt(b * k)} นาที</small></li>`).join('');
+  if (html !== lastSteps) $('#steps').innerHTML = lastSteps = html; // touch the page only when a step changes state
   const mm = Math.floor(T / 60) % 60, hh = (6 + Math.floor(T / 3600)) % 24;
   $('#clock').textContent = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
@@ -483,9 +560,10 @@ const fit = () => { // on phones the panels fill the lower half, so the view cen
 };
 addEventListener('resize', fit); fit();
 const clock = new THREE.Clock();
-let hudT = 0;
+let hudT = 0, frameNo = 0, slow = 0, lastSteps = '';
+const chase = V(0, 0, 0), CHASE = V(-0.55, 0.32, 0.7);
 function frame() {
-  const dt = Math.min(0.05, clock.getDelta());
+  const raw = clock.getDelta(), dt = Math.min(0.05, raw);
   const sim = playing ? dt * speed : 0; // one simulated second per real second at 1x
   T += sim;
   // fuel: each aircraft's whole uplift is delivered over the 23.8 fuelling minutes of the schedule
@@ -494,13 +572,17 @@ function frame() {
   const rolling = planes.some((q) => q.phase === 'takeoff' && q.g.position.y < q.gy + 0.3 || q.phase === 'taxiOut' && q.pu > 0.97);
   for (const p of planes) { const z = p.g.position.z; p.held = rolling && p.phase === 'taxiIn' && z > dep.z - 0.9 && z < dep.z - 0.4 && Math.abs(p.g.position.x - dep.x) < dep.len / 2; if (p.held) p.off -= sim; }
   counting = sim > 0; stepOps(T); counting = false;
-  if (night > 0.02) { const far = THREE.MathUtils.clamp(camera.position.distanceTo(controls.target) / 7, 1, 5); for (const g of glows) g.material.size = g.userData.size * far; } // lamps stay visible from far away
+  stepAir(dt, sim);
+  if (++frameNo & 1) sun.shadow.needsUpdate = true;
+  // adaptive sharpness: if frames stay slow for two seconds, render fewer pixels (never below 1x); it does not step back up
+  slow = raw > 0.022 ? slow + raw : 0; if (slow > 2 && renderer.getPixelRatio() > 1) { renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() - 0.25)); slow = 0; }
+  if (night > 0.02) { const far = THREE.MathUtils.clamp(camera.position.distanceTo(controls.target) / 3.5, 1, 9); for (const g of glows) g.material.size = g.userData.size * far; } // lamps stay visible from far away
   // map labels: shown from above, gone in low close-ups
-  for (const [sp, pole] of flags) { const o = THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
+  for (const [sp, pole] of flags) { const o = part === 'air' ? 0 : THREE.MathUtils.smoothstep(camera.position.y, 2.5, 6); sp.material.opacity = pole.material.opacity = o; sp.visible = pole.visible = o > 0.02; }
   if (focus && focus.g.visible) { // chase the chosen flight; the user can still orbit and zoom around it
     focus.g.getWorldPosition(tmp); const d = camera.position.distanceTo(tmp);
-    camera.position.add(tmp.clone().sub(controls.target)); controls.target.copy(tmp);
-    if (d > 2.2 || followFresh) { camera.position.lerp(tmp.clone().add(V(-0.55, 0.32, 0.7)), followFresh ? 1 : 0.05); followFresh = false; }
+    camera.position.add(chase.copy(tmp).sub(controls.target)); controls.target.copy(tmp);
+    if (d > 2.2 || followFresh) { camera.position.lerp(chase.copy(tmp).add(CHASE), followFresh ? 1 : 1 - Math.pow(0.05, dt * 3)); followFresh = false; } // eased by time, not by frame count
   }
   controls.update();
   sky.position.copy(camera.position);
@@ -509,7 +591,12 @@ function frame() {
   requestAnimationFrame(frame);
 }
 camera.position.copy(field.localToWorld(V(-30, 40, 24))); controls.target.copy(field.localToWorld(V(6, 0, -7)));
-goto('all'); hud(); frame();
-if (location.search.includes('debug')) window.__bkk = { applyNight, planes, field, camera, controls, goto, setLayer, tally, cycle: CYCLE, dep: { x: dep.x / K, z: dep.z / K, len: dep.len / K }, parkAt: PH.slice(0, 3).reduce((n, q) => n + q[1], 0), set T(v) { T = v; }, get T() { return T; },
+goto('all'); hud();
+Promise.all([field.userData.ready, gseReady]).then(async () => {
+  const hidden = [...glows, pools].filter((o) => !o.visible); for (const o of hidden) o.visible = true;
+  stepOps(0); await renderer.compileAsync(scene, camera);
+  for (const o of hidden) o.visible = false;
+}).finally(frame);
+if (location.search.includes('debug')) window.__bkk = { renderer, applyNight, planes, field, camera, controls, goto, setLayer, tally, cycle: CYCLE, dep: { x: dep.x / K, z: dep.z / K, len: dep.len / K }, parkAt: PH.slice(0, 3).reduce((n, q) => n + q[1], 0), set T(v) { T = v; }, get T() { return T; },
   // test hook: where every aircraft is at a given time, in metres on the airfield
   at(t) { stepOps(t); const r = planes.map((p) => ({ no: p.f.no, phase: p.phase, shown: p.g.visible, x: p.g.position.x / K, y: p.g.position.y / K, z: p.g.position.z / K })); stepOps(T); return r; } };
