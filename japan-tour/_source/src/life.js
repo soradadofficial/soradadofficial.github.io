@@ -126,7 +126,7 @@ export function createLife(scene, w) {
     addPlane((p, t) => {
       const k = (t % period) / period;
       const dist = k * 70;
-      const lx = -len / 2 + 0.6 + dist;
+      const lx = -(apt.userData.len ?? len) / 2 + 0.6 + dist;
       const y = dist < 2.2 ? 0.081 : 0.081 + Math.pow((dist - 2.2) / 68, 1.2) * 18;
       p.position.copy(apt.userData.toWorld(lx, 0, 0)).setY(apt.position.y + y);
       p.rotation.set(0, apt.rotation.y, dist < 2.2 ? 0 : 0.14, 'YZX');

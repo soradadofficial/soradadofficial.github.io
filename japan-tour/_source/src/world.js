@@ -9,12 +9,15 @@ import { createSky, createClouds, createPetals, createTrail, ENV, lerpEnv, makeE
 import { VERT, MODEL_SCALE as S, PLANE_SCALE as PL, toX, toZ, thaiXZ, FUJI, LAKES, buildTerrain, buildFuji, buildThailand, buildNear, lakeMeshes } from './geo.js';
 import { Path, monotone, linear } from './path.js';
 import {
-  ribbon, roadMaterial, waterMaterial, waterTime, viaduct, createAirport, createBkkAirport, createCities, createForest, createToriiTunnel, drapedDisc,
+  ribbon, roadMaterial, waterMaterial, waterTime, viaduct, createAirport, createBkkAirport, BKK_K, createCities, createForest, createToriiTunnel, drapedDisc,
   createLabel, routeLine, rnd,
 } from './scenery.js';
 import { createHoloMap } from './mapholo.js';
 import { createLife } from './life.js';
 import ROUTES from './routes.json';
+import NRT_OSM from './nrt-osm.json';
+import { createOsmAirport, addOsmSurroundings } from './osm-airport.js';
+import BKK_OSM from './bkk-osm.json';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 
@@ -76,7 +79,8 @@ export function createWorld() {
     return null;
   };
   const lakeY = (name) => LAKES.find((l) => l.name === name).level * VERT + 0.012;
-  const ground = (x, z) => Math.max(H(x, z), -0.05);
+  let plateTop = () => -Infinity; // set once the Narita plate exists: anything placed on the ground there sits on the plate
+  const ground = (x, z) => Math.max(H(x, z), -0.05, plateTop(x, z));
   const onGround = (v, lift = 0) => { v.y = ground(v.x, v.z) + lift; return v; };
 
   // spatial hash of road/rail points so buildings and trees keep clear
@@ -95,18 +99,22 @@ export function createWorld() {
   const [bx, bz] = thaiXZ(100.75, 13.69);
   const bkk = createBkkAirport({ x: bx, z: bz, y: 0.055, bearing: 13 }); // runway 01/19 lies at about 013 degrees true
   scene.add(bkk);
-  const nrtC = LL(140.386, 35.765);
-  const nrtY = Math.max(H(nrtC.x, nrtC.z), 0.05) + 0.01;
-  const NRT_LEN = 4;
-  const nrt = createAirport({ x: nrtC.x, z: nrtC.z, y: nrtY, bearing: 337, len: NRT_LEN, side: 1, label: 'NRT  成田', termX: 0.4, parked: 3 });
-  // free the middle gate for our flight
-  nrt.remove(nrt.userData.jets[1]);
+  { const c = bkk.userData.complex; addOsmSurroundings(bkk, BKK_OSM, ([e, n]) => [c.x + n * BKK_K, c.z + e * BKK_K], BKK_K, 34); } // roads, canals and buildings round the airfield, as on the airport page
+  // Narita from its real layout (OpenStreetMap), built in code at the same model scale as Suvarnabhumi (BKK_K units per
+  // metre, six times the ground scale), on a flat plate laid over the plateau. Main runway 16R/34L, landing north on 34L.
+  const nrtAt = LL(140.38, 35.765);
+  let nrtTop = 0.05;
+  for (let i = -6; i <= 6; i++) for (let j = -6; j <= 6; j++) nrtTop = Math.max(nrtTop, H(nrtAt.x + i * 3, nrtAt.z + j * 3));
+  const nrtY = nrtTop + 0.01;
+  const nrt = createOsmAirport({ osm: NRT_OSM, ref: '16R/34L', K: BKK_K, y: nrtY, toWorldXZ: (lon, lat) => LL(lon, lat), ground: H, label: 'NRT  成田' });
   scene.add(nrt);
+  const nrtC = nrt.position.clone(), NRT_LEN = nrt.userData.len;
+  { const P = nrt.userData.pad, q = V(0, 0, 0); plateTop = (x, z) => { q.set(x, 0, z); nrt.worldToLocal(q); return q.x > P.x0 && q.x < P.x1 && q.z > P.z0 && q.z < P.z1 ? nrtY : -Infinity; }; }
   const kixC = LL(135.24, 34.43);
   const kixLand = T.landAt(kixC.x, kixC.z) > 0.6;
   const kix = createAirport({ x: kixC.x, z: kixC.z, y: kixLand ? H(kixC.x, kixC.z) + 0.01 : 0.06, bearing: 236, len: 3.5, side: -1, label: 'KIX  関西', termX: 0, parked: 3, seaPad: !kixLand });
   scene.add(kix);
-  const jets = [...bkk.userData.jets, ...nrt.userData.jets.filter((j) => j.parent), ...kix.userData.jets];
+  const jets = [...bkk.userData.jets, ...nrt.userData.jets, ...kix.userData.jets];
 
   // ---------- story flight path ----------
   const plane = createAirliner();
@@ -118,8 +126,25 @@ export function createWorld() {
   const B0 = V(bx, 0, bz);
   const brg = (deg, km, y) => { const r = deg * Math.PI / 180; return V(B0.x + Math.sin(r) * km, y, B0.z - Math.cos(r) * km); };
   const gyB = 0.055 + GO, gyN = nrtY + GO;
-  const apDir = V(Math.sin(337 * Math.PI / 180), 0, -Math.cos(337 * Math.PI / 180));
-  const thrN = nw(-NRT_LEN / 2 + 0.35, 0);
+  const apDir = nw(1, 0).sub(nw(0, 0)).setY(0).normalize();
+  const thrN = nw(-NRT_LEN / 2 + 0.3, 0);
+  // Arrival on the real taxiways: off the runway, along the graph to an empty stand at Terminal 1 (else any terminal).
+  // Story camera and kerb points are expressed from that stand: t along the facade, f toward the terminal.
+  const NU = nrt.userData, NK = BKK_K;
+  const freeSlots = NU.slots.filter((sl) => !NU.jets.some((j) => j.userData.slot === sl));
+  const slot = freeSlots.find((sl) => /Terminal 1/.test(sl.term || '')) || freeSlots[0];
+  const fN = [-slot.nx, -slot.nz], tN = slot.nz < 0 ? [slot.nz * -1, -slot.nx * -1] : [slot.nz, -slot.nx];
+  const lane = NU.nav.nearest(slot.x + slot.nx * 75 * NK, slot.z + slot.nz * 75 * NK);
+  const runIn = NU.nav.route(NU.nav.nearest(-NRT_LEN / 2 + 1500 * NK, 0, (q) => Math.abs(q[1]) < 15 * NK), lane) || [];
+  const offRwy = runIn.findIndex((q) => Math.abs(q[1]) > 40 * NK);
+  const taxiPts = runIn.slice(Math.max(1, offRwy - 1)).filter((_, i, a) => i % 3 === 0 || i === a.length - 1);
+  const term = NRT_OSM.buildings.find((b) => b.name === slot.term), ringL = term ? term.p.map(NU.local) : [[slot.x, slot.z]];
+  const tc = ringL.reduce((a, q) => [a[0] + q[0] / ringL.length, a[1] + q[1] / ringL.length], [0, 0]);
+  const deep = Math.max(...ringL.map((q) => (q[0] - tc[0]) * fN[0] + (q[1] - tc[1]) * fN[1]));
+  const kerbL = [tc[0] + fN[0] * (deep + 45 * NK), tc[1] + fN[1] * (deep + 45 * NK)];
+  // old generic-layout offsets: gate was at (0.4, 1.95) and the kerb at (0.4, 3.85) in that frame
+  const G = (a, b, y = 0) => nw(slot.x + tN[0] * (a - 0.4) + fN[0] * (b - 1.95), slot.z + tN[1] * (a - 0.4) + fN[1] * (b - 1.95), y);
+  const KB = (a, b, y = 0) => nw(kerbL[0] + tN[0] * (a - 0.4) + fN[0] * (b - 3.85), kerbL[1] + tN[1] * (a - 0.4) + fN[1] * (b - 3.85), y);
   // Take-off from 02R (the main departure runway), then the track actually flown BKK-NRT as
   // recorded by ADS-B: right turn out over Isan, Da Nang, IKELA, KAPLI, the southern tip of Taiwan,
   // Okinawa, up the Pacific side of Japan, then round the Boso peninsula. Cruise FL370 then FL410.
@@ -131,11 +156,12 @@ export function createWorld() {
     ikela: R(18.6617, 112.2450, 37), r6: R(19.8532, 114.6832, 41), kapli: R(21.1745, 117.5346, 41), taiwan: R(21.923, 120.850, 41), iguru: R(23.8093, 123.7741, 41),
     okinawa: R(26.2102, 127.8470, 41), r11: R(28.6338, 130.7732, 41), r12: R(31.1234, 134.3454, 41), r13: R(33.3419, 138.1078, 41),
     J1: R(33.8865, 139.0965, 38), J1b: R(34.3852, 140.0089, 26), J2: R(34.9743, 140.6468, 14), IF: thrN.clone().addScaledVector(apDir, -48).setY(nrtY + 6.5), FAF: thrN.clone().addScaledVector(apDir, -20).setY(nrtY + 2.4),
-    thr: thrN.clone().setY(gyN + 0.06), touch: nw(-NRT_LEN / 2 + 1.0, 0, GO), roll2: nw(NRT_LEN / 2 - 0.9, 0, GO),
-    tx1: nw(NRT_LEN / 2 - 0.45, 0.42, GO), tx2: nw(NRT_LEN / 2 - 0.62, 1.0, GO), tx3: nw(0.85, 1.05, GO), tx4: nw(0.4, 1.45, GO), gate: nw(0.4, 1.95, GO),
+    thr: thrN.clone().setY(gyN + 0.06), touch: nw(-NRT_LEN / 2 + 400 * NK, 0, GO), roll2: nw(taxiPts[0] ? taxiPts[0][0] - 300 * NK : 0, 0, GO),
+    ...Object.fromEntries(taxiPts.map(([x, z], i) => ['tx' + i, nw(x, z, GO)])),
+    txIn: nw(slot.x + slot.nx * 75 * NK, slot.z + slot.nz * 75 * NK, GO), gate: nw(slot.x, slot.z, GO),
   };
   W.start.y = W.roll.y = gyB; W.lift.y = gyB + 0.03;
-  W.touch.y = W.roll2.y = W.tx1.y = W.tx2.y = W.tx3.y = W.tx4.y = W.gate.y = gyN;
+  for (const k of Object.keys(W)) if (k === 'touch' || k === 'roll2' || k === 'gate' || k.startsWith('tx')) W[k].y = gyN;
   const flight = Path.fromControl(Object.values(W), 0.12, (x, z, p) => p.y);
   const FD = Object.fromEntries(Object.entries(W).map(([k, v]) => [k, flight.closest(v)]));
   FD.start = 0; FD.gate = flight.length;
@@ -147,7 +173,7 @@ export function createWorld() {
   // ---------- tour road ----------
   // Real road geometry (OpenStreetMap, baked by scripts/build-routes.mjs), resampled to an
   // even spacing. The vertical profile is the ground, eased so the deck does not jitter.
-  const roadY = (x, z) => Math.max(H(x, z), 0.03) + 0.014;
+  const roadY = (x, z) => Math.max(H(x, z), 0.03, plateTop(x, z)) + 0.014;
   const polyPath = (pts, step) => {
     for (let k = 0; k < 3; k++) { // Chaikin: round the corners left by simplification
       const o = [pts[0]];
@@ -162,11 +188,12 @@ export function createWorld() {
     return new Path(out);
   };
   const deckY = (x, z, q) => Math.max(q.y, H(x, z) + 0.006);
-  const curb = nw(0.4, 3.85);
+  const curb = KB(0.4, 3.85);
   const legNames = Object.keys(ROUTES.road), legEnd = {};
   const roadLL = [];
   legNames.forEach((name) => { roadLL.push(...ROUTES.road[name].map(([lo, la]) => LL(lo, la))); legEnd[name.split('-')[1]] = roadLL[roadLL.length - 1]; });
-  const offAirports = roadLL.filter((q) => Math.hypot(q.x - nrtC.x, q.z - nrtC.z) > 7 && Math.hypot(q.x - kixC.x, q.z - kixC.z) > 7);
+  const onNrtPad = (q, m = 1.5) => { const l = nrt.worldToLocal(q.clone()), P = NU.pad; return l.x > P.x0 - m && l.x < P.x1 + m && l.z > P.z0 - m && l.z < P.z1 + m; };
+  const offAirports = roadLL.filter((q) => !onNrtPad(q) && Math.hypot(q.x - kixC.x, q.z - kixC.z) > 7);
   // access road from behind a terminal round the end of its runway toward `far`, never across the airfield
   const access = (apt, far, side, len) => {
     const f = apt.worldToLocal(far.clone()), sx = Math.sign(f.x) || 1, w = (lx, lz) => apt.userData.toWorld(lx, lz).setY(0);
@@ -174,7 +201,18 @@ export function createWorld() {
     if (f.z * side < 3.5) { pts.push(w(sx * (len / 2 + 1.6), side * 4.8), w(sx * (len / 2 + 2.2), side * 1.2)); if (f.z * side < 0) pts.push(w(sx * (len / 2 + 1.6), -side * 2.4)); }
     return pts;
   };
-  const road = polyPath([...access(nrt, offAirports[0], 1, NRT_LEN), ...offAirports, ...access(kix, offAirports[offAirports.length - 1], -1, 3.5).reverse()], 0.18);
+  // Narita: out from the kerb on the landside, then round the edge of the plate toward the first road point beyond it
+  const nrtAccess = (far) => {
+    const P = NU.pad, m = 1.4, box = [[P.x0 - m, P.z0 - m], [P.x1 + m, P.z0 - m], [P.x1 + m, P.z1 + m], [P.x0 - m, P.z1 + m]], w = ([x, z]) => nw(x, z).setY(0);
+    const per = ([x, z]) => { const W2 = P.x1 - P.x0 + 2 * m, D2 = P.z1 - P.z0 + 2 * m, cx = Math.min(Math.max(x, P.x0 - m), P.x1 + m), cz = Math.min(Math.max(z, P.z0 - m), P.z1 + m); // distance round the edge from the first corner
+      const dl = [Math.abs(cz - (P.z0 - m)), Math.abs(cx - (P.x1 + m)), Math.abs(cz - (P.z1 + m)), Math.abs(cx - (P.x0 - m))], e = dl.indexOf(Math.min(...dl));
+      return [cx - (P.x0 - m), W2 + cz - (P.z0 - m), W2 + D2 + (P.x1 + m - cx), 2 * W2 + D2 + (P.z1 + m - cz)][e]; };
+    const fl = nrt.worldToLocal(far.clone()), out = [kerbL[0] + fN[0] * 1.2, kerbL[1] + fN[1] * 1.2], a = per(out), b = per([fl.x, fl.z]), T = 2 * (P.x1 - P.x0 + 2 * m) + 2 * (P.z1 - P.z0 + 2 * m);
+    const corners = box.map((q) => [q, per(q)]), fwd = ((b - a) % T + T) % T < T / 2, pts = [w(kerbL), w(out)];
+    corners.filter(([, c]) => fwd ? ((c - a) % T + T) % T < ((b - a) % T + T) % T : ((a - c) % T + T) % T < ((a - b) % T + T) % T).sort(([, c1], [, c2]) => fwd ? ((c1 - a) % T + T) % T - ((c2 - a) % T + T) % T : ((a - c1) % T + T) % T - ((a - c2) % T + T) % T).forEach(([q]) => pts.push(w(q)));
+    return pts;
+  };
+  const road = polyPath([...nrtAccess(offAirports[0]), ...offAirports, ...access(kix, offAirports[offAirports.length - 1], -1, 3.5).reverse()], 0.18);
   const roadMat = roadMaterial();
   scene.add(ribbon(road, 0.07, deckY, roadMat, { uvLen: 0.6 }));
   addClear(road);
@@ -288,7 +326,7 @@ export function createWorld() {
     { x: toX(135.81), z: toZ(34.68), r: 2.4, n: 200, maxH: 0.5 },
   ];
   const avoid = [
-    { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: 5, tree: 1.15 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
+    { x: towerPos.x, z: towerPos.z, r: 1.3 }, { x: nrtC.x, z: nrtC.z, r: Math.hypot(NU.pad.x1 - NU.pad.x0, NU.pad.z1 - NU.pad.z0) / 2 + 1, tree: 1 }, { x: pagodaPos.x, z: pagodaPos.z, r: 0.9 }, { x: hotelPos.x, z: hotelPos.z, r: 1.4 },
     { x: castlePos.x, z: castlePos.z, r: 1.7 }, { x: nara.x + 0.3, z: nara.z, r: 1.2 }, { x: fushimi.x + 0.6, z: fushimi.z, r: 1.1 }, { x: ryokanPos.x, z: ryokanPos.z, r: 0.6 }, { x: toX(135.778), z: toZ(35.0), r: 0.45, tree: 1 }, { x: tokyoHotelPos.x, z: tokyoHotelPos.z, r: 1.1 }, { x: tokyoHotelPos.x + (towerPos.x - tokyoHotelPos.x) * 0.45, z: tokyoHotelPos.z + (towerPos.z - tokyoHotelPos.z) * 0.45, r: 1.25 }, /* Shiba Park lies between the hotel and Tokyo Tower: no blocks there, so the floor picker sees the low floors */ { x: osakaHotelPos.x, z: osakaHotelPos.z, r: 0.95 }, { x: hakVilla.x, z: hakVilla.z, r: 0.4, tree: 1 }, { x: pagodaEye.x, z: pagodaEye.z, r: 0.7, tree: 1 }, { x: (pagodaEye.x + pagodaPos.x) / 2, z: (pagodaEye.z + pagodaPos.z) / 2, r: 0.6, tree: 1 },
   ];
   // rivers through the cities (drawn as rippled water ribbons, kept clear of buildings)
@@ -331,7 +369,6 @@ export function createWorld() {
   scatter(LL(139.03, 35.24), 9, 9000);
   scatter(LL(138.8, 35.45), 15, 13000);
   scatter(pagodaPos, 1.0, 1300);
-  scatter(nrtC, 8, 3000);
   scatter(LL(135.79, 34.966), 2.0, 2400);
   scatter(LL(135.85, 34.686), 1.8, 1800);
   for (let i = 0; i < 1400; i++) { const a = rnd() * 6.283, d = 0.95 + rnd() * 0.75; const x = castlePos.x + Math.cos(a) * d, z = castlePos.z + Math.sin(a) * d; if (!nearRoute(x, z, 0.1)) trees.push({ x, z, y: H(x, z), s: 0.035 + rnd() * 0.03, r: rnd(), kind: 1 }); }
@@ -467,14 +504,14 @@ export function createWorld() {
 
   // guide and group at the Narita curb, coach waiting
   const PS = S * 0.6;
-  const guidePos = nw(0.52, 3.68);
+  const guidePos = KB(0.52, 3.68);
   onGround(guidePos);
   const guide = createGuide(); guide.scale.setScalar(PS); guide.position.copy(guidePos); scene.add(guide);
   const tourists = new THREE.Group();
   ['#4b6cb7', '#f2b134', '#7a4fb5', '#3aa17e', '#d9534f', '#2b3a67', '#e2799b', '#3d8fb0'].forEach((c, i) => {
     const p = createPerson(c);
     p.scale.setScalar(PS);
-    p.position.copy(nw(0.565 + (i % 4) * 0.02, 3.645 - Math.floor(i / 4) * 0.022));
+    p.position.copy(KB(0.565 + (i % 4) * 0.02, 3.645 - Math.floor(i / 4) * 0.022));
     onGround(p.position);
     p.lookAt(guidePos.x, p.position.y, guidePos.z);
     tourists.add(p);
@@ -614,9 +651,9 @@ export function createWorld() {
   const toriiEye = V(toriiPos.x, toriiPos.y, toriiPos.z).addScaledVector(toLake, 0.85).add(V(-toLake.z * 0.25, 0.22, toLake.x * 0.25)); // out on the water, clear of the lakeside road
   const fushiEye = fushiPath.at(0.02).add(V(0, 0.065, 0));
   const fushiLook = fushiPath.at(0.32).add(V(0, 0.05, 0));
-  const nrtGateEye = nw(1.5, 1.0, 1.7), nrtGateLook = nw(0.4, 2.0, 0.12);
+  const nrtGateEye = G(1.5, 1.0, 1.7), nrtGateLook = G(0.4, 2.0, 0.12);
   // guide close-up from the terminal side, looking the way the camera is already travelling
-  const guideEye = nw(0.6, 3.5, 0), guideLook = guidePos.clone().add(V(0, 0.016, 0));
+  const guideEye = KB(0.6, 3.5, 0), guideLook = guidePos.clone().add(V(0, 0.016, 0));
   guideEye.y = guidePos.y + 0.05;
   // Tokyo is entered along the bus's own heading; Hakone and the ryokan are seen from across the lake
   const tokIn = towerPos.clone().sub(nrtC).setY(0).normalize();
@@ -640,10 +677,10 @@ export function createWorld() {
     // side, landmarks approached from the direction of travel) so nothing whips round.
     { t: 0.455, pos: PR(3.6, 1.1, -2.6), look: PR(-14, -3, 0) },
     { t: 0.5, pos: PR(2.8, 0.75, -1.9), look: PR(-6, -0.4, 0) },
-    { t: 0.527, pos: A(nw(1.0, 1.7, 0.75)), look: PR(0, 0, 0) }, // fixed camera on the apron tracks the roll-out and taxi
+    { t: 0.527, pos: A(G(1.0, 1.7, 0.75)), look: PR(0, 0, 0) }, // fixed camera on the apron tracks the roll-out and taxi
     { t: 0.556, pos: A(nrtGateEye), look: A(nrtGateLook) },
-    { t: 0.585, pos: A(nw(0.95, 2.3, 1.15)), look: A(guideLook) }, // over the terminal roof to the guide and group at the kerb
-    { t: 0.61, pos: A(nw(0.95, 3.0, 1.0)), look: A(nw(0.4, 4.9, 0)) }, // coach pulls out below; no chase round the airport loop
+    { t: 0.585, pos: A(G(0.95, 2.3, 1.15)), look: A(guideLook) }, // over the terminal roof to the guide and group at the kerb
+    { t: 0.61, pos: A(KB(0.95, 3.0, 1.0)), look: A(KB(0.4, 4.9, 0)) }, // coach pulls out below; no chase round the airport loop
     { t: 0.635, pos: BW(tokIn, 3.2, 1.9), look: BW(tokIn, 0, 0.1, 2) },
     { t: 0.655, pos: BW(tokIn, 2.4, 1.3), look: mixF(BW(tokIn, 0, 0.1, 2), A(towerPos.clone().add(V(0, 3, 0))), 0.5) },
     { t: 0.68, pos: A(towerPos.clone().addScaledVector(tokIn, -9.5).add(V(0, 3.6, 0))), look: A(towerPos.clone().add(V(0, 3.2, 0))) },
@@ -733,7 +770,7 @@ export function createWorld() {
   const roadKm = (a, b) => Math.round(b - a);
   const LEGS = [
     { t0: 0, t1: 0.06, kind: 'ground', title: 'สนามบินสุวรรณภูมิ', sub: 'เช็คอินกลุ่ม · เกต D4', dest: bkk.position, stats: [['เที่ยวบิน', 'CV 101'], ['ขึ้นเครื่อง', '07:15'], ['ผู้เดินทาง', '24 ท่าน']] },
-    { t0: 0.06, t1: 0.552, kind: 'flight', title: 'กรุงเทพฯ → โตเกียว', sub: 'BKK ✈ NRT · บินตรง', dest: nw(0.4, 1.95), stats: [['ระยะทาง', '4,650 กม.'], ['เวลาบิน', '6 ชม. 30 น.'], ['เครื่องบิน', 'Wide-body'], ['ระดับบิน', '37,000 ฟุต']] },
+    { t0: 0.06, t1: 0.552, kind: 'flight', title: 'กรุงเทพฯ → โตเกียว', sub: 'BKK ✈ NRT · บินตรง', dest: nw(slot.x, slot.z), stats: [['ระยะทาง', '4,650 กม.'], ['เวลาบิน', '6 ชม. 30 น.'], ['เครื่องบิน', 'Wide-body'], ['ระดับบิน', '37,000 ฟุต']] },
     { t0: 0.552, t1: 0.62, kind: 'ground', title: 'พบไกด์ที่นาริตะ', sub: 'ประตูขาออก B · ธงสีชมพู', dest: guidePos, stats: [['ไกด์', 'มิกิ'], ['ภาษา', 'ไทย · ญี่ปุ่น'], ['รถ', 'โค้ช 40 ที่นั่ง']] },
     { t0: 0.62, t1: 0.722, kind: 'bus', title: 'นาริตะ → โตเกียว', sub: 'ทางด่วน Higashi-Kanto', d0: 0, d1: BD.tokyo, dest: busPath.at(BD.tokyo), stats: [['ระยะทาง', `${roadKm(0, BD.tokyo)} กม.`], ['เวลา', '~1 ชม. 10 น.'], ['แวะ', 'โตเกียวทาวเวอร์']] },
     { t0: 0.722, t1: 0.83, kind: 'bus', title: 'โตเกียว → ฮาโกเน่', sub: 'ทางด่วนโทเม · ทะเลสาบอาชิ', d0: BD.tokyo, d1: BD.hakone, dest: busPath.at(BD.hakone), stats: [['ระยะทาง', `${roadKm(BD.tokyo, BD.hakone)} กม.`], ['เวลา', '~1 ชม. 45 น.'], ['แวะ', 'เรือโจรสลัด · เรียวกัง']] },
@@ -835,7 +872,9 @@ export function createWorld() {
     sc.left = sc.bottom = -ext; sc.right = sc.top = ext; sc.near = ext * 0.5; sc.far = ext * 9;
     sc.updateProjectionMatrix();
     sun.shadow.normalBias = ext * 0.004;
-    sun.castShadow = scale < 70;
+    // High up, shadows are faded out and their map left alone instead of switching castShadow off: toggling it changes
+    // every material's shader, which recompiled the whole scene each time the camera crossed this height (a long stall).
+    const shade = scale < 70; sun.shadow.intensity = shade ? 1 : 0; sun.shadow.autoUpdate = shade;
     clouds.userData.setEnv(e);
     clouds.userData.update(camera.position);
     trail.material.uniforms.strength.value = 1 - e.night * 0.6;
