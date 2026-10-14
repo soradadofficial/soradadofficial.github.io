@@ -92,6 +92,7 @@ export function initStays({ world, fly, setOrbit, onSelect }) {
       <p class="stay-meta"><span>${s.area}</span><span>คะแนนผู้เข้าพัก ${s.score}/10 (ตัวอย่าง)</span></p>
       <p class="muted">${s.text}</p>
       <ul class="tags">${s.highlights.map((h) => `<li>${h}</li>`).join('')}</ul>
+      ${s.id === 'tokyo' ? '<a class="text-link" href="./stay-tokyo.html">เปิดหน้าตึกแบบเจาะลึก: เลือกชั้น ดูผังห้อง และวิวจริงจากหน้าต่าง →</a>' : ''}
       <h4>เลือกห้องพัก <small>${s.rooms.length} แบบ</small></h4>
       <div class="room-list">${s.rooms.map((r) => `
         <article class="room-row">
