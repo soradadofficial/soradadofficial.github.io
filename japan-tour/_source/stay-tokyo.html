@@ -15,6 +15,7 @@
     --f-body: "IBM Plex Sans Thai", Thonburi, "Leelawadee UI", Tahoma, system-ui, Arial, sans-serif; --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace; --f-display: "Noto Serif Thai", Thonburi, Georgia, serif; }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
+  body.inside .left { display: none; } /* walking inside a room or a hall: give the view the room */
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--washi); font: 400 15px/1.6 var(--f-body); }
   canvas#gl { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; touch-action: none; }
   :focus-visible { outline: 2px solid var(--akane); outline-offset: 2px; border-radius: 6px; }

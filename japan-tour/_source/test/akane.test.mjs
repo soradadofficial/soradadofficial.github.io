@@ -42,3 +42,15 @@ test('views come from real bearings: north rooms see Tokyo Tower, south-west roo
   assert.ok(towerView(8) && towerView(307) && !towerView(127));
   assert.ok(viewsFor(249).some((v) => v.name.includes('ฟูจิ')));
 });
+
+test('walk-through spaces: four scenes on their real floors, each with views and a model', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const meta = JSON.parse(readFileSync(new URL('../public/models/akane-spaces.json', import.meta.url)));
+  assert.deepEqual(Object.fromEntries(Object.entries(meta).map(([id, m]) => [id, m.k])), { lobby: 1, spa: -2, lounge: 32, sky: 33 });
+  for (const [id, m] of Object.entries(meta)) {
+    assert.ok(existsSync(new URL(`../public/models/akane-${id}.glb`, import.meta.url)), id);
+    assert.ok(Object.keys(m.views).length >= 3, id);
+    for (const v of Object.values(m.views)) assert.ok(v.eye.length === 3 && v.look.length === 3);
+  }
+  assert.ok(meta.sky.seats >= 73 && meta.sky.seats <= 84, 'sky bar seats near the real 84');
+});

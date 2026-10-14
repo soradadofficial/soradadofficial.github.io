@@ -313,22 +313,26 @@ function view(sec) {
   const { room, meta } = S.room, v = meta.views[sec]; if (!v) return;
   room.updateMatrixWorld(); const eye = room.localToWorld(V(...v.eye)), look = room.localToWorld(V(...v.look));
   const d = look.clone().sub(eye).normalize();
-  if (sec === 'view' && towerView(S.room.u.bearing)) { const tt = V(P.tokyoTower.p[0], 175, P.tokyoTower.p[1]).sub(eye).normalize(); if (tt.dot(d) > 0.55) d.copy(tt).lerp(d, 0.25).normalize(); } // frame the tower in the window
+  if (sec === 'view' && S.room.u && towerView(S.room.u.bearing)) { const tt = V(P.tokyoTower.p[0], 175, P.tokyoTower.p[1]).sub(eye).normalize(); if (tt.dot(d) > 0.55) d.copy(tt).lerp(d, 0.25).normalize(); } // frame the tower in the window
   yaw = Math.atan2(-d.x, -d.z); pitch = Math.asin(d.y);
   const from = camera.position.clone(), o = { t: 0 };
   tween = gsap.to(o, { t: 1, duration: REDUCED ? 0 : 0.9, ease: 'power2.inOut', onUpdate: () => { camera.position.lerpVectors(from, eye, o.t); aim(); } });
   document.querySelectorAll('#roomnav [data-v]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.v === sec));
+  if (S.room.space) history.replaceState(null, '', `#${S.room.space}`);
 }
 const aim = () => camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
 function leaveRoom(silent) {
   if (!S.room) return;
+  const space = S.room.space;
   scene.remove(S.room.room); S.room = null; controls.enabled = true; $('#roomnav').hidden = true; camera.fov = 42; camera.updateProjectionMatrix();
   if (plateGroup) plateGroup.visible = true;
+  if (space) { applyNight(S.night); if (!silent) goFloor(SPACE[space].k); return; }
   if (!silent && S.unit) { cut.constant = floorY(S.unit.k) + floorH(S.unit.k) - 0.02; controls.target.set(S.unit.c.x * 0.6, floorY(S.unit.k) + 1, S.unit.c.z * 0.6); pickUnit(S.unit); }
 }
 function roomNav() {
   const nav = $('#roomnav'); nav.hidden = false;
-  nav.innerHTML = [['view', 'วิวหน้าต่าง'], ['bed', 'เตียง'], ['living', 'มุมนั่งเล่น'], ['bath', 'ห้องน้ำ']].map(([v, n]) => `<button type="button" data-v="${v}" aria-pressed="${v === 'view'}">${n}</button>`).join('') + '<button type="button" data-out>ออกจากห้อง</button>';
+  const items = S.room.space ? Object.entries(SPACE[S.room.space].views) : [['view', 'วิวหน้าต่าง'], ['bed', 'เตียง'], ['living', 'มุมนั่งเล่น'], ['bath', 'ห้องน้ำ']];
+  nav.innerHTML = items.map(([v, n], i) => `<button type="button" data-v="${v}" aria-pressed="${i === 0}">${n}</button>`).join('') + `<button type="button" data-out>${S.room.space ? 'ออกไปผังชั้น' : 'ออกจากห้อง'}</button>`;
 }
 $('#roomnav').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.v) view(b.dataset.v); else { leaveRoom(false); } });
 { // first-person look inside a room: drag to turn, wheel to zoom
@@ -337,6 +341,104 @@ $('#roomnav').addEventListener('click', (e) => { const b = e.target.closest('but
   addEventListener('pointermove', (e) => { if (!drag || !S.room) return; yaw += (e.clientX - drag.x) * 0.004; pitch = THREE.MathUtils.clamp(pitch + (e.clientY - drag.y) * 0.004, -1.2, 1.2); drag = { x: e.clientX, y: e.clientY }; aim(); });
   addEventListener('pointerup', () => { drag = null; });
   renderer.domElement.addEventListener('wheel', (e) => { if (!S.room) return; camera.fov = THREE.MathUtils.clamp(camera.fov + Math.sign(e.deltaY) * 4, 22, 70); camera.updateProjectionMatrix(); }, { passive: true });
+}
+
+// ---------- walk-through spaces: lobby and atrium, spa, club lounge, sky bar (blender/akane_spaces.py) ----------
+const SPACE = {
+  lobby: { k: 1, name: 'ล็อบบี้และโถงกลาง', short: 'ล็อบบี้และโถงกลาง', svc: /Lobby|SHOP/,
+    views: { arrive: 'ทางเข้า', forest: 'แชนเดอเลียร์กระจก', atrium: 'มองขึ้นโถงกลาง', lounge: 'Lobby Lounge', desk: 'เคาน์เตอร์ต้อนรับ' },
+    facts: [['เคาน์เตอร์ต้อนรับ', 'เปิด 24 ชม. อยู่ทางซ้ายเมื่อเข้าทางเข้าหลักฝั่งใต้ ตกแต่งแบบห้องหนังสือในบ้าน พนักงานพูดญี่ปุ่น อังกฤษ จีน เกาหลี'],
+      ['แชนเดอเลียร์', 'งานศิลป์กระจกบานเล็กหลายร้อยชิ้นที่แขวนเป็นแชนเดอเลียร์ ในธีม “การทักทายของป่า” จากการปรับปรุงล็อบบี้ที่เสร็จเมื่อ 1 ธ.ค. 2017'],
+      ['โถงกลาง', 'สูงต่อเนื่องจาก B1 ถึงชั้น 32 มีลิฟต์แก้วชมวิว 8 ตัว ห้องพักทุกชั้นเปิดออกสู่ระเบียงรอบโถง'],
+      ['ทางเข้า', 'แขกที่พักกับแขกงานเลี้ยงใช้ทางเข้าแยกกัน · ซุ้มรถรับส่งอยู่ฝั่งใต้']],
+    note: 'ขนาดและตำแหน่งของน้ำตก ขนาดโถงกลาง และการวางเฟอร์นิเจอร์ไม่มีข้อมูลเผยแพร่ ฉากนี้จัดวางเป็นตัวอย่างบนผังตึกจริง' },
+  spa: { k: -2, name: 'Spa & Fitness · ออนเซ็นและสระ 25 ม.', short: 'ออนเซ็นและสระ', svc: /Spa|โบว์ลิ่ง/, dark: true,
+    views: { pool: 'สระ 25 ม.', deck: 'เก้าอี้ริมสระ', onsen: 'ออนเซ็น', sauna: 'ซาวน่า' },
+    facts: [['มีอะไรบ้าง', 'ออนเซ็นธรรมชาติ สระน้ำอุ่นในร่ม ยิม ซาวน่าอินฟราเรด และอ่างน้ำวน'], ['การแต่งกาย', 'ห้ามใส่ชุดคลุม ยูกาตะ และรองเท้าแตะของห้องพักลงมาที่สปา']],
+    note: 'ผังสปาจริงไม่เผยแพร่ ตำแหน่งสระ ออนเซ็น ซาวน่า และยิมในฉากนี้เป็นการจัดวางตัวอย่าง ขนาดสระ ราคา และเวลาเปิดเป็นข้อมูลจริง' },
+  lounge: { k: 32, name: 'Premium Club Lounge', short: 'คลับเลานจ์ชั้น 32', svc: /Premium Club/,
+    views: { window: 'ที่นั่งริมหน้าต่าง', buffet: 'บุฟเฟต์', swing: 'ชิงช้าต้นไม้' },
+    facts: [['ใครเข้าได้', 'แขกห้องชั้น Premium Club และสมาชิกระดับสูงสุดของโปรแกรมสะสมแต้มของเครือ · ช่วงค็อกเทลรับอายุ 13 ปีขึ้นไป'],
+      ['สิทธิ์ชั้นคลับ', 'อาหารเช้าที่เลานจ์ ขัดรองเท้า ซักรีดลด 20% ห้องประชุมฟรี 2 ชม. · พัก 3 คืนขึ้นไปมีรถโรงแรมรับส่ง'],
+      ['การออกแบบ', 'ขยายจาก 146 เป็น 184 ม² ในปี 2016 แนวหน้าต่างฝั่งทาวเวอร์กลายเป็นที่นั่ง บุฟเฟต์ย้ายไปกลางห้อง · เปิดใหม่หลังปรับปรุง 1 ต.ค. 2025 · กลางคืนแสงโตเกียวทาวเวอร์ส่องเข้ามาในห้อง']],
+    note: 'ชิงช้าแบบต้นไม้และโคมกิ่งไม้มาจากธีม A Part of the Park ของห้องชั้นคลับ ในฉากนี้วางไว้เป็นตัวอย่าง ไม่มีผังเลานจ์จริงเผยแพร่' },
+  sky: { k: 33, name: 'Stellar Garden · สกายบาร์', short: 'สกายบาร์ชั้น 33', svc: /Stellar/,
+    views: { tower: 'ที่นั่งหันหาทาวเวอร์', bar: 'เคาน์เตอร์บาร์', room: 'ทั้งร้าน' },
+    facts: [['ที่นั่ง', 'บาร์ 84 ที่นั่ง: 73 ที่นั่งหันหาโตเกียวทาวเวอร์ และเคาน์เตอร์ 11 ที่ · ห้องอาหารอีก 116 ที่นั่ง'],
+      ['ตกแต่ง', 'ปรับปรุงใหม่ในธีมไม้โทนอุ่น เปิดเมื่อ 3 ต.ค. 2025'], ['ห้องส่วนตัว', 'Brise Verte 4 ห้อง 26 ที่นั่ง จองล่วงหน้า 3 วัน · Sky Banquet 184 ม² นั่งได้ 100 คน']],
+    note: 'ฉากนี้แสดงโซนบาร์ฝั่งทาวเวอร์ ตำแหน่งที่นั่ง ชั้นยก และเคาน์เตอร์เป็นการจัดวางตัวอย่าง จำนวนที่นั่งเป็นข้อมูลจริง · กดปุ่มกลางคืนเพื่อดูโตเกียวทาวเวอร์เปิดไฟ' },
+};
+const SPACE_AT = Object.fromEntries(Object.entries(SPACE).map(([id, sp]) => [sp.k, id]));
+const spaceMeta = fetch('./models/akane-spaces.json').then((r) => r.json()).catch(() => ({}));
+const spaceCache = new Map();
+function waterPatch(m, body) { // animated water, mirrors and glow, drawn from world position and time
+  m.customProgramCacheKey = () => `akane-${m.name}`;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uTime = U.time;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWp; varying float vTag;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvWp = (modelMatrix * vec4(transformed, 1.0)).xyz; vTag = uv.x;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vWp; varying float vTag; uniform float uTime;
+float akCaus(vec2 p, float t) { float c = sin(p.x * 1.7 + t * 1.1 + sin(p.y * 1.3 + t * 0.7) * 1.5) + sin(p.y * 1.9 - t * 0.9 + sin(p.x * 1.1 - t * 0.6) * 1.5); return pow(1.0 - abs(c) * 0.5, 6.0); }`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n{ ${body} }`);
+  };
+}
+const WATER = {
+  PoolTile: 'totalEmissiveRadiance += vec3(0.55, 0.92, 1.0) * akCaus(vWp.xz * 1.4, uTime) * 0.5;',
+  PoolWater: 'float c = akCaus(vWp.xz * 2.3 + 3.0, uTime * 1.3); totalEmissiveRadiance += vec3(0.8, 1.0, 1.0) * c * 0.18; diffuseColor.a = mix(diffuseColor.a, 0.75, c * 0.5);',
+  OnsenWater: 'float c = akCaus(vWp.xz * 3.0, uTime * 0.6); totalEmissiveRadiance += vec3(1.0, 0.95, 0.8) * c * 0.08;',
+  FallWater: 'float s = fract(vWp.y * 0.9 + uTime * 1.6 + fract(sin(floor((vWp.x + vWp.z) * 9.0) * 91.7) * 4375.5) * 7.0); float k = smoothstep(0.0, 0.35, s) * (1.0 - smoothstep(0.35, 1.0, s)); totalEmissiveRadiance += vec3(0.85, 0.95, 1.0) * k * 0.7; diffuseColor.a *= 0.65 + 0.35 * k;',
+  Mirror: 'totalEmissiveRadiance += vec3(1.0, 0.97, 0.9) * pow(max(0.0, sin(uTime * 1.3 + vTag * 61.0)), 48.0) * 2.4;',
+};
+function prepSpace(root, meta) {
+  root.traverse((o) => {
+    if (!o.isMesh) return; o.receiveShadow = true;
+    const m = o.material; if (WATER[m.name]) waterPatch(m, WATER[m.name]);
+    if (m.name === 'Mirror') m.envMapIntensity = 2.4;
+    if (m.transparent) m.depthWrite = false;
+  });
+  const lamp = new THREE.PointLight('#ffe2bf', 10, 26, 1.4); lamp.position.set(...meta.lamp); root.add(lamp);
+  root.userData.forest = root.getObjectByName('Forest');
+  if (meta.steam) { // steam over the onsen: a few soft puffs rising and fading
+    const n = 36, pos = new Float32Array(n * 3), base = new THREE.Vector3(...meta.steam);
+    for (let i = 0; i < n; i++) pos.set([base.x + (Math.random() - 0.5) * 5, base.y + Math.random() * 2, base.z + (Math.random() - 0.5) * 2.6], i * 3);
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const steam = new THREE.Points(g, new THREE.PointsMaterial({ map: glowTex, size: 1.6, transparent: true, opacity: 0.16, depthWrite: false, color: '#ffffff' }));
+    steam.userData.base = base; root.add(steam); root.userData.steam = steam;
+  }
+  return root;
+}
+function animateSpace(u, t, dt) {
+  if (u.forest) u.forest.rotation.y = Math.sin(t * 0.21) * 0.02; // the mirrors sway a little, so their glints travel
+  if (u.steam) {
+    const a = u.steam.geometry.attributes.position, b = u.steam.userData.base;
+    for (let i = 0; i < a.count; i++) { let y = a.getY(i) + dt * 0.35; if (y > b.y + 2.2) y = b.y; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(t + i) * dt * 0.05); }
+    a.needsUpdate = true;
+  }
+}
+const loadSpace = (id, meta) => { if (!spaceCache.has(id)) spaceCache.set(id, new Promise((ok, no) => loader.load(`./models/akane-${id}.glb`, (g) => ok(prepSpace(g.scene, meta)), undefined, no))); return spaceCache.get(id); };
+async function enterSpace(id, sec) {
+  const sp = SPACE[id], meta = (await spaceMeta)[id]; if (!sp || !meta) return;
+  if (S.room?.space === id) { view(sec || Object.keys(sp.views)[0]); return; }
+  const room = await loadSpace(id, meta).catch(() => null); if (!room) return;
+  leaveRoom(true);
+  if (S.k !== sp.k) { S.k = sp.k; if (plateGroup) { scene.remove(plateGroup); plateGroup = null; cellMeshes = []; } }
+  room.position.set(0, floorY(sp.k) + (sp.k === 1 ? 0.02 : 0), 0); // the lobby floor sits just above the ground plate
+  scene.add(room); await renderer.compileAsync(room, camera, scene);
+  S.room = { space: id, room, meta, u: null }; S.unit = null; setMode(null);
+  if (plateGroup) plateGroup.visible = false;
+  cut.constant = id === 'lobby' ? 1e6 : floorY(sp.k) + floorH(sp.k); setHot(null); U.sel.value.set(-99, -99);
+  controls.enabled = false; tween?.kill(); camera.fov = 55; camera.updateProjectionMatrix();
+  if (sp.dark) { hemi.intensity = 0.3; sun.intensity = 0; scene.environmentIntensity = 0.3; } // underground: only its own lights
+  view(sec || Object.keys(sp.views)[0]); tween?.progress(1); roomNav(); render(); renderer.shadowMap.needsUpdate = true;
+}
+function cardSpace(id) {
+  const sp = SPACE[id], rows = SERVICES.filter(([n, k]) => k === sp.k && sp.svc.test(n));
+  card.innerHTML = `<h2>${floorLabel(sp.k)} · เดินชมแบบ 3 มิติ</h2><h3>${sp.name}</h3>
+    <ul class="list">${rows.map(([n, , h, note]) => `<li><span>${n}</span><small>${h}<br>${note}</small></li>`).join('')}</ul>
+    <dl>${sp.facts.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>
+    <p class="muted small" style="margin:8px 0 0">${sp.note}</p>
+    <p class="muted small" style="margin:6px 0 0">ลากเพื่อหันมอง เลือกจุดชมจากแถบปุ่ม</p>
+    <div class="row"><button type="button" data-go="${sp.k}">← ผังชั้น ${floorLabel(sp.k)}</button><button type="button" data-home>ภาพรวม</button></div>`;
 }
 
 // ---------- picking ----------
@@ -392,6 +494,7 @@ function cardFloor(k) {
   const units = unitsOn(k), plan = floorPlan(k), zones = plan.filter((e) => e.zone && !e.quiet), types = [...new Set(units.map((u) => u.type))];
   const free = units.filter((u) => u.free).length;
   card.innerHTML = `<h2>${BAND[band(k)][0]} · ระดับ ${Math.round(floorY(k))} ม.</h2><h3>${floorLabel(k)} · ${USE(k)}</h3>
+    ${SPACE_AT[k] ? `<div class="row" style="margin:4px 0 8px"><button type="button" class="primary" data-space="${SPACE_AT[k]}">เดินชม${SPACE[SPACE_AT[k]].short}แบบ 3 มิติ</button></div>` : ''}
     ${units.length ? `<p class="muted small">${units.length} ห้องบนชั้นนี้ · ว่าง ${free} ห้อง (ตัวอย่าง) · แตะห้องบนผังหรือบนตึก</p>
       <label class="small muted">ประเภทห้อง <select id="flt" style="font:inherit;color:var(--washi);background:rgba(255,255,255,0.06);border:1px solid var(--line);border-radius:10px;min-height:36px;color-scheme:dark"><option value="">ทั้งหมด</option>${types.map((t) => `<option value="${t}"${S.filter === t ? ' selected' : ''}>${TYPES[t].name} · ${TYPES[t].m2} ม²</option>`).join('')}</select></label>` : ''}
     ${svgPlan(k)}
@@ -437,8 +540,9 @@ function cardOverview() {
   const bodies = {
     about: `<div class="facts">${FACTS.map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('')}</div>
       <p class="small" style="margin:0 0 6px">ตึกผังสามเหลี่ยมตัดมุม กว้างราว 52 ม. ตั้งอยู่บนที่ดินเดิมของสนามกอล์ฟชิบะ มีสวนราวครึ่งหนึ่งของพื้นที่ ห้องพักเรียงรอบโถงกลางที่สูงตั้งแต่ B1 ถึงชั้น 32 มีลิฟต์แก้วชมวิว 8 ตัว ห้องฝั่งเหนือและมุมตะวันตกเฉียงเหนือหันหาโตเกียวทาวเวอร์</p>
-      <p class="muted small" style="margin:0">ชี้ที่ตึกหรือแถบชั้นด้านซ้ายเพื่อให้ชั้นสว่าง แตะเพื่อเปิดผังชั้น แล้วเลือกห้องเพื่อเดินเข้าไปดู</p>`,
-    svc: `<ul class="list">${SERVICES.map(([n, k, h, note]) => `<li><span>${n}</span><button type="button" class="go" data-go="${k}">${floorLabel(k)}</button><small>${h}<br>${note}</small></li>`).join('')}</ul>`,
+      <p class="muted small" style="margin:0">ชี้ที่ตึกหรือแถบชั้นด้านซ้ายเพื่อให้ชั้นสว่าง แตะเพื่อเปิดผังชั้น แล้วเลือกห้องเพื่อเดินเข้าไปดู</p>
+      <h4 class="small" style="margin:12px 0 0">เดินชมแบบ 3 มิติ</h4><div class="row" style="margin-top:6px">${Object.entries(SPACE).map(([id, sp]) => `<button type="button" data-space="${id}">${sp.short}</button>`).join('')}</div>`,
+    svc: `<ul class="list">${SERVICES.map(([n, k, h, note]) => { const sp = Object.keys(SPACE).find((id) => SPACE[id].k === k && SPACE[id].svc.test(n)); return `<li><span>${n}</span><button type="button" class="go" data-${sp ? `space="${sp}"` : `go="${k}"`}>${sp ? '3 มิติ' : floorLabel(k)}</button><small>${h}<br>${note}</small></li>`; }).join('')}</ul>`,
     go: `${accessMap()}<table class="t"><thead><tr><th>สถานี</th><th>สาย</th><th>ทางออก</th><th>เดิน</th></tr></thead><tbody>${STATIONS.map(([a, b, c, d]) => `<tr><td>${a}</td><td>${b}</td><td>${c}</td><td class="mono">${d} นาที</td></tr>`).join('')}</tbody></table>
       <p class="small">${SHUTTLE}</p><table class="t"><thead><tr><th>สนามบิน</th><th>วิธี</th><th>เวลา</th><th>ราคา</th></tr></thead><tbody>${AIRPORT.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table><p class="muted small">${ONWARD}</p>`,
     pol: `<dl>${POLICY.map(([a, b]) => `<div><dt>${a}</dt><dd>${b}</dd></div>`).join('')}</dl>`,
@@ -460,6 +564,7 @@ function accessMap() { // OSM footprints within the plate, the tower, the statio
 card.addEventListener('click', (e) => {
   const b = e.target.closest('button, [data-no]'); if (!b) return;
   if (b.dataset.tab) { S.tab = b.dataset.tab; cardOverview(); return; }
+  if (b.dataset.space) { b.disabled = true; b.textContent = 'กำลังเปิดฉาก…'; enterSpace(b.dataset.space); return; }
   if (b.dataset.no) { pickUnit(findUnit(Number(b.dataset.no))); return; }
   if (b.dataset.go !== undefined) { goFloor(Number(b.dataset.go)); return; }
   if (b.dataset.home !== undefined) { overview('all'); return; }
@@ -469,9 +574,10 @@ card.addEventListener('click', (e) => {
 });
 card.addEventListener('keydown', (e) => { const c = e.target.closest('[data-no]'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); pickUnit(findUnit(Number(c.dataset.no))); } });
 function render() {
-  if (S.unit) cardUnit(S.unit); else if (S.k !== null) cardFloor(S.k); else cardOverview();
+  document.body.classList.toggle('inside', !!S.room);
+  if (S.room?.space) cardSpace(S.room.space); else if (S.unit) cardUnit(S.unit); else if (S.k !== null) cardFloor(S.k); else cardOverview();
   document.querySelectorAll('#stack button').forEach((b) => b.setAttribute('aria-pressed', Number(b.dataset.k) === S.k));
-  $('#where').textContent = S.room ? `ในห้อง ${S.unit.no} · ${TYPES[S.unit.type].name}` : S.unit ? `${floorLabel(S.unit.k)} · ห้อง ${S.unit.no}` : S.k !== null ? `${floorLabel(S.k)} · ${USE(S.k)}` : S.mode === 'under' ? 'ใต้ดิน B1–B2' : 'ภาพรวม';
+  $('#where').textContent = S.room?.space ? `${floorLabel(SPACE[S.room.space].k)} · ${SPACE[S.room.space].name}` : S.room ? `ในห้อง ${S.unit.no} · ${TYPES[S.unit.type].name}` : S.unit ? `${floorLabel(S.unit.k)} · ห้อง ${S.unit.no}` : S.k !== null ? `${floorLabel(S.k)} · ${USE(S.k)}` : S.mode === 'under' ? 'ใต้ดิน B1–B2' : 'ภาพรวม';
 }
 
 // ---------- day and night ----------
@@ -502,9 +608,9 @@ function frame() {
     const span = floorY(c.userData.top) - floorY(-1), p = 0.5 - 0.5 * Math.cos(((t * 0.045 + c.userData.phase * 0.13) % 1) * Math.PI * 2);
     c.position.y = floorY(-1) + p * span;
   }
-  if (!S.room) controls.update();
+  if (!S.room) controls.update(); else if (S.room.space) animateSpace(S.room.room.userData, t, dt);
   sky.position.copy(camera.position);
-  for (const s of LABELS) { const v = S.room ? !!s.userData.far : S.k === null; s.visible = v; if (s.userData.pin) s.userData.pin.visible = v; }
+  for (const s of LABELS) { const v = S.room ? !!s.userData.far && !S.room.space : S.k === null; s.visible = v; if (s.userData.pin) s.userData.pin.visible = v; }
   slow = raw > 0.024 ? slow + raw : 0; if (slow > 2 && renderer.getPixelRatio() > 1) { renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() - 0.25)); slow = 0; }
   if (S.k !== null && t - last > 0.5) { last = t; renderer.shadowMap.needsUpdate = true; } // floor plates and lifts move under the cut: refresh shadows twice a second
   renderer.render(scene, camera);
@@ -517,6 +623,6 @@ Promise.all([towerReady, document.fonts.ready]).then(async () => {
 }).catch(() => {}).finally(() => {
   renderer.shadowMap.needsUpdate = true; $('#veil').classList.add('gone'); frame();
   const h = location.hash.slice(1), m = /^u(\d{3,4})$/.exec(h), f = /^f(b?)(\d+)$/.exec(h);
-  if (m && findUnit(Number(m[1]))) pickUnit(findUnit(Number(m[1]))); else if (f) goFloor(f[1] ? -Number(f[2]) : Number(f[2])); else if (POSE[h]) overview(h); else fly(...POSE.all, 2.2);
+  if (m && findUnit(Number(m[1]))) pickUnit(findUnit(Number(m[1]))); else if (SPACE[h]) enterSpace(h); else if (f) goFloor(f[1] ? -Number(f[2]) : Number(f[2])); else if (POSE[h]) overview(h); else fly(...POSE.all, 2.2);
 });
-if (location.search.includes('debug')) window.__akane = { renderer, scene, camera, controls, S, goFloor, pickUnit, enterRoom, leaveRoom, view, overview, applyNight, findUnit, tower };
+if (location.search.includes('debug')) window.__akane = { renderer, scene, camera, controls, S, goFloor, pickUnit, enterRoom, enterSpace, leaveRoom, view, overview, applyNight, findUnit, tower };
