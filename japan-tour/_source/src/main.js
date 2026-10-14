@@ -493,5 +493,7 @@ renderInfo('hotel');
 document.querySelector('[data-target="hotel"]')?.setAttribute('aria-selected', 'true');
 resize();
 requestAnimationFrame(frame);
+// build every shader in the scene in the background, so arriving at a new place (Narita, Tokyo, ...) does not stall a frame
+setTimeout(() => renderer.compileAsync(scene, camera).catch(() => {}), 1500);
 const reveal = () => setTimeout(() => $('#veil').classList.add('gone'), 500);
 (document.fonts?.ready || Promise.resolve()).then(() => { measure(); reveal(); });
